@@ -40,8 +40,7 @@ type model struct {
 	artists          []string
 	currentlyPlaying track
 	status           string
-	cursor           int
-	lines            int
+	albumFocused     int
 }
 
 type browse struct {
@@ -191,8 +190,20 @@ func (m *model) getTrackURL(name, artist, album string) (string, error) {
 }
 
 func main() {
+	// \u0020 - whitespace
+	// tview.Borders.Horizontal = rune('\u0020')
+	tview.Borders.HorizontalFocus = rune('\u2500')
+	tview.Borders.VerticalFocus = rune('\u2502')
+	tview.Borders.TopRightFocus = rune('\u2510')
+	tview.Borders.TopLeftFocus = rune('\u250C')
+	tview.Borders.BottomRightFocus = rune('\u2518')
+	tview.Borders.BottomLeftFocus = rune('\u2514')
+
 	app := tview.NewApplication()
-	m := model{albumArtists: map[string]artist{}}
+	m := model{
+		albumArtists: map[string]artist{},
+		albumFocused: 0,
+	}
 
 	err := m.fetchData()
 	if err != nil {
@@ -207,8 +218,12 @@ func main() {
 		SetSelectedBackgroundColor(tcell.ColorMediumBlue).
 		ShowSecondaryText(false)
 
+	arLst.SetBorder(true).SetTitle("Artist/Album").SetBackgroundColor(tcell.ColorDefault).SetTitleAlign(tview.AlignLeft)
+
 	alFlex := tview.NewFlex().
 		SetDirection(tview.FlexRow)
+
+	alFlex.SetBorder(true).SetTitle("Track").SetBackgroundColor(tcell.ColorDefault).SetTitleAlign(tview.AlignLeft)
 
 	appFlex := tview.NewFlex().
 		AddItem(arLst, 0, 1, true).
@@ -253,12 +268,14 @@ func main() {
 				return event
 			})
 
+			trackLst.SetTitle(album.name).SetBorder(true).SetBackgroundColor(tcell.ColorDefault).SetTitleAlign(tview.AlignLeft)
+
 			for _, t := range album.tracks {
 				trackLst.AddItem(t.name, "", 0, nil)
 			}
 
 			// TODO: add album title somehow
-			alFlex.AddItem(trackLst, 0, 2, false)
+			alFlex.AddItem(trackLst, trackLst.GetItemCount() + 2, 1, false)
 		}
 	})
 
