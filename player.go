@@ -36,11 +36,12 @@ type artist struct {
 }
 
 type model struct {
-	albumArtists     map[string]artist
-	artists          []string
-	currentlyPlaying track
-	status           string
-	albumFocused     int
+	albumArtists      map[string]artist
+	artists           []string
+	currentlyPlaying  track
+	status            string
+	currentAlbumIndex int
+	currentAlbumCount int
 }
 
 type browse struct {
@@ -212,8 +213,9 @@ func (m *model) getTrackURL(name, artist, album string) (string, error) {
 func main() {
 	app := tview.NewApplication()
 	m := model{
-		albumArtists: map[string]artist{},
-		albumFocused: 0,
+		albumArtists:      map[string]artist{},
+		currentAlbumIndex: 0,
+		currentAlbumCount: 0,
 	}
 
 	err := m.fetchData()
@@ -268,6 +270,7 @@ func main() {
 	// draw selected artist's right pane (album items) on artist scroll
 	arLst.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
 		alFlex.Clear()
+		m.currentAlbumCount = len(m.albumArtists[artist].albums)
 
 		for _, album := range m.albumArtists[artist].albums {
 			trackLst := tview.NewList().
@@ -296,10 +299,29 @@ func main() {
 			trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 				switch event.Rune() {
 				case 'j':
-					// TODO: check if we need to jump to the next album
+					if trackLst.GetCurrentItem()+1 == trackLst.GetItemCount() {
+						if m.currentAlbumIndex+1 == m.currentAlbumCount {
+							// do nothing, return default
+							return nil
+						} else {
+							app.SetFocus(alFlex.GetItem(m.currentAlbumIndex + 1))
+							return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+						}
+					}
+
 					return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
 				case 'k':
-					// TODO: check if we need to jump to the previous album
+					// FIXME
+					if trackLst.GetCurrentItem() == 0 {
+						if m.currentAlbumIndex == 0 {
+							// do nothing, i'm already on 1st album
+							return nil
+						} else {
+							app.SetFocus(alFlex.GetItem(m.currentAlbumIndex))
+							return nil
+						}
+					}
+
 					return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
 				}
 
@@ -341,6 +363,7 @@ func main() {
 			if !albumView.HasFocus() {
 				app.SetFocus(alFlex.GetItem(0))
 				arLst.SetSelectedBackgroundColor(tcell.ColorLightGray)
+				m.currentAlbumIndex = 0
 			} else {
 				app.SetFocus(artistView)
 				arLst.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
