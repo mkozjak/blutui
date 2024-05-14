@@ -22,16 +22,16 @@ func SortArtists(input map[string]artist) []string {
 }
 
 func Log(data string) error {
-    file, err := os.Create("/tmp/debug.log")
-    if err != nil {
-        return err
-    }
-    defer file.Close()
+	file, err := os.Create("/tmp/debug.log")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
-    _, err = file.WriteString(data + "\n")
-    if err != nil {
-        return err
-    }
+	_, err = file.WriteString(data + "\n")
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }

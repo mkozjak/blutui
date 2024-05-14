@@ -10,7 +10,7 @@ import (
 	"sort"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
+	"github.com/mkozjak/tview"
 )
 
 var api string = "http://bluesound.local:11000"
@@ -54,6 +54,26 @@ type item struct {
 	Type      string `xml:"type,attr"`
 	PlayURL   string `xml:"playURL,attr"`
 }
+
+var arListStyle = &tview.BoxBorders{
+	// \u0020 - whitespace
+	HorizontalFocus:  rune('\u2500'),
+	Horizontal:       rune('\u2500'),
+	VerticalFocus:    rune('\u2502'),
+	Vertical:         rune('\u2502'),
+	TopRightFocus:    rune('\u2510'),
+	TopRight:         rune('\u2510'),
+	TopLeftFocus:     rune('\u250C'),
+	TopLeft:          rune('\u250C'),
+	BottomRightFocus: rune('\u2518'),
+	BottomRight:      rune('\u2518'),
+	BottomLeftFocus:  rune('\u2514'),
+	BottomLeft:       rune('\u2514'),
+}
+
+var alFlexStyle = arListStyle
+
+var trListStyle = &tview.BoxBorders{}
 
 func (m *model) fetchData() error {
 	albumSectionsEndp := api + "/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic"
@@ -190,15 +210,6 @@ func (m *model) getTrackURL(name, artist, album string) (string, error) {
 }
 
 func main() {
-	// \u0020 - whitespace
-	// tview.Borders.Horizontal = rune('\u0020')
-	tview.Borders.HorizontalFocus = rune('\u2500')
-	tview.Borders.VerticalFocus = rune('\u2502')
-	tview.Borders.TopRightFocus = rune('\u2510')
-	tview.Borders.TopLeftFocus = rune('\u250C')
-	tview.Borders.BottomRightFocus = rune('\u2518')
-	tview.Borders.BottomLeftFocus = rune('\u2514')
-
 	app := tview.NewApplication()
 	m := model{
 		albumArtists: map[string]artist{},
@@ -215,15 +226,36 @@ func main() {
 		SetHighlightFullLine(true).
 		SetWrapAround(false).
 		SetSelectedTextColor(tcell.ColorWhite).
-		SetSelectedBackgroundColor(tcell.ColorMediumBlue).
+		SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
 		ShowSecondaryText(false)
 
-	arLst.SetBorder(true).SetTitle("Artist/Album").SetBackgroundColor(tcell.ColorDefault).SetTitleAlign(tview.AlignLeft)
+	arLst.SetTitle(" [::b]Artist ").
+		SetBorder(true).
+		SetBorderColor(tcell.ColorCornflowerBlue).
+		SetBackgroundColor(tcell.ColorDefault).
+		SetTitleAlign(tview.AlignLeft).
+		SetCustomBorders(arListStyle).
+		// set artists list keymap
+		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Rune() {
+			case 'j':
+				return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+			case 'k':
+				return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
+			}
+
+			return event
+		})
 
 	alFlex := tview.NewFlex().
 		SetDirection(tview.FlexRow)
 
-	alFlex.SetBorder(true).SetTitle("Track").SetBackgroundColor(tcell.ColorDefault).SetTitleAlign(tview.AlignLeft)
+	alFlex.SetTitle(" [::b]Track ").
+		SetBorder(true).
+		SetBorderColor(tcell.ColorCornflowerBlue).
+		SetBackgroundColor(tcell.ColorDefault).
+		SetTitleAlign(tview.AlignLeft).
+		SetCustomBorders(alFlexStyle)
 
 	appFlex := tview.NewFlex().
 		AddItem(arLst, 0, 1, true).
@@ -243,39 +275,49 @@ func main() {
 				SetWrapAround(false).
 				SetSelectedFocusOnly(true).
 				SetSelectedTextColor(tcell.ColorWhite).
-				SetSelectedBackgroundColor(tcell.ColorMediumBlue).
+				SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
 				ShowSecondaryText(false)
 
+			trackLst.SetSelectedFunc(func(i int, name, _ string, sh rune) {
+				u, err := m.getTrackURL(name, artist, album.name)
+				if err != nil {
+					panic(err)
+				}
+
+				// play track
+				_, err = http.Get(api + u)
+				if err != nil {
+					fmt.Println("Error playing track:", err)
+					panic(err)
+				}
+			})
+
+			// set album tracklist keymap
 			trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-				switch event.Key() {
-				case tcell.KeyEnter:
-					i := trackLst.GetCurrentItem()
-					name, _ := trackLst.GetItemText(i)
-
-					u, err := m.getTrackURL(name, artist, album.name)
-					if err != nil {
-						panic(err)
-					}
-
-					_, err = http.Get(api + u)
-					if err != nil {
-						fmt.Println("Error playing track:", err)
-						panic(err)
-					}
-
+				switch event.Rune() {
+				case 'j':
+					// TODO: check if we need to jump to the next album
+					return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+				case 'k':
+					// TODO: check if we need to jump to the previous album
+					return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
 				}
 
 				return event
 			})
 
-			trackLst.SetTitle(album.name).SetBorder(true).SetBackgroundColor(tcell.ColorDefault).SetTitleAlign(tview.AlignLeft)
+			trackLst.SetTitle("[::b]" + album.name).
+				SetBorder(true).
+				SetBorderColor(tcell.ColorCornflowerBlue).
+				SetBackgroundColor(tcell.ColorDefault).
+				SetTitleAlign(tview.AlignLeft).
+				SetCustomBorders(trListStyle)
 
 			for _, t := range album.tracks {
 				trackLst.AddItem(t.name, "", 0, nil)
 			}
 
-			// TODO: add album title somehow
-			alFlex.AddItem(trackLst, trackLst.GetItemCount() + 2, 1, false)
+			alFlex.AddItem(trackLst, trackLst.GetItemCount()+2, 1, false)
 		}
 	})
 
@@ -287,15 +329,8 @@ func main() {
 		return
 	})
 
-	// set keymap
+	// set global keymap
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Rune() {
-		case 'j':
-			return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
-		case 'k':
-			return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
-		}
-
 		switch event.Key() {
 		case tcell.KeyCtrlQ:
 			app.Stop()
@@ -305,8 +340,10 @@ func main() {
 
 			if !albumView.HasFocus() {
 				app.SetFocus(alFlex.GetItem(0))
+				arLst.SetSelectedBackgroundColor(tcell.ColorLightGray)
 			} else {
 				app.SetFocus(artistView)
+				arLst.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
 
 			return nil
