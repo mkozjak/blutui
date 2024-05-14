@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"sort"
 	"strings"
 )
@@ -18,4 +19,19 @@ func SortArtists(input map[string]artist) []string {
 	})
 
 	return names
+}
+
+func Log(data string) error {
+    file, err := os.Create("/tmp/debug.log")
+    if err != nil {
+        return err
+    }
+    defer file.Close()
+
+    _, err = file.WriteString(data + "\n")
+    if err != nil {
+        return err
+    }
+
+    return nil
 }
