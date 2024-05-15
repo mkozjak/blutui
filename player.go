@@ -349,7 +349,7 @@ func main() {
 				trackLst.AddItem(t.name, "", 0, nil)
 			}
 
-			alFlex.AddItem(trackLst, trackLst.GetItemCount()+2, 1, false)
+			alFlex.AddItem(trackLst, trackLst.GetItemCount()+2, 1, true)
 		}
 	})
 
@@ -371,21 +371,21 @@ func main() {
 			albumView := appFlex.GetItem(1)
 
 			if !albumView.HasFocus() {
-				app.SetFocus(alFlex.GetItem(0))
+				app.SetFocus(alFlex)
 				arLst.SetSelectedBackgroundColor(tcell.ColorLightGray)
-				m.currentAlbumIndex = 0
 			} else {
 				app.SetFocus(artistView)
 				arLst.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
 
+			m.currentAlbumIndex = 0
 			return nil
 		}
 
 		return event
 	})
 
-	if err := app.SetRoot(appFlex, true).SetFocus(appFlex).Run(); err != nil {
+	if err := app.SetRoot(appFlex, true).SetFocus(appFlex).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 }
