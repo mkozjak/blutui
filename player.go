@@ -224,12 +224,17 @@ func main() {
 	}
 
 	// left pane - artists
+	arLstStyle := tcell.Style{}
+	arLstStyle.Background(tcell.ColorDefault)
+	trackLstStyle := arLstStyle
+
 	arLst := tview.NewList().
 		SetHighlightFullLine(true).
 		SetWrapAround(false).
 		SetSelectedTextColor(tcell.ColorWhite).
 		SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
-		ShowSecondaryText(false)
+		ShowSecondaryText(false).
+		SetMainTextStyle(arLstStyle)
 
 	arLst.SetTitle(" [::b]Artist ").
 		SetBorder(true).
@@ -279,7 +284,8 @@ func main() {
 				SetSelectedFocusOnly(true).
 				SetSelectedTextColor(tcell.ColorWhite).
 				SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
-				ShowSecondaryText(false)
+				ShowSecondaryText(false).
+				SetMainTextStyle(trackLstStyle)
 
 			trackLst.SetSelectedFunc(func(i int, name, _ string, sh rune) {
 				u, err := m.getTrackURL(name, artist, album.name)
