@@ -288,11 +288,13 @@ func main() {
 				}
 
 				// play track
-				_, err = http.Get(api + u)
-				if err != nil {
-					fmt.Println("Error playing track:", err)
-					panic(err)
-				}
+				go func() {
+					_, err = http.Get(api + u)
+					if err != nil {
+						fmt.Println("Error playing track:", err)
+						panic(err)
+					}
+				}()
 			})
 
 			// set album tracklist keymap
