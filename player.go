@@ -16,19 +16,21 @@ import (
 var api string = "http://bluesound.local:11000"
 
 type track struct {
-	name    string
-	length  int
-	disc    int
-	number  int
-	playUrl string
+	name        string
+	length      int
+	disc        int
+	number      int
+	playUrl     string
+	autoplayUrl string
 }
 
 type album struct {
-	name    string
-	year    int
-	genre   string
-	tracks  []track
-	playUrl string
+	name        string
+	year        int
+	genre       string
+	tracks      []track
+	playUrl     string
+	autoplayUrl string
 }
 
 type artist struct {
@@ -49,11 +51,12 @@ type browse struct {
 }
 
 type item struct {
-	Text      string `xml:"text,attr"`  // album name; track name
-	Text2     string `xml:"text2,attr"` // artist name
-	BrowseKey string `xml:"browseKey,attr"`
-	Type      string `xml:"type,attr"`
-	PlayURL   string `xml:"playURL,attr"`
+	Text        string `xml:"text,attr"`  // album name; track name
+	Text2       string `xml:"text2,attr"` // artist name
+	BrowseKey   string `xml:"browseKey,attr"`
+	Type        string `xml:"type,attr"`
+	PlayURL     string `xml:"playURL,attr"`
+	AutoplayURL string `xml:"autoplayURL,attr"`
 }
 
 var arListStyle = &tview.BoxBorders{
@@ -147,8 +150,9 @@ func (m *model) fetchData() error {
 			var albumTracks []track
 			for _, tr := range tracks.Items {
 				track := track{
-					name:    tr.Text,
-					playUrl: tr.PlayURL,
+					name:        tr.Text,
+					playUrl:     tr.PlayURL,
+					autoplayUrl: tr.AutoplayURL,
 				}
 
 				albumTracks = append(albumTracks, track)
@@ -165,9 +169,10 @@ func (m *model) fetchData() error {
 			} else {
 				m.albumArtists[al.Text2] = artist{
 					albums: []album{{
-						name:    al.Text,
-						tracks:  albumTracks,
-						playUrl: al.PlayURL,
+						name:        al.Text,
+						tracks:      albumTracks,
+						playUrl:     al.PlayURL,
+						autoplayUrl: al.AutoplayURL,
 					}},
 				}
 			}
@@ -192,7 +197,7 @@ func (m *model) fetchData() error {
 	return nil
 }
 
-func (m *model) getTrackURL(name, artist, album string) (string, error) {
+func (m *model) getTrackURL(name, artist, album string) (string, string, error) {
 	for _, a := range m.albumArtists[artist].albums {
 		if a.name != album {
 			continue
@@ -203,11 +208,11 @@ func (m *model) getTrackURL(name, artist, album string) (string, error) {
 				continue
 			}
 
-			return t.playUrl, nil
+			return t.playUrl, t.autoplayUrl, nil
 		}
 	}
 
-	return "", errors.New("no such track")
+	return "", "", errors.New("no such track")
 }
 
 func main() {
@@ -288,18 +293,21 @@ func main() {
 				SetMainTextStyle(trackLstStyle)
 
 			trackLst.SetSelectedFunc(func(i int, name, _ string, sh rune) {
-				u, err := m.getTrackURL(name, artist, album.name)
+				_, autoplay, err := m.getTrackURL(name, artist, album.name)
 				if err != nil {
 					panic(err)
 				}
 
-				// play track
+				// play track and add subsequent album tracks to queue
 				go func() {
-					_, err = http.Get(api + u)
+					_, err = http.Get(api + autoplay)
 					if err != nil {
-						fmt.Println("Error playing track:", err)
+						fmt.Println("Error autoplaying track:", err)
 						panic(err)
 					}
+
+					// arLst.SetItemText(arLst.GetCurrentItem(), "[yellow]"+artist, "")
+					// trackLst.SetItemText(i, "[yellow]"+name, "")
 				}()
 			})
 
