@@ -305,6 +305,7 @@ func main() {
 							return nil
 						} else {
 							app.SetFocus(alFlex.GetItem(m.currentAlbumIndex + 1))
+							m.currentAlbumIndex = m.currentAlbumIndex + 1
 							return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
 						}
 					}
@@ -317,7 +318,8 @@ func main() {
 							// do nothing, i'm already on 1st album
 							return nil
 						} else {
-							app.SetFocus(alFlex.GetItem(m.currentAlbumIndex))
+							app.SetFocus(alFlex.GetItem(m.currentAlbumIndex - 1))
+							m.currentAlbumIndex = m.currentAlbumIndex - 1
 							return nil
 						}
 					}
