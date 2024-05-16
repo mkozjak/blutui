@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"sort"
@@ -84,21 +84,21 @@ func (m *model) fetchData() error {
 
 	resp, err := http.Get(albumSectionsEndp)
 	if err != nil {
-		fmt.Println("Error fetching album section list:", err)
+		log.Println("Error fetching album section list:", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
+		log.Println("Error reading response body:", err)
 		return err
 	}
 
 	var sections browse
 	err = xml.Unmarshal(body, &sections)
 	if err != nil {
-		fmt.Println("Error parsing the sections XML:", err)
+		log.Println("Error parsing the sections XML:", err)
 		return err
 	}
 
@@ -106,21 +106,21 @@ func (m *model) fetchData() error {
 	for _, item := range sections.Items {
 		resp, err = http.Get(api + "/Browse?key=" + url.QueryEscape(item.BrowseKey))
 		if err != nil {
-			fmt.Println("Error fetching album section:", err)
+			log.Println("Error fetching album section:", err)
 			return err
 		}
 		defer resp.Body.Close()
 
 		body, err = io.ReadAll(resp.Body)
 		if err != nil {
-			fmt.Println("Error reading response body:", err)
+			log.Println("Error reading response body:", err)
 			return err
 		}
 
 		var albums browse
 		err = xml.Unmarshal(body, &albums)
 		if err != nil {
-			fmt.Println("Error parsing the albums XML:", err)
+			log.Println("Error parsing the albums XML:", err)
 			return err
 		}
 
@@ -129,21 +129,21 @@ func (m *model) fetchData() error {
 			// fetch album tracks
 			resp, err = http.Get(api + "/Browse?key=" + url.QueryEscape(al.BrowseKey))
 			if err != nil {
-				fmt.Println("Error fetching album tracks section:", err)
+				log.Println("Error fetching album tracks section:", err)
 				return err
 			}
 			defer resp.Body.Close()
 
 			body, err = io.ReadAll(resp.Body)
 			if err != nil {
-				fmt.Println("Error reading response body:", err)
+				log.Println("Error reading response body:", err)
 				return err
 			}
 
 			var tracks browse
 			err = xml.Unmarshal(body, &tracks)
 			if err != nil {
-				fmt.Println("Error parsing the album tracks XML:", err)
+				log.Println("Error parsing the album tracks XML:", err)
 				return err
 			}
 
@@ -213,6 +213,49 @@ func (m *model) getTrackURL(name, artist, album string) (string, string, error) 
 	}
 
 	return "", "", errors.New("no such track")
+}
+
+func play(url string) {
+	go func() {
+		_, err := http.Get(api + url)
+		if err != nil {
+			log.Println("Error autoplaying track:", err)
+			panic(err)
+		}
+
+		// arLst.SetItemText(arLst.GetCurrentItem(), "[yellow]"+artist, "")
+		// trackLst.SetItemText(i, "[yellow]"+name, "")
+	}()
+}
+
+func stop() {
+	go func() {
+		_, err := http.Get(api + "/Stop")
+		if err != nil {
+			log.Println("Error stopping playback:", err)
+			panic(err)
+		}
+	}()
+}
+
+func next() {
+	go func() {
+		_, err := http.Get(api + "/Skip")
+		if err != nil {
+			log.Println("Error switch to next track:", err)
+			panic(err)
+		}
+	}()
+}
+
+func previous() {
+	go func() {
+		_, err := http.Get(api + "/Back")
+		if err != nil {
+			log.Println("Error switch to previous track:", err)
+			panic(err)
+		}
+	}()
 }
 
 func main() {
@@ -299,16 +342,7 @@ func main() {
 				}
 
 				// play track and add subsequent album tracks to queue
-				go func() {
-					_, err = http.Get(api + autoplay)
-					if err != nil {
-						fmt.Println("Error autoplaying track:", err)
-						panic(err)
-					}
-
-					// arLst.SetItemText(arLst.GetCurrentItem(), "[yellow]"+artist, "")
-					// trackLst.SetItemText(i, "[yellow]"+name, "")
-				}()
+				play(autoplay)
 			})
 
 			// set album tracklist keymap
@@ -357,7 +391,9 @@ func main() {
 				trackLst.AddItem(t.name, "", 0, nil)
 			}
 
-			alFlex.AddItem(trackLst, trackLst.GetItemCount()+2, 1, true)
+			// FIXME: how do I scroll this?
+			// alFlex.AddItem(trackLst, trackLst.GetItemCount()+2, 1, true)
+			alFlex.AddItem(trackLst, 1, 1, true)
 		}
 	})
 
@@ -374,6 +410,7 @@ func main() {
 		switch event.Key() {
 		case tcell.KeyCtrlQ:
 			app.Stop()
+
 		case tcell.KeyTab:
 			artistView := appFlex.GetItem(0)
 			albumView := appFlex.GetItem(1)
@@ -388,6 +425,17 @@ func main() {
 
 			m.currentAlbumIndex = 0
 			return nil
+		}
+
+		switch event.Rune() {
+		case 'v':
+			stop()
+		case 'b':
+			next()
+		case 'z':
+			previous()
+		case 'q':
+			app.Stop()
 		}
 
 		return event
