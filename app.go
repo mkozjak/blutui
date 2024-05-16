@@ -215,49 +215,6 @@ func (m *model) getTrackURL(name, artist, album string) (string, string, error) 
 	return "", "", errors.New("no such track")
 }
 
-func play(url string) {
-	go func() {
-		_, err := http.Get(api + url)
-		if err != nil {
-			log.Println("Error autoplaying track:", err)
-			panic(err)
-		}
-
-		// arLst.SetItemText(arLst.GetCurrentItem(), "[yellow]"+artist, "")
-		// trackLst.SetItemText(i, "[yellow]"+name, "")
-	}()
-}
-
-func stop() {
-	go func() {
-		_, err := http.Get(api + "/Stop")
-		if err != nil {
-			log.Println("Error stopping playback:", err)
-			panic(err)
-		}
-	}()
-}
-
-func next() {
-	go func() {
-		_, err := http.Get(api + "/Skip")
-		if err != nil {
-			log.Println("Error switch to next track:", err)
-			panic(err)
-		}
-	}()
-}
-
-func previous() {
-	go func() {
-		_, err := http.Get(api + "/Back")
-		if err != nil {
-			log.Println("Error switch to previous track:", err)
-			panic(err)
-		}
-	}()
-}
-
 func main() {
 	app := tview.NewApplication()
 	m := model{
@@ -393,7 +350,7 @@ func main() {
 
 			// FIXME: how do I scroll this?
 			// alFlex.AddItem(trackLst, trackLst.GetItemCount()+2, 1, true)
-			alFlex.AddItem(trackLst, 1, 1, true)
+			alFlex.AddItem(trackLst, 0, 1, true)
 		}
 	})
 
