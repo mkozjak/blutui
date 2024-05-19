@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"sort"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/tview"
 )
 
@@ -191,4 +192,94 @@ func (a *app) getTrackURL(name, artist, album string) (string, string, error) {
 	}
 
 	return "", "", errors.New("no such track")
+}
+
+func (a *app) newAlbumList(artist, albumName string, tracks []track) *tview.List {
+	textStyle := tcell.Style{}
+	textStyle.Background(tcell.ColorDefault)
+
+	trackLst := tview.NewList().
+		SetHighlightFullLine(true).
+		SetWrapAround(false).
+		SetSelectedFocusOnly(true).
+		SetSelectedTextColor(tcell.ColorWhite).
+		SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
+		ShowSecondaryText(false).
+		SetMainTextStyle(textStyle)
+
+	trackLst.SetSelectedFunc(func(i int, trackName, _ string, sh rune) {
+		_, autoplay, err := a.getTrackURL(trackName, artist, albumName)
+		if err != nil {
+			panic(err)
+		}
+
+		// play track and add subsequent album tracks to queue
+		go play(autoplay)
+	})
+
+	trackLst.Focus(func(p tview.Primitive) {
+		Log("first album received focus")
+	})
+
+	// set album tracklist keymap
+	trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Rune() {
+		case 'j':
+			if trackLst.GetCurrentItem()+1 == trackLst.GetItemCount() {
+				// skip to the next album if available
+				if a.currentAlbumIndex+1 == a.currentAlbumCount {
+					// do nothing, return default
+					return nil
+				} else {
+					// a.application.SetFocus(c.GetItem(a.currentAlbumIndex + 1))
+					// a.currentAlbumIndex = a.currentAlbumIndex + 1
+
+					return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+				}
+			}
+
+			return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+		case 'k':
+			// FIXME
+			if trackLst.GetCurrentItem() == 0 {
+				if a.currentAlbumIndex == 0 {
+					// do nothing, i'm already on 1st album
+					return nil
+				} else {
+					// a.application.SetFocus(c.GetItem(a.currentAlbumIndex - 1))
+					// a.currentAlbumIndex = a.currentAlbumIndex - 1
+					return nil
+				}
+			}
+
+			return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
+		}
+
+		return event
+	})
+
+	trackLst.SetTitle("[::b]" + albumName).
+		SetBorder(true).
+		SetBorderColor(tcell.ColorCornflowerBlue).
+		SetBackgroundColor(tcell.ColorDefault).
+		SetTitleAlign(tview.AlignLeft).
+		SetCustomBorders(trListStyle)
+
+	for _, t := range tracks {
+		trackLst.AddItem(t.name, "", 0, nil)
+	}
+
+	return trackLst
+}
+
+func (a *app) drawCurrentArtist(artist string, c *tview.Grid) []int {
+	l := []int{}
+
+	for i, album := range a.albumArtists[artist].albums {
+		albumList := a.newAlbumList(artist, album.name, album.tracks)
+		l = append(l, len(album.tracks)+2)
+		c.AddItem(albumList, i, 0, 1, 1, 0, 0, false)
+	}
+
+	return l
 }

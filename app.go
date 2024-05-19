@@ -23,84 +23,8 @@ var arListStyle = &tview.BoxBorders{
 	BottomLeft:       rune('\u2514'),
 }
 
-var alFlexStyle = arListStyle
+var alGridStyle = arListStyle
 var trListStyle = &tview.BoxBorders{}
-
-func (a *app) drawCurrentArtist(artist string, c *tview.Flex) {
-	trackLstStyle := tcell.Style{}
-	trackLstStyle.Background(tcell.ColorDefault)
-
-	for _, album := range a.albumArtists[artist].albums {
-		trackLst := tview.NewList().
-			SetHighlightFullLine(true).
-			SetWrapAround(false).
-			SetSelectedFocusOnly(true).
-			SetSelectedTextColor(tcell.ColorWhite).
-			SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
-			ShowSecondaryText(false).
-			SetMainTextStyle(trackLstStyle)
-
-		trackLst.SetSelectedFunc(func(i int, name, _ string, sh rune) {
-			_, autoplay, err := a.getTrackURL(name, artist, album.name)
-			if err != nil {
-				panic(err)
-			}
-
-			// play track and add subsequent album tracks to queue
-			go play(autoplay)
-		})
-
-		// set album tracklist keymap
-		trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-			switch event.Rune() {
-			case 'j':
-				if trackLst.GetCurrentItem()+1 == trackLst.GetItemCount() {
-					if a.currentAlbumIndex+1 == a.currentAlbumCount {
-						// do nothing, return default
-						return nil
-					} else {
-						a.application.SetFocus(c.GetItem(a.currentAlbumIndex + 1))
-						a.currentAlbumIndex = a.currentAlbumIndex + 1
-						return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
-					}
-				}
-
-				return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
-			case 'k':
-				// FIXME
-				if trackLst.GetCurrentItem() == 0 {
-					if a.currentAlbumIndex == 0 {
-						// do nothing, i'm already on 1st album
-						return nil
-					} else {
-						a.application.SetFocus(c.GetItem(a.currentAlbumIndex - 1))
-						a.currentAlbumIndex = a.currentAlbumIndex - 1
-						return nil
-					}
-				}
-
-				return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
-			}
-
-			return event
-		})
-
-		trackLst.SetTitle("[::b]" + album.name).
-			SetBorder(true).
-			SetBorderColor(tcell.ColorCornflowerBlue).
-			SetBackgroundColor(tcell.ColorDefault).
-			SetTitleAlign(tview.AlignLeft).
-			SetCustomBorders(trListStyle)
-
-		for _, t := range album.tracks {
-			trackLst.AddItem(t.name, "", 0, nil)
-		}
-
-		// FIXME: how do I scroll this?
-		// c.AddItem(trackLst, trackLst.GetItemCount()+2, 1, true)
-		c.AddItem(trackLst, 0, 1, true)
-	}
-}
 
 func main() {
 	a := app{
@@ -145,19 +69,19 @@ func main() {
 			return event
 		})
 
-	alFlex := tview.NewFlex().
-		SetDirection(tview.FlexRow)
+	alGrid := tview.NewGrid().
+		SetColumns(0)
 
-	alFlex.SetTitle(" [::b]Track ").
+	alGrid.SetTitle(" [::b]Track ").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(alFlexStyle)
+		SetCustomBorders(alGridStyle)
 
 	appFlex := tview.NewFlex().
 		AddItem(arLst, 0, 1, true).
-		AddItem(alFlex, 0, 2, false)
+		AddItem(alGrid, 0, 2, false)
 
 	for _, artist := range a.artists {
 		arLst.AddItem(artist, "", 0, nil)
@@ -165,18 +89,19 @@ func main() {
 
 	// draw selected artist's right pane (album items) on artist scroll
 	arLst.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
-		alFlex.Clear()
+		alGrid.Clear()
 		a.currentAlbumCount = len(a.albumArtists[artist].albums)
-		a.drawCurrentArtist(artist, alFlex)
+		l := a.drawCurrentArtist(artist, alGrid)
+		alGrid.SetRows(l...)
 	})
 
 	// draw initial album list for the first artist in the list
 	a.application.SetAfterDrawFunc(func(screen tcell.Screen) {
-		a.drawCurrentArtist(a.artists[0], alFlex)
+		l := a.drawCurrentArtist(a.artists[0], alGrid)
+		alGrid.SetRows(l...)
 
 		// disable callback
 		a.application.SetAfterDrawFunc(nil)
-		return
 	})
 
 	// set global keymap
@@ -188,11 +113,13 @@ func main() {
 		case tcell.KeyTab:
 			artistView := appFlex.GetItem(0)
 			albumView := appFlex.GetItem(1)
+			// Log(strconv.FormatBool(artistView.HasFocus()))
 
 			if !albumView.HasFocus() {
-				a.application.SetFocus(alFlex)
+				a.application.SetFocus(alGrid)
 				arLst.SetSelectedBackgroundColor(tcell.ColorLightGray)
 			} else {
+				Log("album view has focus")
 				a.application.SetFocus(artistView)
 				arLst.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
@@ -215,7 +142,7 @@ func main() {
 		return event
 	})
 
-	if err := a.application.SetRoot(appFlex, true).SetFocus(appFlex).EnableMouse(true).Run(); err != nil {
+	if err := a.application.SetRoot(appFlex, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 }
