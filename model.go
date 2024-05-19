@@ -217,10 +217,6 @@ func (a *app) newAlbumList(artist, albumName string, tracks []track) *tview.List
 		go play(autoplay)
 	})
 
-	trackLst.Focus(func(p tview.Primitive) {
-		Log("first album received focus")
-	})
-
 	// set album tracklist keymap
 	trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
@@ -278,7 +274,12 @@ func (a *app) drawCurrentArtist(artist string, c *tview.Grid) []int {
 	for i, album := range a.albumArtists[artist].albums {
 		albumList := a.newAlbumList(artist, album.name, album.tracks)
 		l = append(l, len(album.tracks)+2)
-		c.AddItem(albumList, i, 0, 1, 1, 0, 0, false)
+
+		if i == 0 {
+			c.AddItem(albumList, i, 0, 1, 1, 0, 0, true)
+		} else {
+			c.AddItem(albumList, i, 0, 1, 1, 0, 0, false)
+		}
 	}
 
 	return l

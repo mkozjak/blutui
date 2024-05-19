@@ -113,13 +113,11 @@ func main() {
 		case tcell.KeyTab:
 			artistView := appFlex.GetItem(0)
 			albumView := appFlex.GetItem(1)
-			// Log(strconv.FormatBool(artistView.HasFocus()))
 
 			if !albumView.HasFocus() {
 				a.application.SetFocus(alGrid)
 				arLst.SetSelectedBackgroundColor(tcell.ColorLightGray)
 			} else {
-				Log("album view has focus")
 				a.application.SetFocus(artistView)
 				arLst.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
