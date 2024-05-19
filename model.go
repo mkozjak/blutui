@@ -275,6 +275,9 @@ func (a *app) drawCurrentArtist(artist string, c *tview.Grid) []int {
 		albumList := a.newAlbumList(artist, album.name, album.tracks)
 		l = append(l, len(album.tracks)+2)
 
+		// automatically focus the first track from the first album
+		// since grid is the parent, it will automatically lose focus
+		// and give it to the first album
 		if i == 0 {
 			c.AddItem(albumList, i, 0, 1, 1, 0, 0, true)
 		} else {
