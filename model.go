@@ -227,7 +227,7 @@ func (a *app) newAlbumList(artist, albumName string, tracks []track, c *tview.Gr
 
 				if albumIndex + 1 != len(a.albumArtists[artist].albums) {
 					// this will redraw the screen
-					// TODO: only use SetOffset if the screen cannot show the album in its entirety
+					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
 					c.SetOffset(albumIndex + 1, 0)
 					a.application.SetFocus(a.currentArtistAlbums[albumIndex + 1])
 				}
@@ -242,7 +242,7 @@ func (a *app) newAlbumList(artist, albumName string, tracks []track, c *tview.Gr
 
 				if albumIndex != 0 {
 					// this will redraw the screen
-					// TODO: only use SetOffset if the screen cannot show the album in its entirety
+					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
 					c.SetOffset(albumIndex - 1, 0)
 					a.application.SetFocus(a.currentArtistAlbums[albumIndex - 1])
 				}
