@@ -3,9 +3,11 @@ package internal
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"log"
 	"net/url"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -33,7 +35,7 @@ var TrListStyle = &tview.BoxBorders{}
 
 type track struct {
 	name        string
-	length      int
+	duration    int
 	disc        int
 	number      int
 	playUrl     string
@@ -43,6 +45,7 @@ type track struct {
 type album struct {
 	name        string
 	year        int
+	duration    int
 	genre       string
 	tracks      []track
 	playUrl     string
@@ -87,6 +90,10 @@ type item struct {
 	Type        string `xml:"type,attr"`
 	PlayURL     string `xml:"playURL,attr"`
 	AutoplayURL string `xml:"autoplayURL,attr"`
+	Duration    string `xml:"duration,attr"`
+}
+
+type Status struct {
 }
 
 func (a *App) FetchData() error {
@@ -126,6 +133,8 @@ func (a *App) FetchData() error {
 
 		// iterate albums and fill m.albumArtists
 		for _, al := range albums.Items {
+			var duration int
+
 			// fetch album tracks
 			body, err = FetchAndCache(api+"/Browse?key="+url.QueryEscape(al.BrowseKey), cache)
 			if err != nil {
@@ -146,16 +155,28 @@ func (a *App) FetchData() error {
 					name:        tr.Text,
 					playUrl:     tr.PlayURL,
 					autoplayUrl: tr.AutoplayURL,
+					duration: func() int {
+						l, err := strconv.Atoi(tr.Duration)
+						if err != nil {
+							return 0
+						}
+
+						return l
+					}(),
 				}
 
 				albumTracks = append(albumTracks, track)
+				duration += track.duration
 			}
 
 			ar, ok := a.AlbumArtists[al.Text2]
 			if ok {
 				ar.albums = append(ar.albums, album{
-					name:   al.Text,
-					tracks: albumTracks,
+					name:        al.Text,
+					tracks:      albumTracks,
+					playUrl:     al.PlayURL,
+					autoplayUrl: al.AutoplayURL,
+					duration:    duration,
 				})
 
 				a.AlbumArtists[al.Text2] = ar
@@ -166,6 +187,7 @@ func (a *App) FetchData() error {
 						tracks:      albumTracks,
 						playUrl:     al.PlayURL,
 						autoplayUrl: al.AutoplayURL,
+						duration:    duration,
 					}},
 				}
 			}
@@ -208,9 +230,12 @@ func (a *App) getTrackURL(name, artist, album string) (string, string, error) {
 	return "", "", errors.New("no such track")
 }
 
-func (a *App) newAlbumList(artist, albumName string, tracks []track, c *tview.Grid) *tview.List {
+func (a *App) newAlbumList(artist, albumName string, albumDuration int, tracks []track, c *tview.Grid) *tview.List {
 	textStyle := tcell.Style{}
 	textStyle.Background(tcell.ColorDefault)
+	m := albumDuration / 60
+	s := albumDuration % 60
+	duration := fmt.Sprintf("%02d:%02d", m, s)
 
 	trackLst := tview.NewList().
 		SetHighlightFullLine(true).
@@ -220,6 +245,22 @@ func (a *App) newAlbumList(artist, albumName string, tracks []track, c *tview.Gr
 		SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
 		ShowSecondaryText(false).
 		SetMainTextStyle(textStyle)
+
+	// create a custom list line for album length etc.
+	trackLst.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		centerY := y + height/trackLst.GetItemCount()/2
+
+		for cx := x + len(trackLst.GetTitle()) - 3; cx < x+width-len(duration)-2; cx++ {
+			screen.SetContent(cx, centerY, tview.BoxDrawingsLightHorizontal, nil,
+				tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue))
+		}
+
+		// write album length along the horizontal line
+		tview.Print(screen, "[::b]"+duration, x+1, centerY, width-2, tview.AlignRight, tcell.ColorWhite)
+
+		// space for other content
+		return x + 1, centerY + 1, width - 2, height - (centerY + 1 - y)
+	})
 
 	trackLst.SetSelectedFunc(func(i int, trackName, _ string, sh rune) {
 		_, autoplay, err := a.getTrackURL(trackName, artist, albumName)
@@ -288,7 +329,7 @@ func (a *App) DrawCurrentArtist(artist string, c *tview.Grid) []int {
 	a.currentArtistAlbums = nil
 
 	for i, album := range a.AlbumArtists[artist].albums {
-		albumList := a.newAlbumList(artist, album.name, album.tracks, c)
+		albumList := a.newAlbumList(artist, album.name, album.duration, album.tracks, c)
 		l = append(l, len(album.tracks)+2)
 
 		// automatically focus the first track from the first album

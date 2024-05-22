@@ -17,6 +17,8 @@ func main() {
 		panic(err)
 	}
 
+	go a.PollStatus()
+
 	// left pane - artists
 	arLstStyle := tcell.Style{}
 	arLstStyle.Background(tcell.ColorDefault)

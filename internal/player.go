@@ -102,3 +102,10 @@ func currentVolume() (int, error) {
 
 	return volRes.Value, nil
 }
+
+func (a *App) PollStatus() (ch chan <- Status) {
+	var s Status
+	ch <- s
+
+	return ch
+}
