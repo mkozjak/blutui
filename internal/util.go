@@ -12,6 +12,11 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func LoadCache() (*Cache, error) {
@@ -129,4 +134,33 @@ func FormatDuration(d int) string {
 	m := d / 60
 	s := d % 60
 	return fmt.Sprintf("%02d:%02d", m, s)
+}
+
+func CapitalizeArtist(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+
+	// Decode the first rune in the string
+	firstRune, size := utf8.DecodeRuneInString(s)
+	if firstRune == utf8.RuneError {
+		return s
+	}
+
+	// Capitalize the first rune if it's a letter
+	firstRune = unicode.ToUpper(firstRune)
+
+	// Combine the capitalized first rune with the rest of the string
+	return string(firstRune) + s[size:]
+
+}
+
+func Caser(s string) string {
+	var res string
+
+	for _, c := range []cases.Caser{cases.Title(language.English)} {
+		res = c.String(s)
+	}
+
+	return res
 }

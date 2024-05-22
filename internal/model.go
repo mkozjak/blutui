@@ -168,7 +168,9 @@ func (a *App) FetchData() error {
 				duration += track.duration
 			}
 
-			ar, ok := a.AlbumArtists[al.Text2]
+			arName := Caser(al.Text2)
+			ar, ok := a.AlbumArtists[arName]
+
 			if ok {
 				ar.albums = append(ar.albums, album{
 					name:        al.Text,
@@ -178,9 +180,9 @@ func (a *App) FetchData() error {
 					duration:    duration,
 				})
 
-				a.AlbumArtists[al.Text2] = ar
+				a.AlbumArtists[arName] = ar
 			} else {
-				a.AlbumArtists[al.Text2] = Artist{
+				a.AlbumArtists[arName] = Artist{
 					albums: []album{{
 						name:        al.Text,
 						tracks:      albumTracks,
