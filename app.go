@@ -123,11 +123,13 @@ func main() {
 		}
 
 		switch event.Rune() {
-		case 'v':
+		case 'p':
+			go playpause()
+		case 's':
 			go stop()
-		case 'b':
+		case '>':
 			go next()
-		case 'z':
+		case '<':
 			go previous()
 		case 'q':
 			a.application.Stop()

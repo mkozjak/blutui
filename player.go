@@ -16,6 +16,14 @@ func play(url string) {
 	// trackLst.SetItemText(i, "[yellow]"+name, "")
 }
 
+func playpause() {
+	_, err := http.Get(api + "/Pause?toggle=1")
+	if err != nil {
+		log.Println("Error toggling play/pause:", err)
+		panic(err)
+	}
+}
+
 func stop() {
 	_, err := http.Get(api + "/Stop")
 	if err != nil {
