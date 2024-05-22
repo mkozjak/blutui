@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"encoding/xml"
@@ -12,6 +12,27 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/tview"
 )
+
+var api string = "http://bluesound.local:11000"
+
+var ArListStyle = &tview.BoxBorders{
+	// \u0020 - whitespace
+	HorizontalFocus:  rune('\u2500'),
+	Horizontal:       rune('\u2500'),
+	VerticalFocus:    rune('\u2502'),
+	Vertical:         rune('\u2502'),
+	TopRightFocus:    rune('\u2510'),
+	TopRight:         rune('\u2510'),
+	TopLeftFocus:     rune('\u250C'),
+	TopLeft:          rune('\u250C'),
+	BottomRightFocus: rune('\u2518'),
+	BottomRight:      rune('\u2518'),
+	BottomLeftFocus:  rune('\u2514'),
+	BottomLeft:       rune('\u2514'),
+}
+
+var AlGridStyle = ArListStyle
+var TrListStyle = &tview.BoxBorders{}
 
 type track struct {
 	name        string
@@ -31,14 +52,14 @@ type album struct {
 	autoplayUrl string
 }
 
-type artist struct {
+type Artist struct {
 	albums []album
 }
 
-type app struct {
-	application         *tview.Application
-	albumArtists        map[string]artist
-	artists             []string
+type App struct {
+	Application         *tview.Application
+	AlbumArtists        map[string]Artist
+	Artists             []string
 	currentlyPlaying    track
 	status              string
 	currentArtistAlbums []*tview.List
@@ -57,7 +78,7 @@ type item struct {
 	AutoplayURL string `xml:"autoplayURL,attr"`
 }
 
-func (a *app) fetchData() error {
+func (a *App) FetchData() error {
 	albumSectionsEndp := api + "/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic"
 
 	resp, err := http.Get(albumSectionsEndp)
@@ -136,16 +157,16 @@ func (a *app) fetchData() error {
 				albumTracks = append(albumTracks, track)
 			}
 
-			ar, ok := a.albumArtists[al.Text2]
+			ar, ok := a.AlbumArtists[al.Text2]
 			if ok {
 				ar.albums = append(ar.albums, album{
 					name:   al.Text,
 					tracks: albumTracks,
 				})
 
-				a.albumArtists[al.Text2] = ar
+				a.AlbumArtists[al.Text2] = ar
 			} else {
-				a.albumArtists[al.Text2] = artist{
+				a.AlbumArtists[al.Text2] = Artist{
 					albums: []album{{
 						name:        al.Text,
 						tracks:      albumTracks,
@@ -157,11 +178,11 @@ func (a *app) fetchData() error {
 		}
 	}
 
-	a.artists = SortArtists(a.albumArtists)
+	a.Artists = SortArtists(a.AlbumArtists)
 
 	// Iterate over sorted artist names
-	for _, artistName := range a.artists {
-		ar := a.albumArtists[artistName]
+	for _, artistName := range a.Artists {
+		ar := a.AlbumArtists[artistName]
 
 		// Sort albums alphabetically
 		sort.Slice(ar.albums, func(i, j int) bool {
@@ -169,14 +190,14 @@ func (a *app) fetchData() error {
 			return ar.albums[i].name < ar.albums[j].name
 		})
 
-		a.albumArtists[artistName] = ar
+		a.AlbumArtists[artistName] = ar
 	}
 
 	return nil
 }
 
-func (a *app) getTrackURL(name, artist, album string) (string, string, error) {
-	for _, a := range a.albumArtists[artist].albums {
+func (a *App) getTrackURL(name, artist, album string) (string, string, error) {
+	for _, a := range a.AlbumArtists[artist].albums {
 		if a.name != album {
 			continue
 		}
@@ -193,7 +214,7 @@ func (a *app) getTrackURL(name, artist, album string) (string, string, error) {
 	return "", "", errors.New("no such track")
 }
 
-func (a *app) newAlbumList(artist, albumName string, tracks []track, c *tview.Grid) *tview.List {
+func (a *App) newAlbumList(artist, albumName string, tracks []track, c *tview.Grid) *tview.List {
 	textStyle := tcell.Style{}
 	textStyle.Background(tcell.ColorDefault)
 
@@ -213,23 +234,23 @@ func (a *app) newAlbumList(artist, albumName string, tracks []track, c *tview.Gr
 		}
 
 		// play track and add subsequent album tracks to queue
-		go play(autoplay)
+		go Play(autoplay)
 	})
 
 	// set album tracklist keymap
 	trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
 		case 'j':
-			if trackLst.GetCurrentItem() + 1 == trackLst.GetItemCount() {
+			if trackLst.GetCurrentItem()+1 == trackLst.GetItemCount() {
 				// reached the end of current album
 				// skip to next one if available
 				albumIndex, _ := c.GetOffset()
 
-				if albumIndex + 1 != len(a.albumArtists[artist].albums) {
+				if albumIndex+1 != len(a.AlbumArtists[artist].albums) {
 					// this will redraw the screen
 					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
-					c.SetOffset(albumIndex + 1, 0)
-					a.application.SetFocus(a.currentArtistAlbums[albumIndex + 1])
+					c.SetOffset(albumIndex+1, 0)
+					a.Application.SetFocus(a.currentArtistAlbums[albumIndex+1])
 				}
 			}
 
@@ -243,8 +264,8 @@ func (a *app) newAlbumList(artist, albumName string, tracks []track, c *tview.Gr
 				if albumIndex != 0 {
 					// this will redraw the screen
 					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
-					c.SetOffset(albumIndex - 1, 0)
-					a.application.SetFocus(a.currentArtistAlbums[albumIndex - 1])
+					c.SetOffset(albumIndex-1, 0)
+					a.Application.SetFocus(a.currentArtistAlbums[albumIndex-1])
 				}
 			}
 
@@ -259,7 +280,7 @@ func (a *app) newAlbumList(artist, albumName string, tracks []track, c *tview.Gr
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(trListStyle)
+		SetCustomBorders(TrListStyle)
 
 	for _, t := range tracks {
 		trackLst.AddItem(t.name, "", 0, nil)
@@ -268,11 +289,11 @@ func (a *app) newAlbumList(artist, albumName string, tracks []track, c *tview.Gr
 	return trackLst
 }
 
-func (a *app) drawCurrentArtist(artist string, c *tview.Grid) []int {
+func (a *App) DrawCurrentArtist(artist string, c *tview.Grid) []int {
 	l := []int{}
 	a.currentArtistAlbums = nil
 
-	for i, album := range a.albumArtists[artist].albums {
+	for i, album := range a.AlbumArtists[artist].albums {
 		albumList := a.newAlbumList(artist, album.name, album.tracks, c)
 		l = append(l, len(album.tracks)+2)
 

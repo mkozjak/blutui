@@ -1,11 +1,11 @@
-package main
+package internal
 
 import (
 	"log"
 	"net/http"
 )
 
-func play(url string) {
+func Play(url string) {
 	_, err := http.Get(api + url)
 	if err != nil {
 		log.Println("Error autoplaying track:", err)
@@ -16,7 +16,7 @@ func play(url string) {
 	// trackLst.SetItemText(i, "[yellow]"+name, "")
 }
 
-func playpause() {
+func Playpause() {
 	_, err := http.Get(api + "/Pause?toggle=1")
 	if err != nil {
 		log.Println("Error toggling play/pause:", err)
@@ -24,7 +24,7 @@ func playpause() {
 	}
 }
 
-func stop() {
+func Stop() {
 	_, err := http.Get(api + "/Stop")
 	if err != nil {
 		log.Println("Error stopping playback:", err)
@@ -32,7 +32,7 @@ func stop() {
 	}
 }
 
-func next() {
+func Next() {
 	_, err := http.Get(api + "/Skip")
 	if err != nil {
 		log.Println("Error switch to next track:", err)
@@ -40,7 +40,7 @@ func next() {
 	}
 }
 
-func previous() {
+func Previous() {
 	_, err := http.Get(api + "/Back")
 	if err != nil {
 		log.Println("Error switch to previous track:", err)

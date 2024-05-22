@@ -3,36 +3,16 @@ package main
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/tview"
+	"github.com/mkozjak/blucli/internal"
 )
 
-var api string = "http://bluesound.local:11000"
-
-var arListStyle = &tview.BoxBorders{
-	// \u0020 - whitespace
-	HorizontalFocus:  rune('\u2500'),
-	Horizontal:       rune('\u2500'),
-	VerticalFocus:    rune('\u2502'),
-	Vertical:         rune('\u2502'),
-	TopRightFocus:    rune('\u2510'),
-	TopRight:         rune('\u2510'),
-	TopLeftFocus:     rune('\u250C'),
-	TopLeft:          rune('\u250C'),
-	BottomRightFocus: rune('\u2518'),
-	BottomRight:      rune('\u2518'),
-	BottomLeftFocus:  rune('\u2514'),
-	BottomLeft:       rune('\u2514'),
-}
-
-var alGridStyle = arListStyle
-var trListStyle = &tview.BoxBorders{}
-
 func main() {
-	a := app{
-		application:       tview.NewApplication(),
-		albumArtists:      map[string]artist{},
+	a := internal.App{
+		Application:       tview.NewApplication(),
+		AlbumArtists:      map[string]internal.Artist{},
 	}
 
-	err := a.fetchData()
+	err := a.FetchData()
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +34,7 @@ func main() {
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(arListStyle).
+		SetCustomBorders(internal.ArListStyle).
 		// set artists list keymap
 		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Rune() {
@@ -75,47 +55,47 @@ func main() {
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(alGridStyle)
+		SetCustomBorders(internal.AlGridStyle)
 
 	appFlex := tview.NewFlex().
 		AddItem(arLst, 0, 1, true).
 		AddItem(alGrid, 0, 2, false)
 
-	for _, artist := range a.artists {
+	for _, artist := range a.Artists {
 		arLst.AddItem(artist, "", 0, nil)
 	}
 
 	// draw selected artist's right pane (album items) on artist scroll
 	arLst.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
 		alGrid.Clear()
-		l := a.drawCurrentArtist(artist, alGrid)
+		l := a.DrawCurrentArtist(artist, alGrid)
 		alGrid.SetRows(l...)
 	})
 
 	// draw initial album list for the first artist in the list
-	a.application.SetAfterDrawFunc(func(screen tcell.Screen) {
-		l := a.drawCurrentArtist(a.artists[0], alGrid)
+	a.Application.SetAfterDrawFunc(func(screen tcell.Screen) {
+		l := a.DrawCurrentArtist(a.Artists[0], alGrid)
 		alGrid.SetRows(l...)
 
 		// disable callback
-		a.application.SetAfterDrawFunc(nil)
+		a.Application.SetAfterDrawFunc(nil)
 	})
 
 	// set global keymap
-	a.application.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	a.Application.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyCtrlQ:
-			a.application.Stop()
+			a.Application.Stop()
 
 		case tcell.KeyTab:
 			artistView := appFlex.GetItem(0)
 			albumView := appFlex.GetItem(1)
 
 			if !albumView.HasFocus() {
-				a.application.SetFocus(alGrid)
+				a.Application.SetFocus(alGrid)
 				arLst.SetSelectedBackgroundColor(tcell.ColorLightGray)
 			} else {
-				a.application.SetFocus(artistView)
+				a.Application.SetFocus(artistView)
 				arLst.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
 
@@ -124,21 +104,21 @@ func main() {
 
 		switch event.Rune() {
 		case 'p':
-			go playpause()
+			go internal.Playpause()
 		case 's':
-			go stop()
+			go internal.Stop()
 		case '>':
-			go next()
+			go internal.Next()
 		case '<':
-			go previous()
+			go internal.Previous()
 		case 'q':
-			a.application.Stop()
+			a.Application.Stop()
 		}
 
 		return event
 	})
 
-	if err := a.application.SetRoot(appFlex, true).EnableMouse(true).Run(); err != nil {
+	if err := a.Application.SetRoot(appFlex, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 }

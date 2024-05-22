@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func SortArtists(input map[string]artist) []string {
+func SortArtists(input map[string]Artist) []string {
 	// Iterate over the map keys and sort them alphabetically
 	names := make([]string, 0, len(input))
 
