@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"log"
 	"net/url"
 	"sort"
@@ -230,12 +229,10 @@ func (a *App) getTrackURL(name, artist, album string) (string, string, error) {
 	return "", "", errors.New("no such track")
 }
 
-func (a *App) newAlbumList(artist, albumName string, albumDuration int, tracks []track, c *tview.Grid) *tview.List {
+func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.List {
 	textStyle := tcell.Style{}
 	textStyle.Background(tcell.ColorDefault)
-	m := albumDuration / 60
-	s := albumDuration % 60
-	duration := fmt.Sprintf("%02d:%02d", m, s)
+	d := FormatDuration(album.duration)
 
 	trackLst := tview.NewList().
 		SetHighlightFullLine(true).
@@ -250,20 +247,20 @@ func (a *App) newAlbumList(artist, albumName string, albumDuration int, tracks [
 	trackLst.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		centerY := y + height/trackLst.GetItemCount()/2
 
-		for cx := x + len(trackLst.GetTitle()) - 3; cx < x+width-len(duration)-2; cx++ {
+		for cx := x + len(trackLst.GetTitle()) - 3; cx < x+width-len(d)-2; cx++ {
 			screen.SetContent(cx, centerY, tview.BoxDrawingsLightHorizontal, nil,
 				tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue))
 		}
 
 		// write album length along the horizontal line
-		tview.Print(screen, "[::b]"+duration, x+1, centerY, width-2, tview.AlignRight, tcell.ColorWhite)
+		tview.Print(screen, "[::b]"+d, x+1, centerY, width-2, tview.AlignRight, tcell.ColorWhite)
 
 		// space for other content
 		return x + 1, centerY + 1, width - 2, height - (centerY + 1 - y)
 	})
 
 	trackLst.SetSelectedFunc(func(i int, trackName, _ string, sh rune) {
-		_, autoplay, err := a.getTrackURL(trackName, artist, albumName)
+		_, autoplay, err := a.getTrackURL(trackName, artist, album.name)
 		if err != nil {
 			panic(err)
 		}
@@ -310,14 +307,15 @@ func (a *App) newAlbumList(artist, albumName string, albumDuration int, tracks [
 		return event
 	})
 
-	trackLst.SetTitle("[::b]" + albumName).
+	trackLst.
+		SetTitle("[::b]" + album.name).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
 		SetCustomBorders(TrListStyle)
 
-	for _, t := range tracks {
+	for _, t := range album.tracks {
 		trackLst.AddItem(t.name, "", 0, nil)
 	}
 
@@ -329,7 +327,7 @@ func (a *App) DrawCurrentArtist(artist string, c *tview.Grid) []int {
 	a.currentArtistAlbums = nil
 
 	for i, album := range a.AlbumArtists[artist].albums {
-		albumList := a.newAlbumList(artist, album.name, album.duration, album.tracks, c)
+		albumList := a.newAlbumList(artist, album, c)
 		l = append(l, len(album.tracks)+2)
 
 		// automatically focus the first track from the first album

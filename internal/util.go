@@ -124,3 +124,9 @@ func Log(data ...interface{}) error {
 
 	return nil
 }
+
+func FormatDuration(d int) string {
+	m := d / 60
+	s := d % 60
+	return fmt.Sprintf("%02d:%02d", m, s)
+}
