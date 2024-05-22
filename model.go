@@ -36,13 +36,12 @@ type artist struct {
 }
 
 type app struct {
-	application       *tview.Application
-	albumArtists      map[string]artist
-	artists           []string
-	currentlyPlaying  track
-	status            string
-	currentAlbumIndex int
-	currentAlbumCount int
+	application         *tview.Application
+	albumArtists        map[string]artist
+	artists             []string
+	currentlyPlaying    track
+	status              string
+	currentArtistAlbums []*tview.List
 }
 
 type browse struct {
@@ -194,7 +193,7 @@ func (a *app) getTrackURL(name, artist, album string) (string, string, error) {
 	return "", "", errors.New("no such track")
 }
 
-func (a *app) newAlbumList(artist, albumName string, tracks []track) *tview.List {
+func (a *app) newAlbumList(artist, albumName string, tracks []track, c *tview.Grid) *tview.List {
 	textStyle := tcell.Style{}
 	textStyle.Background(tcell.ColorDefault)
 
@@ -221,30 +220,31 @@ func (a *app) newAlbumList(artist, albumName string, tracks []track) *tview.List
 	trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
 		case 'j':
-			if trackLst.GetCurrentItem()+1 == trackLst.GetItemCount() {
-				// skip to the next album if available
-				if a.currentAlbumIndex+1 == a.currentAlbumCount {
-					// do nothing, return default
-					return nil
-				} else {
-					// a.application.SetFocus(c.GetItem(a.currentAlbumIndex + 1))
-					// a.currentAlbumIndex = a.currentAlbumIndex + 1
+			if trackLst.GetCurrentItem() + 1 == trackLst.GetItemCount() {
+				// reached the end of current album
+				// skip to next one if available
+				albumIndex, _ := c.GetOffset()
 
-					return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+				if albumIndex + 1 != len(a.albumArtists[artist].albums) {
+					// this will redraw the screen
+					// TODO: only use SetOffset if the screen cannot show the album in its entirety
+					c.SetOffset(albumIndex + 1, 0)
+					a.application.SetFocus(a.currentArtistAlbums[albumIndex + 1])
 				}
 			}
 
 			return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
 		case 'k':
-			// FIXME
 			if trackLst.GetCurrentItem() == 0 {
-				if a.currentAlbumIndex == 0 {
-					// do nothing, i'm already on 1st album
-					return nil
-				} else {
-					// a.application.SetFocus(c.GetItem(a.currentAlbumIndex - 1))
-					// a.currentAlbumIndex = a.currentAlbumIndex - 1
-					return nil
+				// reached the beginning of current album
+				// skip to previous one if available
+				albumIndex, _ := c.GetOffset()
+
+				if albumIndex != 0 {
+					// this will redraw the screen
+					// TODO: only use SetOffset if the screen cannot show the album in its entirety
+					c.SetOffset(albumIndex - 1, 0)
+					a.application.SetFocus(a.currentArtistAlbums[albumIndex - 1])
 				}
 			}
 
@@ -270,9 +270,10 @@ func (a *app) newAlbumList(artist, albumName string, tracks []track) *tview.List
 
 func (a *app) drawCurrentArtist(artist string, c *tview.Grid) []int {
 	l := []int{}
+	a.currentArtistAlbums = nil
 
 	for i, album := range a.albumArtists[artist].albums {
-		albumList := a.newAlbumList(artist, album.name, album.tracks)
+		albumList := a.newAlbumList(artist, album.name, album.tracks, c)
 		l = append(l, len(album.tracks)+2)
 
 		// automatically focus the first track from the first album
@@ -283,6 +284,8 @@ func (a *app) drawCurrentArtist(artist string, c *tview.Grid) []int {
 		} else {
 			c.AddItem(albumList, i, 0, 1, 1, 0, 0, false)
 		}
+
+		a.currentArtistAlbums = append(a.currentArtistAlbums, albumList)
 	}
 
 	return l

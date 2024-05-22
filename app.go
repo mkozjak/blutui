@@ -30,8 +30,6 @@ func main() {
 	a := app{
 		application:       tview.NewApplication(),
 		albumArtists:      map[string]artist{},
-		currentAlbumIndex: 0,
-		currentAlbumCount: 0,
 	}
 
 	err := a.fetchData()
@@ -90,7 +88,6 @@ func main() {
 	// draw selected artist's right pane (album items) on artist scroll
 	arLst.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
 		alGrid.Clear()
-		a.currentAlbumCount = len(a.albumArtists[artist].albums)
 		l := a.drawCurrentArtist(artist, alGrid)
 		alGrid.SetRows(l...)
 	})
@@ -122,7 +119,6 @@ func main() {
 				arLst.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
 
-			a.currentAlbumIndex = 0
 			return nil
 		}
 
