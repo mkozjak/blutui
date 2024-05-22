@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/mkozjak/blucli/internal"
+	"github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/tview"
 )
 
@@ -17,7 +17,14 @@ func main() {
 		panic(err)
 	}
 
-	go a.PollStatus()
+	// channel for receiving player status updates
+	statusCh := make(chan internal.Status)
+	go a.PollStatus(statusCh)
+	go func() {
+		for state := range statusCh {
+			internal.Log("Got new notification!", state.Volume)
+		}
+	}()
 
 	// left pane - artists
 	arLstStyle := tcell.Style{}

@@ -93,6 +93,7 @@ type item struct {
 }
 
 type Status struct {
+	Volume int
 }
 
 func (a *App) FetchData() error {

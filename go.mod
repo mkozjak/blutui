@@ -1,4 +1,4 @@
-module github.com/mkozjak/blucli
+module github.com/mkozjak/blutui
 
 go 1.22.2
 

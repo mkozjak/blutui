@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 var api string = "http://bluesound.local:11000"
@@ -103,9 +104,12 @@ func currentVolume() (int, error) {
 	return volRes.Value, nil
 }
 
-func (a *App) PollStatus() (ch chan <- Status) {
-	var s Status
-	ch <- s
+func (a *App) PollStatus(ch chan<- Status) {
+	for {
+		var s Status
+		s.Volume = 20
 
-	return ch
+		ch <- s
+		time.Sleep(5 * time.Second)
+	}
 }
