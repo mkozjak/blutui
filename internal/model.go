@@ -13,8 +13,6 @@ import (
 	"github.com/mkozjak/tview"
 )
 
-var api string = "http://bluesound.local:11000"
-
 var ArListStyle = &tview.BoxBorders{
 	// \u0020 - whitespace
 	HorizontalFocus:  rune('\u2500'),
@@ -67,6 +65,11 @@ type App struct {
 
 type browse struct {
 	Items []item `xml:"item"`
+}
+
+type volume struct {
+	XMLName xml.Name `xml:"volume"`
+	Value   int      `xml:",chardata"`
 }
 
 type item struct {

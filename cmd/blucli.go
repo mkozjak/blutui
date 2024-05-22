@@ -2,14 +2,14 @@ package main
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/mkozjak/tview"
 	"github.com/mkozjak/blucli/internal"
+	"github.com/mkozjak/tview"
 )
 
 func main() {
 	a := internal.App{
-		Application:       tview.NewApplication(),
-		AlbumArtists:      map[string]internal.Artist{},
+		Application:  tview.NewApplication(),
+		AlbumArtists: map[string]internal.Artist{},
 	}
 
 	err := a.FetchData()
@@ -111,6 +111,10 @@ func main() {
 			go internal.Next()
 		case '<':
 			go internal.Previous()
+		case '+':
+			go internal.VolumeUp()
+		case '-':
+			go internal.VolumeDown()
 		case 'q':
 			a.Application.Stop()
 		}
