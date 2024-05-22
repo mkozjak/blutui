@@ -3,11 +3,10 @@ package internal
 import (
 	"encoding/xml"
 	"errors"
-	"io"
 	"log"
-	"net/http"
 	"net/url"
 	"sort"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/tview"
@@ -63,6 +62,15 @@ type App struct {
 	currentArtistAlbums []*tview.List
 }
 
+type Cache struct {
+	Data map[string]CacheItem
+}
+
+type CacheItem struct {
+	Response   []byte
+	Expiration time.Time
+}
+
 type browse struct {
 	Items []item `xml:"item"`
 }
@@ -82,18 +90,15 @@ type item struct {
 }
 
 func (a *App) FetchData() error {
-	albumSectionsEndp := api + "/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic"
-
-	resp, err := http.Get(albumSectionsEndp)
+	cache, err := LoadCache()
 	if err != nil {
-		log.Println("Error fetching album section list:", err)
+		log.Println("Error loading local cache:", err)
 		return err
 	}
-	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := FetchAndCache(api+"/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic", cache)
 	if err != nil {
-		log.Println("Error reading response body:", err)
+		log.Println("Error fetching/caching data:", err)
 		return err
 	}
 
@@ -106,16 +111,9 @@ func (a *App) FetchData() error {
 
 	// parse album sections (alphabetical order) from xml
 	for _, item := range sections.Items {
-		resp, err = http.Get(api + "/Browse?key=" + url.QueryEscape(item.BrowseKey))
+		body, err = FetchAndCache(api+"/Browse?key="+url.QueryEscape(item.BrowseKey), cache)
 		if err != nil {
-			log.Println("Error fetching album section:", err)
-			return err
-		}
-		defer resp.Body.Close()
-
-		body, err = io.ReadAll(resp.Body)
-		if err != nil {
-			log.Println("Error reading response body:", err)
+			log.Println("Error fetching album sections:", err)
 			return err
 		}
 
@@ -129,16 +127,9 @@ func (a *App) FetchData() error {
 		// iterate albums and fill m.albumArtists
 		for _, al := range albums.Items {
 			// fetch album tracks
-			resp, err = http.Get(api + "/Browse?key=" + url.QueryEscape(al.BrowseKey))
+			body, err = FetchAndCache(api+"/Browse?key="+url.QueryEscape(al.BrowseKey), cache)
 			if err != nil {
-				log.Println("Error fetching album tracks section:", err)
-				return err
-			}
-			defer resp.Body.Close()
-
-			body, err = io.ReadAll(resp.Body)
-			if err != nil {
-				log.Println("Error reading response body:", err)
+				log.Println("Error fetching album tracks:", err)
 				return err
 			}
 
