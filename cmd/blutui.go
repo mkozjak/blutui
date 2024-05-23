@@ -67,9 +67,22 @@ func main() {
 		SetTitleAlign(tview.AlignLeft).
 		SetCustomBorders(internal.AlGridStyle)
 
-	appFlex := tview.NewFlex().
-		AddItem(arLst, 0, 1, true).
-		AddItem(alGrid, 0, 2, false)
+	// bottom bar - status
+	stText := tview.NewTextView().
+		SetMaxLines(1).
+		SetRegions(true).
+		SetDynamicColors(true).
+		SetScrollable(false).
+		SetBackgroundColor(tcell.ColorDefault)
+
+	// app
+	appFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+		// left and right pane
+		AddItem(tview.NewFlex().
+			AddItem(arLst, 0, 1, true).
+			AddItem(alGrid, 0, 2, false), 0, 1, true).
+		// status bar
+		AddItem(stText, 1, 1, false)
 
 	for _, artist := range a.Artists {
 		arLst.AddItem(artist, "", 0, nil)
