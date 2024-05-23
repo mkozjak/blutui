@@ -56,6 +56,7 @@ func main() {
 			return event
 		})
 
+	// right pane - albums
 	alGrid := tview.NewGrid().
 		SetColumns(0)
 
@@ -97,14 +98,12 @@ func main() {
 			a.Application.Stop()
 
 		case tcell.KeyTab:
-			artistView := appFlex.GetItem(0)
-			albumView := appFlex.GetItem(1)
 
-			if !albumView.HasFocus() {
+			if !alGrid.HasFocus() {
 				a.Application.SetFocus(alGrid)
 				arLst.SetSelectedBackgroundColor(tcell.ColorLightGray)
 			} else {
-				a.Application.SetFocus(artistView)
+				a.Application.SetFocus(arLst)
 				arLst.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
 
