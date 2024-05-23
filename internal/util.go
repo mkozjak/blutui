@@ -22,7 +22,7 @@ import (
 func LoadCache() (*Cache, error) {
 	cache := &Cache{Data: make(map[string]CacheItem)}
 
-	file, err := os.Open("/Users/mkozjak/.config/blucli/cache")
+	file, err := os.Open("/Users/mkozjak/.config/blutui/cache")
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -42,10 +42,10 @@ func LoadCache() (*Cache, error) {
 }
 
 func SaveCache(cache *Cache) error {
-	file, err := os.OpenFile("/Users/mkozjak/.config/blucli/cache", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	file, err := os.OpenFile("/Users/mkozjak/.config/blutui/cache", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			file, err = os.Create("/Users/mkozjak/.config/blucli/cache")
+			file, err = os.Create("/Users/mkozjak/.config/blutui/cache")
 			if err != nil {
 				return err
 			}
