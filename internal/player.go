@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -17,9 +18,6 @@ func Play(url string) {
 		log.Println("Error autoplaying track:", err)
 		panic(err)
 	}
-
-	// arLst.SetItemText(arLst.GetCurrentItem(), "[yellow]"+artist, "")
-	// trackLst.SetItemText(i, "[yellow]"+name, "")
 }
 
 func Playpause() {
@@ -105,11 +103,33 @@ func currentVolume() (int, error) {
 }
 
 func (a *App) PollStatus(ch chan<- Status) {
+	etag := ""
+
 	for {
+		resp, err := http.Get(api + "/Status?timeout=60" + etag)
+		if err != nil {
+			e := url.Error{Err: err}
+
+			if e.Timeout() {
+				Log("polling timeout")
+				continue
+			}
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			continue
+		}
+
 		var s Status
-		s.Volume = 20
+		err = xml.Unmarshal(body, &s)
+		if err != nil {
+			continue
+		}
 
 		ch <- s
+		etag = "&etag=" + s.ETag
 		time.Sleep(5 * time.Second)
 	}
 }

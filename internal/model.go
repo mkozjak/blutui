@@ -93,7 +93,15 @@ type item struct {
 }
 
 type Status struct {
-	Volume int
+	ETag     string `xml:"etag,attr"`
+	Volume   int    `xml:"volume"`
+	Album    string `xml:"album"`
+	Artist   string `xml:"artist"`
+	Track    string `xml:"name"`
+	Format   string `xml:"streamFormat"`
+	TrackLen int    `xml:"totlen"`
+	Secs     int    `xml:"secs"`
+	State    string `xml:"state"`
 }
 
 func (a *App) FetchData() error {

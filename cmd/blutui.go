@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/tview"
@@ -16,15 +18,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	// channel for receiving player status updates
-	statusCh := make(chan internal.Status)
-	go a.PollStatus(statusCh)
-	go func() {
-		for state := range statusCh {
-			internal.Log("Got new notification!", state.Volume)
-		}
-	}()
 
 	// left pane - artists
 	arLstStyle := tcell.Style{}
@@ -67,9 +60,63 @@ func main() {
 		SetTitleAlign(tview.AlignLeft).
 		SetCustomBorders(internal.AlGridStyle)
 
-	appFlex := tview.NewFlex().
-		AddItem(arLst, 0, 1, true).
-		AddItem(alGrid, 0, 2, false)
+	// bottom bar - status
+	statusBar := tview.NewTable().
+		SetFixed(1, 3).
+		SetSelectable(false, false).
+		SetCell(0, 0, tview.NewTableCell("connecting").
+			SetExpansion(1).
+			SetTextColor(tcell.ColorLightSlateGray).
+			SetAlign(tview.AlignLeft)).
+		SetCell(0, 1, tview.NewTableCell("progress").
+			SetExpansion(2).
+			SetTextColor(tcell.ColorLightSlateGray).
+			SetAlign(tview.AlignCenter)).
+		SetCell(0, 2, tview.NewTableCell("something").
+			SetExpansion(1).
+			SetTextColor(tcell.ColorLightSlateGray).
+			SetAlign(tview.AlignRight))
+
+	statusBar.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
+
+	// channel for receiving player status updates
+	statusCh := make(chan internal.Status)
+
+	// start long-polling for updates
+	go a.PollStatus(statusCh)
+
+	// start a goroutine for receiving the updates
+	go func() {
+		for s := range statusCh {
+			switch s.State {
+			case "play":
+				s.State = "playing"
+				// i := arLst.FindItems(s.Artist, "", false, false)
+				// arLst.SetItemText(i[0], "[yellow]"+s.Artist, "")
+			case "stop":
+				s.State = "stopped"
+			case "pause":
+				s.State = "paused"
+			}
+
+			statusBar.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) + " | " + s.State)
+			statusBar.GetCell(0, 1).SetText(s.Artist + " - " + s.Track)
+			// statusBar.GetCell(0, 1).SetText(
+			// 	s.Artist + " - " + s.Track + " (" +
+			// 		internal.FormatDuration(s.Secs) + "/" + internal.FormatDuration(s.TrackLen) + ")")
+			statusBar.GetCell(0, 2).SetText(s.Format)
+			a.Application.Draw()
+		}
+	}()
+
+	// app
+	appFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+		// left and right pane
+		AddItem(tview.NewFlex().
+			AddItem(arLst, 0, 1, true).
+			AddItem(alGrid, 0, 2, false), 0, 1, true).
+		// status bar
+		AddItem(statusBar, 1, 1, false)
 
 	for _, artist := range a.Artists {
 		arLst.AddItem(artist, "", 0, nil)
