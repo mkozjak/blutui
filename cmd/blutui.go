@@ -66,15 +66,15 @@ func main() {
 		SetSelectable(false, false).
 		SetCell(0, 0, tview.NewTableCell("connecting").
 			SetExpansion(1).
-			SetTextColor(tcell.ColorLightSlateGray).
+			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignLeft)).
 		SetCell(0, 1, tview.NewTableCell("progress").
 			SetExpansion(2).
-			SetTextColor(tcell.ColorLightSlateGray).
+			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignCenter)).
 		SetCell(0, 2, tview.NewTableCell("something").
 			SetExpansion(1).
-			SetTextColor(tcell.ColorLightSlateGray).
+			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignRight))
 
 	statusBar.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
@@ -88,23 +88,33 @@ func main() {
 	// start a goroutine for receiving the updates
 	go func() {
 		for s := range statusCh {
+			var nowPlaying string
+			var format string
+
 			switch s.State {
 			case "play":
 				s.State = "playing"
+				nowPlaying = s.Artist + " - " + s.Track
+				format = s.Format
 				// i := arLst.FindItems(s.Artist, "", false, false)
 				// arLst.SetItemText(i[0], "[yellow]"+s.Artist, "")
 			case "stop":
 				s.State = "stopped"
+				nowPlaying = ""
+				format = ""
+
 			case "pause":
 				s.State = "paused"
+				nowPlaying = s.Artist + " - " + s.Track
+				format = s.Format
 			}
 
 			statusBar.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) + " | " + s.State)
-			statusBar.GetCell(0, 1).SetText(s.Artist + " - " + s.Track)
+			statusBar.GetCell(0, 1).SetText(nowPlaying)
 			// statusBar.GetCell(0, 1).SetText(
 			// 	s.Artist + " - " + s.Track + " (" +
 			// 		internal.FormatDuration(s.Secs) + "/" + internal.FormatDuration(s.TrackLen) + ")")
-			statusBar.GetCell(0, 2).SetText(s.Format)
+			statusBar.GetCell(0, 2).SetText(format)
 			a.Application.Draw()
 		}
 	}()
