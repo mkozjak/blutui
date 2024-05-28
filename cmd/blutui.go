@@ -88,33 +88,31 @@ func main() {
 	// start a goroutine for receiving the updates
 	go func() {
 		for s := range statusCh {
-			var nowPlaying string
-			var format string
+			var cpTitle string
+			var cpFormat string
+			var cpQuality string
 
 			switch s.State {
 			case "play":
 				s.State = "playing"
-				nowPlaying = s.Artist + " - " + s.Track
-				format = s.Format
-				// i := arLst.FindItems(s.Artist, "", false, false)
-				// arLst.SetItemText(i[0], "[yellow]"+s.Artist, "")
+				cpTitle = s.Artist + " - " + s.Track
+				cpFormat = s.Format
+				cpQuality = s.Quality
 			case "stop":
 				s.State = "stopped"
-				nowPlaying = ""
-				format = ""
-
+				cpTitle = ""
+				cpFormat = ""
+				cpQuality = ""
 			case "pause":
 				s.State = "paused"
-				nowPlaying = s.Artist + " - " + s.Track
-				format = s.Format
+				cpTitle = s.Artist + " - " + s.Track
+				cpFormat = s.Format
+				cpQuality = s.Quality
 			}
 
 			statusBar.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) + " | " + s.State)
-			statusBar.GetCell(0, 1).SetText(nowPlaying)
-			// statusBar.GetCell(0, 1).SetText(
-			// 	s.Artist + " - " + s.Track + " (" +
-			// 		internal.FormatDuration(s.Secs) + "/" + internal.FormatDuration(s.TrackLen) + ")")
-			statusBar.GetCell(0, 2).SetText(format)
+			statusBar.GetCell(0, 1).SetText(cpTitle)
+			statusBar.GetCell(0, 2).SetText(cpQuality + " " + cpFormat)
 			a.Application.Draw()
 		}
 	}()

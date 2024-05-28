@@ -99,6 +99,7 @@ type Status struct {
 	Artist   string `xml:"artist"`
 	Track    string `xml:"name"`
 	Format   string `xml:"streamFormat"`
+	Quality  string `xml:"quality"`
 	TrackLen int    `xml:"totlen"`
 	Secs     int    `xml:"secs"`
 	State    string `xml:"state"`
