@@ -151,9 +151,7 @@ func main() {
 		switch event.Key() {
 		case tcell.KeyCtrlQ:
 			a.Application.Stop()
-
 		case tcell.KeyTab:
-
 			if !AlbumPane.HasFocus() {
 				a.Application.SetFocus(AlbumPane)
 				ArtistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
@@ -163,6 +161,10 @@ func main() {
 			}
 
 			return nil
+		case tcell.KeyCtrlB:
+			return tcell.NewEventKey(tcell.KeyPgUp, 0, tcell.ModNone)
+		case tcell.KeyCtrlF:
+			return tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone)
 		}
 
 		switch event.Rune() {
