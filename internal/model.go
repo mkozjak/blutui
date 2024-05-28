@@ -13,7 +13,7 @@ import (
 	"github.com/mkozjak/tview"
 )
 
-var ArListStyle = &tview.BoxBorders{
+var ArtistPaneStyle = &tview.BoxBorders{
 	// \u0020 - whitespace
 	HorizontalFocus:  rune('\u2500'),
 	Horizontal:       rune('\u2500'),
@@ -29,7 +29,7 @@ var ArListStyle = &tview.BoxBorders{
 	BottomLeft:       rune('\u2514'),
 }
 
-var AlGridStyle = ArListStyle
+var AlbumPaneStyle = ArtistPaneStyle
 var TrListStyle = &tview.BoxBorders{}
 
 type track struct {

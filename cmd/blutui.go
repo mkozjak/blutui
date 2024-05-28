@@ -20,23 +20,23 @@ func main() {
 	}
 
 	// left pane - artists
-	arLstStyle := tcell.Style{}
-	arLstStyle.Background(tcell.ColorDefault)
+	ArtistPaneStyle := tcell.Style{}
+	ArtistPaneStyle.Background(tcell.ColorDefault)
 
-	arLst := tview.NewList().
+	ArtistPane := tview.NewList().
 		SetHighlightFullLine(true).
 		SetWrapAround(false).
 		SetSelectedTextColor(tcell.ColorWhite).
 		SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
 		ShowSecondaryText(false).
-		SetMainTextStyle(arLstStyle)
+		SetMainTextStyle(ArtistPaneStyle)
 
-	arLst.SetTitle(" [::b]Artist ").
+	ArtistPane.SetTitle(" [::b]Artist ").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(internal.ArListStyle).
+		SetCustomBorders(internal.ArtistPaneStyle).
 		// set artists list keymap
 		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Rune() {
@@ -50,15 +50,15 @@ func main() {
 		})
 
 	// right pane - albums
-	alGrid := tview.NewGrid().
+	AlbumPane := tview.NewGrid().
 		SetColumns(0)
 
-	alGrid.SetTitle(" [::b]Track ").
+	AlbumPane.SetTitle(" [::b]Track ").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(internal.AlGridStyle)
+		SetCustomBorders(internal.AlbumPaneStyle)
 
 	// bottom bar - status
 	statusBar := tview.NewTable().
@@ -121,26 +121,26 @@ func main() {
 	appFlex := tview.NewFlex().SetDirection(tview.FlexRow).
 		// left and right pane
 		AddItem(tview.NewFlex().
-			AddItem(arLst, 0, 1, true).
-			AddItem(alGrid, 0, 2, false), 0, 1, true).
+			AddItem(ArtistPane, 0, 1, true).
+			AddItem(AlbumPane, 0, 2, false), 0, 1, true).
 		// status bar
 		AddItem(statusBar, 1, 1, false)
 
 	for _, artist := range a.Artists {
-		arLst.AddItem(artist, "", 0, nil)
+		ArtistPane.AddItem(artist, "", 0, nil)
 	}
 
 	// draw selected artist's right pane (album items) on artist scroll
-	arLst.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
-		alGrid.Clear()
-		l := a.DrawCurrentArtist(artist, alGrid)
-		alGrid.SetRows(l...)
+	ArtistPane.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
+		AlbumPane.Clear()
+		l := a.DrawCurrentArtist(artist, AlbumPane)
+		AlbumPane.SetRows(l...)
 	})
 
 	// draw initial album list for the first artist in the list
 	a.Application.SetAfterDrawFunc(func(screen tcell.Screen) {
-		l := a.DrawCurrentArtist(a.Artists[0], alGrid)
-		alGrid.SetRows(l...)
+		l := a.DrawCurrentArtist(a.Artists[0], AlbumPane)
+		AlbumPane.SetRows(l...)
 
 		// disable callback
 		a.Application.SetAfterDrawFunc(nil)
@@ -154,12 +154,12 @@ func main() {
 
 		case tcell.KeyTab:
 
-			if !alGrid.HasFocus() {
-				a.Application.SetFocus(alGrid)
-				arLst.SetSelectedBackgroundColor(tcell.ColorLightGray)
+			if !AlbumPane.HasFocus() {
+				a.Application.SetFocus(AlbumPane)
+				ArtistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
 			} else {
-				a.Application.SetFocus(arLst)
-				arLst.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
+				a.Application.SetFocus(ArtistPane)
+				ArtistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
 
 			return nil
