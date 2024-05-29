@@ -59,7 +59,7 @@ func VolumeUp() {
 		panic(err)
 	}
 
-	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", api, v+5))
+	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", api, v+3))
 	if err != nil {
 		log.Println("Error setting volume up:", err)
 		panic(err)
@@ -73,7 +73,7 @@ func VolumeDown() {
 		panic(err)
 	}
 
-	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", api, v-5))
+	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", api, v-3))
 	if err != nil {
 		log.Println("Error setting volume down:", err)
 		panic(err)
