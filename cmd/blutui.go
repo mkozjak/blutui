@@ -98,6 +98,11 @@ func main() {
 				cpTitle = s.Artist + " - " + s.Track
 				cpFormat = s.Format
 				cpQuality = s.Quality
+			case "stream":
+				s.State = "streaming"
+				cpTitle = s.Title2
+				cpFormat = s.Format
+				cpQuality = s.Quality
 			case "stop":
 				s.State = "stopped"
 				cpTitle = ""
@@ -105,7 +110,14 @@ func main() {
 				cpQuality = ""
 			case "pause":
 				s.State = "paused"
-				cpTitle = s.Artist + " - " + s.Track
+
+				if s.Artist == "" && s.Track == "" {
+					// streaming, set title to Title3 from /Status
+					cpTitle = s.Title3
+				} else {
+					cpTitle = s.Artist + " - " + s.Track
+				}
+
 				cpFormat = s.Format
 				cpQuality = s.Quality
 			}
