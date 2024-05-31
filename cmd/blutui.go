@@ -68,11 +68,11 @@ func main() {
 			SetExpansion(1).
 			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignLeft)).
-		SetCell(0, 1, tview.NewTableCell("progress").
+		SetCell(0, 1, tview.NewTableCell("welcome to blutui =)").
 			SetExpansion(2).
 			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignCenter)).
-		SetCell(0, 2, tview.NewTableCell("something").
+		SetCell(0, 2, tview.NewTableCell("").
 			SetExpansion(1).
 			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignRight))
@@ -120,6 +120,11 @@ func main() {
 
 				cpFormat = s.Format
 				cpQuality = s.Quality
+			case "neterr":
+				s.State = "network error"
+				cpTitle = ""
+				cpFormat = ""
+				cpQuality = ""
 			}
 
 			statusBar.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) + " | " + s.State)

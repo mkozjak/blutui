@@ -2,9 +2,11 @@ package internal
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -108,9 +110,20 @@ func (a *App) PollStatus(ch chan<- Status) {
 	for {
 		resp, err := http.Get(api + "/Status?timeout=60" + etag)
 		if err != nil {
-			e := url.Error{Err: err}
+			uerr := url.Error{Err: err}
+			var derr *net.DNSError
 
-			if e.Timeout() {
+			if errors.As(err, &derr) {
+				Log("dns error:", err)
+				s := Status{
+					State: "neterr",
+				}
+
+				ch <- s
+				continue
+			}
+
+			if uerr.Timeout() {
 				Log("polling timeout")
 				continue
 			}
