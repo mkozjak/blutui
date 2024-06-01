@@ -20,18 +20,18 @@ func main() {
 	}
 
 	// left pane - artists
-	ArtistPaneStyle := tcell.Style{}
-	ArtistPaneStyle.Background(tcell.ColorDefault)
+	artistPaneStyle := tcell.Style{}
+	artistPaneStyle.Background(tcell.ColorDefault)
 
-	ArtistPane := tview.NewList().
+	artistPane := tview.NewList().
 		SetHighlightFullLine(true).
 		SetWrapAround(false).
 		SetSelectedTextColor(tcell.ColorWhite).
 		SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
 		ShowSecondaryText(false).
-		SetMainTextStyle(ArtistPaneStyle)
+		SetMainTextStyle(artistPaneStyle)
 
-	ArtistPane.SetTitle(" [::b]Artist ").
+	artistPane.SetTitle(" [::b]Artist ").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
@@ -50,10 +50,10 @@ func main() {
 		})
 
 	// right pane - albums
-	AlbumPane := tview.NewGrid().
+	albumPane := tview.NewGrid().
 		SetColumns(0)
 
-	AlbumPane.SetTitle(" [::b]Track ").
+	albumPane.SetTitle(" [::b]Track ").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
@@ -138,26 +138,26 @@ func main() {
 	appFlex := tview.NewFlex().SetDirection(tview.FlexRow).
 		// left and right pane
 		AddItem(tview.NewFlex().
-			AddItem(ArtistPane, 0, 1, true).
-			AddItem(AlbumPane, 0, 2, false), 0, 1, true).
+			AddItem(artistPane, 0, 1, true).
+			AddItem(albumPane, 0, 2, false), 0, 1, true).
 		// status bar
 		AddItem(statusBar, 1, 1, false)
 
 	for _, artist := range a.Artists {
-		ArtistPane.AddItem(artist, "", 0, nil)
+		artistPane.AddItem(artist, "", 0, nil)
 	}
 
 	// draw selected artist's right pane (album items) on artist scroll
-	ArtistPane.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
-		AlbumPane.Clear()
-		l := a.DrawCurrentArtist(artist, AlbumPane)
-		AlbumPane.SetRows(l...)
+	artistPane.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
+		albumPane.Clear()
+		l := a.DrawCurrentArtist(artist, albumPane)
+		albumPane.SetRows(l...)
 	})
 
 	// draw initial album list for the first artist in the list
 	a.Application.SetAfterDrawFunc(func(screen tcell.Screen) {
-		l := a.DrawCurrentArtist(a.Artists[0], AlbumPane)
-		AlbumPane.SetRows(l...)
+		l := a.DrawCurrentArtist(a.Artists[0], albumPane)
+		albumPane.SetRows(l...)
 
 		// disable callback
 		a.Application.SetAfterDrawFunc(nil)
@@ -169,12 +169,12 @@ func main() {
 		case tcell.KeyCtrlQ:
 			a.Application.Stop()
 		case tcell.KeyTab:
-			if !AlbumPane.HasFocus() {
-				a.Application.SetFocus(AlbumPane)
-				ArtistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
+			if !albumPane.HasFocus() {
+				a.Application.SetFocus(albumPane)
+				artistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
 			} else {
-				a.Application.SetFocus(ArtistPane)
-				ArtistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
+				a.Application.SetFocus(artistPane)
+				artistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
 
 			return nil
