@@ -59,12 +59,11 @@ type App struct {
 	Application         *tview.Application
 	AlbumArtists        map[string]Artist
 	Artists             []string
-	currentlyPlaying    track
-	status              string
 	currentArtistAlbums []*tview.List
 	ArtistPane          *tview.List
 	AlbumPane           *tview.Grid
 	StatusBar           *tview.Table
+	sbMessages          chan Status
 }
 
 type Cache struct {
@@ -283,7 +282,7 @@ func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.Lis
 		}
 
 		// play track and add subsequent album tracks to queue
-		go Play(autoplay)
+		go a.Play(autoplay)
 	})
 
 	// set album tracklist keymap

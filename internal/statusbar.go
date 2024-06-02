@@ -28,22 +28,20 @@ func (a *App) CreateStatusBar() {
 	a.StatusBar.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
 
 	// channel for receiving player status updates
-	statusCh := make(chan Status)
+	a.sbMessages = make(chan Status)
 
 	// start long-polling for updates
-	go a.PollStatus(statusCh)
+	go a.PollStatus()
 
 	// start a goroutine for receiving the updates
-	go a.listener(a.StatusBar, statusCh)
+	go a.listener()
 }
 
-func (a *App) listener(t *tview.Table, ch <-chan Status) {
-	for s := range ch {
+func (a *App) listener() {
+	for s := range a.sbMessages {
 		var cpTitle string
 		var cpFormat string
 		var cpQuality string
-
-		Log("got data")
 
 		switch s.State {
 		case "play":
@@ -78,11 +76,16 @@ func (a *App) listener(t *tview.Table, ch <-chan Status) {
 			cpTitle = ""
 			cpFormat = ""
 			cpQuality = ""
+		case "ctrlerr":
+			s.State = "player control error"
+			cpTitle = ""
+			cpFormat = ""
+			cpQuality = ""
 		}
 
-		t.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) + " | " + s.State)
-		t.GetCell(0, 1).SetText(cpTitle)
-		t.GetCell(0, 2).SetText(cpQuality + " " + cpFormat)
+		a.StatusBar.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) + " | " + s.State)
+		a.StatusBar.GetCell(0, 1).SetText(cpTitle)
+		a.StatusBar.GetCell(0, 2).SetText(cpQuality + " " + cpFormat)
 		a.Application.Draw()
 	}
 }

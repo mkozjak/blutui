@@ -62,17 +62,17 @@ func main() {
 
 		switch event.Rune() {
 		case 'p':
-			go internal.Playpause()
+			go a.Playpause()
 		case 's':
-			go internal.Stop()
+			go a.Stop()
 		case '>':
-			go internal.Next()
+			go a.Next()
 		case '<':
-			go internal.Previous()
+			go a.Previous()
 		case '+':
-			go internal.VolumeUp()
+			go a.VolumeUp()
 		case '-':
-			go internal.VolumeDown()
+			go a.VolumeDown()
 		case 'q':
 			a.Application.Stop()
 		}
