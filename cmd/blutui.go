@@ -17,30 +17,23 @@ func main() {
 		panic(err)
 	}
 
-	artistPane := a.CreateArtistPane()
-	albumPane := a.CreateAlbumPane()
-	statusBar := a.CreateStatusBar()
-
-	// draw selected artist's right pane (album items) on artist scroll
-	artistPane.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
-		albumPane.Clear()
-		l := a.DrawCurrentArtist(artist, albumPane)
-		albumPane.SetRows(l...)
-	})
+	a.CreateArtistPane()
+	a.CreateAlbumPane()
+	a.CreateStatusBar()
 
 	// app
 	appFlex := tview.NewFlex().SetDirection(tview.FlexRow).
 		// left and right pane
 		AddItem(tview.NewFlex().
-			AddItem(artistPane, 0, 1, true).
-			AddItem(albumPane, 0, 2, false), 0, 1, true).
+			AddItem(a.ArtistPane, 0, 1, true).
+			AddItem(a.AlbumPane, 0, 2, false), 0, 1, true).
 		// status bar
-		AddItem(statusBar, 1, 1, false)
+		AddItem(a.StatusBar, 1, 1, false)
 
 	// draw initial album list for the first artist in the list
 	a.Application.SetAfterDrawFunc(func(screen tcell.Screen) {
-		l := a.DrawCurrentArtist(a.Artists[0], albumPane)
-		albumPane.SetRows(l...)
+		l := a.DrawCurrentArtist(a.Artists[0], a.AlbumPane)
+		a.AlbumPane.SetRows(l...)
 
 		// disable callback
 		a.Application.SetAfterDrawFunc(nil)
@@ -52,12 +45,12 @@ func main() {
 		case tcell.KeyCtrlQ:
 			a.Application.Stop()
 		case tcell.KeyTab:
-			if !albumPane.HasFocus() {
-				a.Application.SetFocus(albumPane)
-				artistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
+			if !a.AlbumPane.HasFocus() {
+				a.Application.SetFocus(a.AlbumPane)
+				a.ArtistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
 			} else {
-				a.Application.SetFocus(artistPane)
-				artistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
+				a.Application.SetFocus(a.ArtistPane)
+				a.ArtistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 			}
 
 			return nil

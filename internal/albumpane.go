@@ -6,16 +6,14 @@ import (
 )
 
 // right pane - albums
-func (a *App) CreateAlbumPane() *tview.Grid {
-	p := tview.NewGrid().
+func (a *App) CreateAlbumPane() {
+	a.AlbumPane = tview.NewGrid().
 		SetColumns(0)
 
-	p.SetTitle(" [::b]Track ").
+	a.AlbumPane.SetTitle(" [::b]Track ").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
 		SetCustomBorders(AlbumPaneStyle)
-
-	return p
 }

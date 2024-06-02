@@ -6,11 +6,11 @@ import (
 )
 
 // left pane - artists
-func (a *App) CreateArtistPane() *tview.List {
+func (a *App) CreateArtistPane() {
 	artistPaneStyle := tcell.Style{}
 	artistPaneStyle.Background(tcell.ColorDefault)
 
-	p := tview.NewList().
+	a.ArtistPane = tview.NewList().
 		SetHighlightFullLine(true).
 		SetWrapAround(false).
 		SetSelectedTextColor(tcell.ColorWhite).
@@ -18,7 +18,7 @@ func (a *App) CreateArtistPane() *tview.List {
 		ShowSecondaryText(false).
 		SetMainTextStyle(artistPaneStyle)
 
-	p.SetTitle(" [::b]Artist ").
+	a.ArtistPane.SetTitle(" [::b]Artist ").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
@@ -37,8 +37,17 @@ func (a *App) CreateArtistPane() *tview.List {
 		})
 
 	for _, artist := range a.Artists {
-		p.AddItem(artist, "", 0, nil)
+		a.ArtistPane.AddItem(artist, "", 0, nil)
 	}
 
-	return p
+	a.scrollCb()
+}
+
+// draw selected artist's right pane (album items) on artist scroll
+func (a *App) scrollCb() {
+	a.ArtistPane.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
+		a.AlbumPane.Clear()
+		l := a.DrawCurrentArtist(artist, a.AlbumPane)
+		a.AlbumPane.SetRows(l...)
+	})
 }

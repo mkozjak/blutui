@@ -62,6 +62,9 @@ type App struct {
 	currentlyPlaying    track
 	status              string
 	currentArtistAlbums []*tview.List
+	ArtistPane          *tview.List
+	AlbumPane           *tview.Grid
+	StatusBar           *tview.Table
 }
 
 type Cache struct {

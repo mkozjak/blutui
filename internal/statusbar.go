@@ -8,8 +8,8 @@ import (
 )
 
 // bottom bar - status
-func (a *App) CreateStatusBar() *tview.Table {
-	statusBar := tview.NewTable().
+func (a *App) CreateStatusBar() {
+	a.StatusBar = tview.NewTable().
 		SetFixed(1, 3).
 		SetSelectable(false, false).
 		SetCell(0, 0, tview.NewTableCell("connecting").
@@ -25,7 +25,7 @@ func (a *App) CreateStatusBar() *tview.Table {
 			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignRight))
 
-	statusBar.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
+	a.StatusBar.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
 
 	// channel for receiving player status updates
 	statusCh := make(chan Status)
@@ -34,9 +34,7 @@ func (a *App) CreateStatusBar() *tview.Table {
 	go a.PollStatus(statusCh)
 
 	// start a goroutine for receiving the updates
-	go a.listener(statusBar, statusCh)
-
-	return statusBar
+	go a.listener(a.StatusBar, statusCh)
 }
 
 func (a *App) listener(t *tview.Table, ch <-chan Status) {
