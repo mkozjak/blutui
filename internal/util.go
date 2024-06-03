@@ -164,3 +164,17 @@ func Caser(s string) string {
 
 	return res
 }
+
+func ExtractAlbumYear(y string) (int, error) {
+	t, err := time.Parse("2006", y)
+	if err == nil {
+		return t.Year(), nil
+	}
+
+	t, err = time.Parse("2006-01-02", y)
+	if err == nil {
+		return t.Year(), nil
+	}
+
+	return 0, errors.New("invalid date format")
+}

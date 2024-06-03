@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -75,6 +76,7 @@ type CacheItem struct {
 	Expiration time.Time
 }
 
+// Used for parsing data from /Browse
 type browse struct {
 	Items []item `xml:"item"`
 }
@@ -92,6 +94,15 @@ type item struct {
 	PlayURL     string `xml:"playURL,attr"`
 	AutoplayURL string `xml:"autoplayURL,attr"`
 	Duration    string `xml:"duration,attr"`
+}
+
+// Used for parsing data from /Songs
+type songs struct {
+	Album []struct {
+		Song []struct {
+			Date string `xml:"date"`
+		} `xml:"song"`
+	} `xml:"album"`
 }
 
 type Status struct {
@@ -183,12 +194,42 @@ func (a *App) FetchData() error {
 			}
 
 			arName := Caser(al.Text2)
+
+			// fetch album date from /Songs
+			body, err = FetchAndCache(
+				strings.ReplaceAll(api+"/Songs?service=LocalMusic&album="+al.Text+"&artist="+arName, " ", "+"),
+				cache)
+			if err != nil {
+				log.Println("Error fetching album date:", err)
+				return err
+			}
+
+			var s songs
+			var year int
+			err = xml.Unmarshal(body, &s)
+			if err != nil {
+				log.Println("Error parsing the album songs XML:", err)
+				return err
+			}
+
+			if len(s.Album) > 0 {
+				if len(s.Album[0].Song) > 0 {
+					if s.Album[0].Song[0].Date != "" {
+						year, err = ExtractAlbumYear(s.Album[0].Song[0].Date)
+						if err != nil {
+							log.Println("Error extracting album's year:", err)
+						}
+					}
+				}
+			}
+
 			ar, ok := a.AlbumArtists[arName]
 
 			if ok {
 				ar.albums = append(ar.albums, album{
 					name:        al.Text,
 					tracks:      albumTracks,
+					year:        year,
 					playUrl:     al.PlayURL,
 					autoplayUrl: al.AutoplayURL,
 					duration:    duration,
@@ -200,6 +241,7 @@ func (a *App) FetchData() error {
 					albums: []album{{
 						name:        al.Text,
 						tracks:      albumTracks,
+						year:        year,
 						playUrl:     al.PlayURL,
 						autoplayUrl: al.AutoplayURL,
 						duration:    duration,
@@ -215,10 +257,9 @@ func (a *App) FetchData() error {
 	for _, artistName := range a.Artists {
 		ar := a.AlbumArtists[artistName]
 
-		// Sort albums alphabetically
+		// Sort albums by year
 		sort.Slice(ar.albums, func(i, j int) bool {
-			// FIXME: should sort by year instead
-			return ar.albums[i].name < ar.albums[j].name
+			return ar.albums[i].year < ar.albums[j].year
 		})
 
 		a.AlbumArtists[artistName] = ar
@@ -283,6 +324,7 @@ func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.Lis
 
 		// play track and add subsequent album tracks to queue
 		go a.Play(autoplay)
+		Log(album.year)
 	})
 
 	// set album tracklist keymap
