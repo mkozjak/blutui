@@ -324,7 +324,6 @@ func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.Lis
 
 		// play track and add subsequent album tracks to queue
 		go a.Play(autoplay)
-		Log(album.year)
 	})
 
 	// set album tracklist keymap
