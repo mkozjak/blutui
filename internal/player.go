@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -55,7 +56,7 @@ func (a *App) Previous() {
 }
 
 func (a *App) VolumeUp() {
-	v, err := a.currentVolume()
+	v, _, err := a.currentVolume()
 	if err != nil {
 		log.Println("Error fetching volume state:", err)
 		a.sbMessages <- Status{State: "ctrlerr"}
@@ -69,7 +70,7 @@ func (a *App) VolumeUp() {
 }
 
 func (a *App) VolumeDown() {
-	v, err := a.currentVolume()
+	v, _, err := a.currentVolume()
 	if err != nil {
 		log.Println("Error fetching volume state:", err)
 		a.sbMessages <- Status{State: "ctrlerr"}
@@ -82,26 +83,49 @@ func (a *App) VolumeDown() {
 	}
 }
 
-func (a *App) currentVolume() (int, error) {
+func (a *App) ToggleMute() {
+	_, m, err := a.currentVolume()
+	if err != nil {
+		log.Println("Error getting mute state:", err)
+		a.sbMessages <- Status{State: "ctrlerr"}
+	}
+
+	if m == false {
+		_, err = http.Get(api + "/Volume?mute=1")
+	} else {
+		_, err = http.Get(api + "/Volume?mute=0")
+	}
+	if err != nil {
+		log.Println("Error toggling mute state:", err)
+		a.sbMessages <- Status{State: "ctrlerr"}
+	}
+}
+
+func (a *App) currentVolume() (int, bool, error) {
 	resp, err := http.Get(api + "/Volume")
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 
 	var volRes volume
 
 	err = xml.Unmarshal(body, &volRes)
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 
-	return volRes.Value, nil
+	m, err := strconv.ParseBool(volRes.Muted)
+	if err != nil {
+		return 0, false, err
+	}
+
+	return volRes.Value, m, nil
 }
 
 func (a *App) PollStatus() {

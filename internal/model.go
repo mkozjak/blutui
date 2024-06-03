@@ -84,6 +84,7 @@ type browse struct {
 type volume struct {
 	XMLName xml.Name `xml:"volume"`
 	Value   int      `xml:",chardata"`
+	Muted   string   `xml:"mute,attr"`
 }
 
 type item struct {

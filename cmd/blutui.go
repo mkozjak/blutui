@@ -73,6 +73,8 @@ func main() {
 			go a.VolumeUp()
 		case '-':
 			go a.VolumeDown()
+		case 'm':
+			go a.ToggleMute()
 		case 'q':
 			a.Application.Stop()
 		}
