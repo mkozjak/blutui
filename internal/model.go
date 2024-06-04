@@ -63,6 +63,8 @@ type App struct {
 	AlbumPane           *tview.Grid
 	StatusBar           *tview.Table
 	sbMessages          chan Status
+	CpArtistIdx         int // currently playing artist's index in *tview.List
+	cpTrackName         string
 }
 
 type Cache struct {
@@ -283,4 +285,28 @@ func (a *App) getTrackURL(name, artist, album string) (string, string, error) {
 	}
 
 	return "", "", errors.New("no such track")
+}
+
+func (a *App) cpHighlightArtist(name string) {
+	// clear previously highlighted items
+	if a.CpArtistIdx >= 0 {
+		n, _ := a.ArtistPane.GetItemText(a.CpArtistIdx)
+		a.ArtistPane.SetItemText(a.CpArtistIdx, strings.TrimPrefix(n, "[yellow]"), "")
+	}
+
+	if name == "" {
+		a.CpArtistIdx = -1
+		return
+	}
+
+	// highlight artist
+	// track is highlighted through a.newAlbumList
+	idx := a.ArtistPane.FindItems(name, "", false, true)
+	if len(idx) < 1 {
+		return
+	}
+
+	n, _ := a.ArtistPane.GetItemText(idx[0])
+	a.ArtistPane.SetItemText(idx[0], "[yellow]"+n, "")
+	a.CpArtistIdx = idx[0]
 }

@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/tview"
 )
@@ -47,8 +49,11 @@ func (a *App) DrawCurrentArtist(artist string, c *tview.Grid) []int {
 	l := []int{}
 	a.currentArtistAlbums = nil
 
-	for i, album := range a.AlbumArtists[artist].albums {
-		albumList := a.newAlbumList(artist, album, c)
+	// remove style from the string
+	cArtist := strings.TrimPrefix(artist, "[yellow]")
+
+	for i, album := range a.AlbumArtists[cArtist].albums {
+		albumList := a.newAlbumList(cArtist, album, c)
 		l = append(l, len(album.tracks)+2)
 
 		// automatically focus the first track from the first album

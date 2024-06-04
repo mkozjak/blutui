@@ -49,6 +49,8 @@ func (a *App) listener() {
 			cpTitle = s.Artist + " - " + s.Track
 			cpFormat = s.Format
 			cpQuality = s.Quality
+			a.cpHighlightArtist(s.Artist)
+			a.cpTrackName = s.Track
 		case "stream":
 			s.State = "streaming"
 			cpTitle = s.Title2
@@ -59,6 +61,8 @@ func (a *App) listener() {
 			cpTitle = ""
 			cpFormat = ""
 			cpQuality = ""
+			a.cpHighlightArtist("")
+			a.cpTrackName = ""
 		case "pause":
 			s.State = "paused"
 

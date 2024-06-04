@@ -10,6 +10,7 @@ func main() {
 	a := internal.App{
 		Application:  tview.NewApplication(),
 		AlbumArtists: map[string]internal.Artist{},
+		CpArtistIdx: -1,
 	}
 
 	err := a.FetchData()

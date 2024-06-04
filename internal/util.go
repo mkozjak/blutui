@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -177,4 +178,9 @@ func ExtractAlbumYear(y string) (int, error) {
 	}
 
 	return 0, errors.New("invalid date format")
+}
+
+func cleanTrackName(n string) string {
+	re := regexp.MustCompile(`^\d+\.\s`)
+	return re.ReplaceAllString(n, "")
 }

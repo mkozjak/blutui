@@ -105,7 +105,11 @@ func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.Lis
 		SetCustomBorders(noBorders)
 
 	for _, t := range album.tracks {
-		trackLst.AddItem(t.name, "", 0, nil)
+		if a.cpTrackName != "" && a.cpTrackName == cleanTrackName(t.name) {
+			trackLst.AddItem("[yellow]"+t.name, "", 0, nil)
+		} else {
+			trackLst.AddItem(t.name, "", 0, nil)
+		}
 	}
 
 	return trackLst
