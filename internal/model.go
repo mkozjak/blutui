@@ -274,6 +274,9 @@ func (a *App) FetchData() error {
 	return nil
 }
 
+func (a *App) RefreshData() {
+}
+
 func (a *App) getTrackURL(name, artist, album string) (string, string, error) {
 	for _, a := range a.AlbumArtists[artist].albums {
 		if a.name != album {

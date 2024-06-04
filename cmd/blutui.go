@@ -76,6 +76,10 @@ func main() {
 			go a.VolumeHold(false)
 		case 'm':
 			go a.ToggleMute()
+		case 'o':
+			a.ArtistPane.SetCurrentItem(a.CpArtistIdx)
+		case 'u':
+			go a.RefreshData()
 		case 'q':
 			a.Application.Stop()
 		}

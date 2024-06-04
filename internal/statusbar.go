@@ -19,7 +19,8 @@ func (a *App) CreateStatusBar() {
 		SetCell(0, 1, tview.NewTableCell("welcome to blutui =)").
 			SetExpansion(2).
 			SetTextColor(tcell.ColorDefault).
-			SetAlign(tview.AlignCenter)).
+			SetAlign(tview.AlignCenter).
+			SetMaxWidth(40)).
 		SetCell(0, 2, tview.NewTableCell("").
 			SetExpansion(1).
 			SetTextColor(tcell.ColorDefault).
