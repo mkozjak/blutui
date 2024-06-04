@@ -40,7 +40,7 @@ func (a *App) CreateArtistPane() {
 		a.ArtistPane.AddItem(artist, "", 0, nil)
 	}
 
-	a.scrollCb()
+	a.ArtistPane.SetChangedFunc(a.scrollCb)
 }
 
 func (a *App) DrawCurrentArtist(artist string, c *tview.Grid) []int {
@@ -67,10 +67,8 @@ func (a *App) DrawCurrentArtist(artist string, c *tview.Grid) []int {
 }
 
 // draw selected artist's right pane (album items) on artist scroll
-func (a *App) scrollCb() {
-	a.ArtistPane.SetChangedFunc(func(index int, artist string, _ string, shortcut rune) {
-		a.AlbumPane.Clear()
-		l := a.DrawCurrentArtist(artist, a.AlbumPane)
-		a.AlbumPane.SetRows(l...)
-	})
+func (a *App) scrollCb(index int, artist string, _ string, shortcut rune) {
+	a.AlbumPane.Clear()
+	l := a.DrawCurrentArtist(artist, a.AlbumPane)
+	a.AlbumPane.SetRows(l...)
 }
