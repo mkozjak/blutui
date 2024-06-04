@@ -55,31 +55,98 @@ func (a *App) Previous() {
 	}
 }
 
-func (a *App) VolumeUp() {
+func (a *App) volumeUp(bigstep bool) {
+	var step int
+	if bigstep == true {
+		step = 10
+	} else {
+		step = 3
+	}
+
 	v, _, err := a.currentVolume()
 	if err != nil {
 		log.Println("Error fetching volume state:", err)
 		a.sbMessages <- Status{State: "ctrlerr"}
 	}
 
-	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", api, v+3))
+	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", api, v+step))
 	if err != nil {
 		log.Println("Error setting volume up:", err)
 		a.sbMessages <- Status{State: "ctrlerr"}
 	}
 }
 
-func (a *App) VolumeDown() {
+func (a *App) volumeDown(bigstep bool) {
+	var step int
+	if bigstep == true {
+		step = 10
+	} else {
+		step = 3
+	}
+
 	v, _, err := a.currentVolume()
 	if err != nil {
 		log.Println("Error fetching volume state:", err)
 		a.sbMessages <- Status{State: "ctrlerr"}
 	}
 
-	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", api, v-3))
+	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", api, v-step))
 	if err != nil {
 		log.Println("Error setting volume down:", err)
 		a.sbMessages <- Status{State: "ctrlerr"}
+	}
+}
+
+func (a *App) VolumeHold(up bool) {
+	if a.volumeHoldBlocker == true {
+		return
+	}
+
+	a.volumeHoldCount = a.volumeHoldCount + 1
+
+	if a.volumeHoldTicker != nil {
+		return
+	}
+
+	a.volumeHoldTicker = time.NewTicker(time.Second)
+	done := make(chan bool)
+
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		done <- true
+	}()
+
+	for {
+		select {
+		case <-done:
+			a.volumeHoldTicker.Stop()
+			a.volumeHoldTicker = nil
+
+			close(done)
+
+			if a.volumeHoldCount < 5 {
+				if up == true {
+					go a.volumeUp(false)
+				} else {
+					go a.volumeDown(false)
+				}
+			} else {
+				if up == true {
+					go a.volumeUp(true)
+				} else {
+					go a.volumeDown(true)
+				}
+
+				a.volumeHoldBlocker = true
+				a.volumeHoldMutex.Lock()
+				time.Sleep(5 * time.Second)
+				a.volumeHoldBlocker = false
+				a.volumeHoldMutex.Unlock()
+			}
+
+			a.volumeHoldCount = 0
+			return
+		}
 	}
 }
 

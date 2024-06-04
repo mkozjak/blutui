@@ -71,9 +71,9 @@ func main() {
 		case '<':
 			go a.Previous()
 		case '+':
-			go a.VolumeUp()
+			go a.VolumeHold(true)
 		case '-':
-			go a.VolumeDown()
+			go a.VolumeHold(false)
 		case 'm':
 			go a.ToggleMute()
 		case 'q':

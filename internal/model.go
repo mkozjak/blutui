@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mkozjak/tview"
@@ -65,6 +66,10 @@ type App struct {
 	sbMessages          chan Status
 	CpArtistIdx         int // currently playing artist's index in *tview.List
 	cpTrackName         string
+	volumeHoldCount     int
+	volumeHoldTicker    *time.Ticker
+	volumeHoldMutex     sync.Mutex
+	volumeHoldBlocker   bool
 }
 
 type Cache struct {
