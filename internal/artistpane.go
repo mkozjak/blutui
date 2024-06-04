@@ -23,7 +23,7 @@ func (a *App) CreateArtistPane() {
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(ArtistPaneStyle).
+		SetCustomBorders(CustomBorders).
 		// set artists list keymap
 		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Rune() {
@@ -41,6 +41,29 @@ func (a *App) CreateArtistPane() {
 	}
 
 	a.scrollCb()
+}
+
+func (a *App) DrawCurrentArtist(artist string, c *tview.Grid) []int {
+	l := []int{}
+	a.currentArtistAlbums = nil
+
+	for i, album := range a.AlbumArtists[artist].albums {
+		albumList := a.newAlbumList(artist, album, c)
+		l = append(l, len(album.tracks)+2)
+
+		// automatically focus the first track from the first album
+		// since grid is the parent, it will automatically lose focus
+		// and give it to the first album
+		if i == 0 {
+			c.AddItem(albumList, i, 0, 1, 1, 0, 0, true)
+		} else {
+			c.AddItem(albumList, i, 0, 1, 1, 0, 0, false)
+		}
+
+		a.currentArtistAlbums = append(a.currentArtistAlbums, albumList)
+	}
+
+	return l
 }
 
 // draw selected artist's right pane (album items) on artist scroll
