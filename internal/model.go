@@ -34,6 +34,7 @@ var noBorders = &tview.BoxBorders{}
 
 type App struct {
 	Application         *tview.Application
+	Pages               *tview.Pages
 	AlbumArtists        map[string]Artist
 	Artists             []string
 	currentArtistAlbums []*tview.List

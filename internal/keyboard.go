@@ -29,6 +29,12 @@ func (a *App) KbGlobalHandler(event *tcell.EventKey) *tcell.EventKey {
 		}
 	case 'u':
 		go a.RefreshData()
+	case 'h':
+		p, _ := a.Pages.GetFrontPage()
+		if p != "help" {
+			a.Pages.ShowPage("help")
+			return nil
+		}
 	case 'q':
 		a.Application.Stop()
 	}
@@ -52,6 +58,25 @@ func (a *App) KbLibHandler(event *tcell.EventKey) *tcell.EventKey {
 		return tcell.NewEventKey(tcell.KeyPgUp, 0, tcell.ModNone)
 	case tcell.KeyCtrlF:
 		return tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone)
+	}
+
+	return event
+}
+
+func (a *App) KbHelpHandler(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Key() {
+	case tcell.KeyEscape:
+		a.Pages.HidePage("help")
+		return nil
+	}
+
+	switch event.Rune() {
+	case 'h':
+		p, _ := a.Pages.GetFrontPage()
+		if p == "help" {
+			a.Pages.HidePage("help")
+			return nil
+		}
 	}
 
 	return event
