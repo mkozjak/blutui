@@ -32,6 +32,23 @@ var CustomBorders = &tview.BoxBorders{
 
 var noBorders = &tview.BoxBorders{}
 
+type App struct {
+	Application         *tview.Application
+	AlbumArtists        map[string]Artist
+	Artists             []string
+	currentArtistAlbums []*tview.List
+	ArtistPane          *tview.List
+	AlbumPane           *tview.Grid
+	StatusBar           *tview.Table
+	sbMessages          chan Status
+	CpArtistIdx         int // currently playing artist's index in *tview.List
+	cpTrackName         string
+	volumeHoldCount     int
+	volumeHoldTicker    *time.Ticker
+	volumeHoldMutex     sync.Mutex
+	volumeHoldBlocker   bool
+}
+
 type track struct {
 	name        string
 	duration    int
@@ -53,23 +70,6 @@ type album struct {
 
 type Artist struct {
 	albums []album
-}
-
-type App struct {
-	Application         *tview.Application
-	AlbumArtists        map[string]Artist
-	Artists             []string
-	currentArtistAlbums []*tview.List
-	ArtistPane          *tview.List
-	AlbumPane           *tview.Grid
-	StatusBar           *tview.Table
-	sbMessages          chan Status
-	CpArtistIdx         int // currently playing artist's index in *tview.List
-	cpTrackName         string
-	volumeHoldCount     int
-	volumeHoldTicker    *time.Ticker
-	volumeHoldMutex     sync.Mutex
-	volumeHoldBlocker   bool
 }
 
 type Cache struct {
