@@ -10,7 +10,7 @@ func main() {
 	a := internal.App{
 		Application:  tview.NewApplication(),
 		AlbumArtists: map[string]internal.Artist{},
-		CpArtistIdx: -1,
+		CpArtistIdx:  -1,
 	}
 
 	err := a.FetchData()
@@ -22,14 +22,16 @@ func main() {
 	a.CreateAlbumPane()
 	a.CreateStatusBar()
 
-	// app
-	appFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+	// library page
+	libFlex := tview.NewFlex().SetDirection(tview.FlexRow).
 		// left and right pane
 		AddItem(tview.NewFlex().
 			AddItem(a.ArtistPane, 0, 1, true).
 			AddItem(a.AlbumPane, 0, 2, false), 0, 1, true).
 		// status bar
 		AddItem(a.StatusBar, 1, 1, false)
+
+	libFlex.SetInputCapture(a.KbLibHandler)
 
 	// draw initial album list for the first artist in the list
 	a.Application.SetAfterDrawFunc(func(screen tcell.Screen) {
@@ -44,7 +46,7 @@ func main() {
 	a.Application.SetInputCapture(a.KbGlobalHandler)
 
 	// set app root screen
-	if err := a.Application.SetRoot(appFlex, true).EnableMouse(true).Run(); err != nil {
+	if err := a.Application.SetRoot(libFlex, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 }

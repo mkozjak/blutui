@@ -6,20 +6,6 @@ func (a *App) KbGlobalHandler(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyCtrlQ:
 		a.Application.Stop()
-	case tcell.KeyTab:
-		if !a.AlbumPane.HasFocus() {
-			a.Application.SetFocus(a.AlbumPane)
-			a.ArtistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
-		} else {
-			a.Application.SetFocus(a.ArtistPane)
-			a.ArtistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
-		}
-
-		return nil
-	case tcell.KeyCtrlB:
-		return tcell.NewEventKey(tcell.KeyPgUp, 0, tcell.ModNone)
-	case tcell.KeyCtrlF:
-		return tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone)
 	}
 
 	switch event.Rune() {
@@ -45,6 +31,27 @@ func (a *App) KbGlobalHandler(event *tcell.EventKey) *tcell.EventKey {
 		go a.RefreshData()
 	case 'q':
 		a.Application.Stop()
+	}
+
+	return event
+}
+
+func (a *App) KbLibHandler(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Key() {
+	case tcell.KeyTab:
+		if !a.AlbumPane.HasFocus() {
+			a.Application.SetFocus(a.AlbumPane)
+			a.ArtistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
+		} else {
+			a.Application.SetFocus(a.ArtistPane)
+			a.ArtistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
+		}
+
+		return nil
+	case tcell.KeyCtrlB:
+		return tcell.NewEventKey(tcell.KeyPgUp, 0, tcell.ModNone)
+	case tcell.KeyCtrlF:
+		return tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone)
 	}
 
 	return event
