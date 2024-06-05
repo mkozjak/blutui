@@ -47,6 +47,7 @@ type App struct {
 	volumeHoldTicker    *time.Ticker
 	volumeHoldMutex     sync.Mutex
 	volumeHoldBlocker   bool
+	playerState         string
 }
 
 type track struct {

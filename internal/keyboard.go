@@ -38,7 +38,9 @@ func (a *App) KbGlobalHandler(event *tcell.EventKey) *tcell.EventKey {
 	case 'm':
 		go a.ToggleMute()
 	case 'o':
-		a.ArtistPane.SetCurrentItem(a.CpArtistIdx)
+		if a.playerState == "playing" {
+			a.ArtistPane.SetCurrentItem(a.CpArtistIdx)
+		}
 	case 'u':
 		go a.RefreshData()
 	case 'q':

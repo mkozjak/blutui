@@ -88,6 +88,7 @@ func (a *App) listener() {
 			cpQuality = ""
 		}
 
+		a.playerState = s.State
 		a.StatusBar.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) + " | " + s.State)
 		a.StatusBar.GetCell(0, 1).SetText(cpTitle)
 		a.StatusBar.GetCell(0, 2).SetText(cpQuality + " " + cpFormat)
