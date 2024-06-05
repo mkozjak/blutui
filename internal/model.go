@@ -41,6 +41,7 @@ type App struct {
 	ArtistPane          *tview.List
 	AlbumPane           *tview.Grid
 	StatusBar           *tview.Table
+	HelpScreen          *tview.Modal
 	sbMessages          chan Status
 	CpArtistIdx         int // currently playing artist's index in *tview.List
 	cpTrackName         string

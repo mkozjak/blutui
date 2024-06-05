@@ -88,10 +88,17 @@ func (a *App) listener() {
 			cpQuality = ""
 		}
 
+		currPage, _ := a.Pages.GetFrontPage()
+		format := ""
+		if cpQuality != "" || cpFormat != "" {
+			format = " | " + cpQuality + " " + cpFormat
+		}
+
 		a.playerState = s.State
-		a.StatusBar.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) + " | " + s.State)
+		a.StatusBar.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) +
+			" | " + s.State + format)
 		a.StatusBar.GetCell(0, 1).SetText(cpTitle)
-		a.StatusBar.GetCell(0, 2).SetText(cpQuality + " " + cpFormat)
+		a.StatusBar.GetCell(0, 2).SetText(currPage)
 		a.Application.Draw()
 	}
 }

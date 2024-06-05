@@ -22,6 +22,7 @@ func main() {
 	a.CreateArtistPane()
 	a.CreateAlbumPane()
 	a.CreateStatusBar()
+	a.CreateHelpScreen()
 
 	// library page
 	libFlex := tview.NewFlex().SetDirection(tview.FlexRow).
@@ -34,25 +35,9 @@ func main() {
 
 	libFlex.SetInputCapture(a.KbLibHandler)
 
-	// help
-	// TODO: do this the smarter way
-	help := tview.NewModal().
-		SetText("enter - start playback\np - play/pause\ns - stop\n> - next song\n" +
-			"< - previous song\n+ - volume up\n- - volume down\nm - toggle mute\n" +
-			"o - jump to currently playing artist\nu - update library\n" +
-			"h - show help screen\nq - quit app").
-		SetBackgroundColor(tcell.ColorDefault)
-
-	help.SetInputCapture(a.KbHelpHandler).
-		SetBorder(true).
-		SetTitle("[::b]Keybindings").
-		SetBorderColor(tcell.ColorCornflowerBlue).
-		SetBackgroundColor(tcell.ColorDefault).
-		SetCustomBorders(internal.CustomBorders)
-
 	// app
 	a.Pages.AddAndSwitchToPage("library", libFlex, true).
-		AddPage("help", help, false, false).
+		AddPage("help", a.HelpScreen, false, false).
 		SetBackgroundColor(tcell.ColorDefault)
 
 	// draw initial album list for the first artist in the list
