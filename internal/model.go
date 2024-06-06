@@ -125,6 +125,7 @@ type Status struct {
 	Format   string `xml:"streamFormat"`
 	Quality  string `xml:"quality"`
 	TrackLen int    `xml:"totlen"`
+	Service  string `xml:"service"`
 	Secs     int    `xml:"secs"`
 	State    string `xml:"state"`
 }
