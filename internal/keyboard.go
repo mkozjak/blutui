@@ -58,6 +58,22 @@ func (a *App) KbLibHandler(event *tcell.EventKey) *tcell.EventKey {
 		return tcell.NewEventKey(tcell.KeyPgUp, 0, tcell.ModNone)
 	case tcell.KeyCtrlF:
 		return tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone)
+	case tcell.KeyCtrlD:
+		if a.ArtistPane.HasFocus() == true {
+			a.ArtistPane.SetCurrentItem(a.ArtistPane.GetCurrentItem() + 20)
+			return nil
+		}
+	case tcell.KeyCtrlU:
+		if a.ArtistPane.HasFocus() == true {
+			i := a.ArtistPane.GetCurrentItem()
+			if i < 20 {
+				a.ArtistPane.SetCurrentItem(0)
+			} else {
+				a.ArtistPane.SetCurrentItem(i - 20)
+			}
+
+			return nil
+		}
 	}
 
 	return event
