@@ -3,57 +3,51 @@ package main
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal"
+	"github.com/mkozjak/blutui/internal/library"
+	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/tview"
 )
 
 func main() {
-	a := internal.App{
-		Application:  tview.NewApplication(),
-		Pages:        tview.NewPages(),
-		AlbumArtists: map[string]internal.Artist{},
-		CpArtistIdx:  -1,
-	}
-
-	err := a.FetchData()
+	lib := library.NewLibrary("http://bluesound.local:11000")
+	libc, err := lib.CreateContainer()
 	if err != nil {
 		panic(err)
 	}
 
-	a.CreateArtistPane()
-	a.CreateAlbumPane()
-	a.CreateStatusBar()
-	a.CreateHelpScreen()
+	// libc.AddItem(statusBar, 1, 1, false)
 
-	// library page
-	libFlex := tview.NewFlex().SetDirection(tview.FlexRow).
-		// left and right pane
-		AddItem(tview.NewFlex().
-			AddItem(a.ArtistPane, 0, 1, true).
-			AddItem(a.AlbumPane, 0, 2, false), 0, 1, true).
-		// status bar
-		AddItem(a.StatusBar, 1, 1, false)
+	pUpd := make(chan player.Status)
+	p := player.NewPlayer("http://bluesound.local:11000", pUpd)
 
-	libFlex.SetInputCapture(a.KbLibHandler)
+	// statusBar := statusbar.
 
-	// app
-	a.Pages.AddAndSwitchToPage("library", libFlex, true).
-		AddPage("help", a.HelpScreen, false, false).
-		SetBackgroundColor(tcell.ColorDefault)
+	a := internal.App{
+		Application: tview.NewApplication(),
+	}
+
+	// a.CreateHelpScreen()
+
+	pages := tview.NewPages().
+		AddAndSwitchToPage("library", libc, true).
+		AddPage("help", a.HelpScreen, false, false)
+
+	pages.SetBackgroundColor(tcell.ColorDefault)
 
 	// draw initial album list for the first artist in the list
 	a.Application.SetAfterDrawFunc(func(screen tcell.Screen) {
-		l := a.DrawCurrentArtist(a.Artists[0], a.AlbumPane)
-		a.AlbumPane.SetRows(l...)
+		l := lib.DrawArtistAlbums(lib.Artists[0], lib.AlbumPane)
+		lib.AlbumPane.SetRows(l...)
 
 		// disable callback
 		a.Application.SetAfterDrawFunc(nil)
 	})
 
 	// set global keymap
-	a.Application.SetInputCapture(a.KbGlobalHandler)
+	a.Application.SetInputCapture(a.KeyboardHandler)
 
 	// set app root screen
-	if err := a.Application.SetRoot(a.Pages, true).EnableMouse(true).Run(); err != nil {
+	if err := a.Application.SetRoot(pages, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 }

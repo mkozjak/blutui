@@ -1,4 +1,4 @@
-package internal
+package statusbar
 
 import (
 	"strconv"
@@ -7,9 +7,12 @@ import (
 	"github.com/mkozjak/tview"
 )
 
+type StatusBar struct {
+}
+
 // bottom bar - status
-func (a *App) CreateStatusBar() {
-	a.StatusBar = tview.NewTable().
+func DrawStatusBar() *tview.Table {
+	b := tview.NewTable().
 		SetFixed(1, 3).
 		SetSelectable(false, false).
 		SetCell(0, 0, tview.NewTableCell("connecting").
@@ -26,16 +29,16 @@ func (a *App) CreateStatusBar() {
 			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignRight))
 
-	a.StatusBar.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
+	b.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
 
 	// channel for receiving player status updates
-	a.sbMessages = make(chan Status)
+	// a.sbMessages = make(chan player.Status)
 
 	// start long-polling for updates
-	go a.PollStatus()
+	// go a.PollStatus()
 
 	// start a goroutine for receiving the updates
-	go a.listener()
+	// go a.listener()
 }
 
 func (a *App) listener() {
