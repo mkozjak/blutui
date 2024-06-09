@@ -99,14 +99,14 @@ func (l *Library) CreateContainer() (*tview.Flex, error) {
 		return nil, err
 	}
 
-	artistPane := l.drawArtistPane()
-	albumPane := l.drawAlbumPane()
+	l.artistPane = l.drawArtistPane()
+	l.albumPane = l.drawAlbumPane()
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		// left and right pane
 		AddItem(tview.NewFlex().
-			AddItem(artistPane, 0, 1, true).
-			AddItem(albumPane, 0, 2, false), 0, 1, true)
+			AddItem(l.artistPane, 0, 1, true).
+			AddItem(l.albumPane, 0, 2, false), 0, 1, true)
 
 	flex.SetInputCapture(l.KeyboardHandler)
 

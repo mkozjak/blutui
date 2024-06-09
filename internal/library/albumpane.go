@@ -122,6 +122,7 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 
 func (l *Library) DrawInitAlbums() {
 	r := l.drawArtistAlbums(l.artists[0], l.albumPane)
+
 	l.albumPane.SetRows(r...)
 }
 
