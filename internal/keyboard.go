@@ -1,62 +1,65 @@
 package internal
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/gdamore/tcell/v2"
+	"github.com/mkozjak/blutui/internal/player"
+)
 
-func (a *App) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
+func KeyboardHandler(event *tcell.EventKey, gotoCpArtist func(), quit func(), p *player.Player) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyCtrlQ:
-		a.Application.Stop()
+		quit()
 	}
 
 	switch event.Rune() {
 	case 'p':
-		go a.Playpause()
+		go p.Playpause()
 	case 's':
-		go a.Stop()
+		go p.Stop()
 	case '>':
-		go a.Next()
+		go p.Next()
 	case '<':
-		go a.Previous()
+		go p.Previous()
 	case '+':
-		go a.VolumeHold(true)
+		go p.VolumeHold(true)
 	case '-':
-		go a.VolumeHold(false)
+		go p.VolumeHold(false)
 	case 'm':
-		go a.ToggleMute()
+		go p.ToggleMute()
 	case 'o':
-		if a.playerState == "playing" {
-			a.ArtistPane.SetCurrentItem(a.CpArtistIdx)
+		if p.GetState() == "playing" {
+			gotoCpArtist()
 		}
 	case 'u':
-		go a.RefreshData()
+		// go p.RefreshData()
 	case 'h':
-		p, _ := a.Pages.GetFrontPage()
-		if p != "help" {
-			a.Pages.ShowPage("help")
-			return nil
-		}
+		// p, _ := a.Pages.GetFrontPage()
+		// if p != "help" {
+		// 	a.Pages.ShowPage("help")
+		// 	return nil
+		// }
 	case 'q':
-		a.Application.Stop()
+		quit()
 	}
 
 	return event
 }
 
-func (a *App) KbHelpHandler(event *tcell.EventKey) *tcell.EventKey {
-	switch event.Key() {
-	case tcell.KeyEscape:
-		a.Pages.HidePage("help")
-		return nil
-	}
+// func KbHelpHandler(event *tcell.EventKey) *tcell.EventKey {
+// 	switch event.Key() {
+// 	case tcell.KeyEscape:
+// 		a.Pages.HidePage("help")
+// 		return nil
+// 	}
 
-	switch event.Rune() {
-	case 'h':
-		p, _ := a.Pages.GetFrontPage()
-		if p == "help" {
-			a.Pages.HidePage("help")
-			return nil
-		}
-	}
+// 	switch event.Rune() {
+// 	case 'h':
+// 		p, _ := a.Pages.GetFrontPage()
+// 		if p == "help" {
+// 			a.Pages.HidePage("help")
+// 			return nil
+// 		}
+// 	}
 
-	return event
-}
+// 	return event
+// }

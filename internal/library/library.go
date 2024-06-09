@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	internal "github.com/mkozjak/blutui/internal"
+	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/tview"
 )
 
@@ -66,27 +67,44 @@ type artist struct {
 	albums []album
 }
 
+type Container interface {
+	tview.Primitive
+	AddItem(item tview.Primitive, proportion int, focus bool)
+}
+
+type ContainerWrapper struct {
+	tview.Primitive
+	flex *tview.Flex
+}
+
+func (c *ContainerWrapper) AddItem(item tview.Primitive, proportion int, focus bool) {
+	c.flex.AddItem(item, 0, proportion, focus)
+}
+
 type Library struct {
-	container           *tview.Flex
+	container           *ContainerWrapper
 	API                 string
+	Player              *player.Player
+	focus               func(tview.Primitive) *tview.Application
 	artistPane          *tview.List
 	albumPane           *tview.Grid
 	albumArtists        map[string]artist
 	artists             []string
 	currentArtistAlbums []*tview.List
 	cpArtistIdx         int
-	cpTrackName         string
+	CpTrackName         string
 }
 
-func NewLibrary(api string) *Library {
+func NewLibrary(api string, f func(p tview.Primitive) *tview.Application) *Library {
 	return &Library{
 		API:          api,
 		albumArtists: map[string]artist{},
+		focus:        f,
 		cpArtistIdx:  -1,
 	}
 }
 
-func (l *Library) CreateContainer() (*tview.Flex, error) {
+func (l *Library) CreateContainer() (Container, error) {
 	err := l.fetchData()
 	if err != nil {
 		return nil, err
@@ -95,20 +113,20 @@ func (l *Library) CreateContainer() (*tview.Flex, error) {
 	artistPane := l.drawArtistPane()
 	albumPane := l.drawAlbumPane()
 
-	l.container = tview.NewFlex().SetDirection(tview.FlexRow).
+	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		// left and right pane
 		AddItem(tview.NewFlex().
 			AddItem(artistPane, 0, 1, true).
 			AddItem(albumPane, 0, 2, false), 0, 1, true)
 
-	l.container.SetInputCapture(l.KeyboardHandler)
+	flex.SetInputCapture(l.KeyboardHandler)
 
-	return l.container, nil
+	return &ContainerWrapper{flex: flex}, nil
 }
 
-// func (l *Library) AddItem(item tview.Primitive) {
-// 	l.Container.AddItem(item, 0, proportion int, focus bool)
-// }
+func (l *Library) AddItem(item tview.Primitive, proportion int, focus bool) {
+	l.container.AddItem(item, proportion, focus)
+}
 
 func (l *Library) fetchData() error {
 	cache, err := internal.LoadCache()
@@ -241,7 +259,7 @@ func (l *Library) fetchData() error {
 		}
 	}
 
-	l.artists = internal.SortArtists(l.albumArtists)
+	l.artists = sortArtists(l.albumArtists)
 
 	// Iterate over sorted artist names
 	for _, artistName := range l.artists {
@@ -277,4 +295,19 @@ func (l *Library) getTrackURL(name, artist, album string) (string, string, error
 	}
 
 	return "", "", errors.New("no such track")
+}
+
+func sortArtists(input map[string]artist) []string {
+	// Iterate over the map keys and sort them alphabetically
+	names := make([]string, 0, len(input))
+
+	for n := range input {
+		names = append(names, n)
+	}
+
+	sort.Slice(names, func(i, j int) bool {
+		return strings.ToLower(names[i]) < strings.ToLower(names[j])
+	})
+
+	return names
 }

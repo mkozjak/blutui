@@ -5,12 +5,12 @@ import "github.com/gdamore/tcell/v2"
 func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyTab:
-		if !l.AlbumPane.HasFocus() {
-			a.Application.SetFocus(l.AlbumPane)
-			l.ArtistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
+		if !l.albumPane.HasFocus() {
+			l.focus(l.albumPane)
+			l.artistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
 		} else {
-			l.Application.SetFocus(l.ArtistPane)
-			l.ArtistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
+			l.focus(l.artistPane)
+			l.artistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 		}
 
 		return nil
@@ -19,17 +19,17 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	case tcell.KeyCtrlF:
 		return tcell.NewEventKey(tcell.KeyPgDn, 0, tcell.ModNone)
 	case tcell.KeyCtrlD:
-		if l.ArtistPane.HasFocus() == true {
-			l.ArtistPane.SetCurrentItem(l.ArtistPane.GetCurrentItem() + 20)
+		if l.artistPane.HasFocus() == true {
+			l.artistPane.SetCurrentItem(l.artistPane.GetCurrentItem() + 20)
 			return nil
 		}
 	case tcell.KeyCtrlU:
-		if l.ArtistPane.HasFocus() == true {
-			i := l.ArtistPane.GetCurrentItem()
+		if l.artistPane.HasFocus() == true {
+			i := l.artistPane.GetCurrentItem()
 			if i < 20 {
-				l.ArtistPane.SetCurrentItem(0)
+				l.artistPane.SetCurrentItem(0)
 			} else {
-				l.ArtistPane.SetCurrentItem(i - 20)
+				l.artistPane.SetCurrentItem(i - 20)
 			}
 
 			return nil

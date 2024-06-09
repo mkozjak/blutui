@@ -39,17 +39,22 @@ type Status struct {
 type Player struct {
 	API               string
 	Updates           chan<- Status
+	status            Status
 	volumeHoldCount   int
 	volumeHoldBlocker bool
 	volumeHoldTicker  *time.Ticker
 	volumeHoldMutex   sync.Mutex
 }
 
-func NewPlayer(api string, ch chan<- Status) *Player {
+func NewPlayer(api string, s chan<- Status) *Player {
 	return &Player{
 		API:     api,
-		Updates: ch,
+		Updates: s,
 	}
+}
+
+func (p *Player) GetState() string {
+	return p.status.State
 }
 
 func (p *Player) Play(url string) {
@@ -244,6 +249,7 @@ func (p *Player) PollStatus() {
 			if errors.As(err, &derr) {
 				s := Status{State: "neterr"}
 
+				p.status = s
 				p.Updates <- s
 				continue
 			}
@@ -265,6 +271,7 @@ func (p *Player) PollStatus() {
 			continue
 		}
 
+		p.status = s
 		p.Updates <- s
 		etag = "&etag=" + s.ETag
 		time.Sleep(5 * time.Second)

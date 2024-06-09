@@ -39,7 +39,7 @@ func (l *Library) drawArtistPane() *tview.List {
 			return event
 		})
 
-	for _, artist := range l.Artists {
+	for _, artist := range l.artists {
 		p.AddItem(artist, "", 0, nil)
 	}
 
@@ -48,26 +48,30 @@ func (l *Library) drawArtistPane() *tview.List {
 	return p
 }
 
-func (l *Library) cpHighlightArtist(name string) {
+func (l *Library) SelectCpArtist() {
+	l.artistPane.SetCurrentItem(l.cpArtistIdx)
+}
+
+func (l *Library) HighlightCpArtist(name string) {
 	// clear previously highlighted items
-	if l.CpArtistIdx >= 0 {
-		n, _ := l.ArtistPane.GetItemText(l.CpArtistIdx)
-		l.ArtistPane.SetItemText(l.CpArtistIdx, strings.TrimPrefix(n, "[yellow]"), "")
+	if l.cpArtistIdx >= 0 {
+		n, _ := l.artistPane.GetItemText(l.cpArtistIdx)
+		l.artistPane.SetItemText(l.cpArtistIdx, strings.TrimPrefix(n, "[yellow]"), "")
 	}
 
 	if name == "" {
-		l.CpArtistIdx = -1
+		l.cpArtistIdx = -1
 		return
 	}
 
 	// highlight artist
 	// track is highlighted through a.newAlbumList
-	idx := l.ArtistPane.FindItems(name, "", false, true)
+	idx := l.artistPane.FindItems(name, "", false, true)
 	if len(idx) < 1 {
 		return
 	}
 
-	n, _ := l.ArtistPane.GetItemText(idx[0])
-	l.ArtistPane.SetItemText(idx[0], "[yellow]"+n, "")
-	l.CpArtistIdx = idx[0]
+	n, _ := l.artistPane.GetItemText(idx[0])
+	l.artistPane.SetItemText(idx[0], "[yellow]"+n, "")
+	l.cpArtistIdx = idx[0]
 }

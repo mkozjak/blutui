@@ -5,7 +5,6 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	internal "github.com/mkozjak/blutui/internal"
-	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/tview"
 )
 
@@ -61,7 +60,7 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 		}
 
 		// play track and add subsequent album tracks to queue
-		go player.Play(autoplay)
+		l.Player.Play(autoplay)
 	})
 
 	// set album tracklist keymap
@@ -73,11 +72,11 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 				// skip to next one if available
 				albumIndex, _ := c.GetOffset()
 
-				if albumIndex+1 != len(l.AlbumArtists[artist].albums) {
+				if albumIndex+1 != len(l.albumArtists[artist].albums) {
 					// this will redraw the screen
 					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
 					c.SetOffset(albumIndex+1, 0)
-					a.Application.SetFocus(l.currentArtistAlbums[albumIndex+1])
+					l.focus(l.currentArtistAlbums[albumIndex+1])
 				}
 			}
 
@@ -92,7 +91,7 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 					// this will redraw the screen
 					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
 					c.SetOffset(albumIndex-1, 0)
-					a.Application.SetFocus(l.currentArtistAlbums[albumIndex-1])
+					l.focus(l.currentArtistAlbums[albumIndex-1])
 				}
 			}
 
@@ -111,7 +110,7 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 		SetCustomBorders(internal.NoBorders)
 
 	for _, t := range album.tracks {
-		if l.cpTrackName != "" && l.cpTrackName == internal.CleanTrackName(t.name) {
+		if l.CpTrackName != "" && l.CpTrackName == internal.CleanTrackName(t.name) {
 			trackLst.AddItem("[yellow]"+t.name, "", 0, nil)
 		} else {
 			trackLst.AddItem(t.name, "", 0, nil)
@@ -121,14 +120,19 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 	return trackLst
 }
 
-func (l *Library) DrawArtistAlbums(artist string, c *tview.Grid) []int {
+func (l *Library) DrawInitAlbums() {
+	r := l.drawArtistAlbums(l.artists[0], l.albumPane)
+	l.albumPane.SetRows(r...)
+}
+
+func (l *Library) drawArtistAlbums(artist string, c *tview.Grid) []int {
 	alHeights := []int{}
 	l.currentArtistAlbums = nil
 
 	// remove style from the string
 	cArtist := strings.TrimPrefix(artist, "[yellow]")
 
-	for i, album := range l.AlbumArtists[cArtist].albums {
+	for i, album := range l.albumArtists[cArtist].albums {
 		albumList := l.newAlbumList(cArtist, album, c)
 		alHeights = append(alHeights, len(album.tracks)+2)
 
@@ -149,7 +153,7 @@ func (l *Library) DrawArtistAlbums(artist string, c *tview.Grid) []int {
 
 // draw selected artist's right pane (album items) on artist scroll
 func (l *Library) scrollCb(index int, artist string, _ string, shortcut rune) {
-	l.AlbumPane.Clear()
-	alHeights := l.DrawArtistAlbums(artist, l.AlbumPane)
-	l.AlbumPane.SetRows(alHeights...)
+	l.albumPane.Clear()
+	alHeights := l.drawArtistAlbums(artist, l.albumPane)
+	l.albumPane.SetRows(alHeights...)
 }
