@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	internal "github.com/mkozjak/blutui/internal"
-	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/tview"
 )
 
@@ -67,25 +66,15 @@ type artist struct {
 	albums []album
 }
 
-type Container interface {
-	tview.Primitive
-	AddItem(item tview.Primitive, proportion int, focus bool)
-}
-
-type ContainerWrapper struct {
-	tview.Primitive
-	flex *tview.Flex
-}
-
-func (c *ContainerWrapper) AddItem(item tview.Primitive, proportion int, focus bool) {
-	c.flex.AddItem(item, 0, proportion, focus)
+type ILibrary interface {
+	SetAppFocus(p tview.Primitive)
+	Play(url string)
 }
 
 type Library struct {
-	container           *ContainerWrapper
+	container           *tview.Flex
+	deps                ILibrary
 	API                 string
-	Player              *player.Player
-	focus               func(tview.Primitive) *tview.Application
 	artistPane          *tview.List
 	albumPane           *tview.Grid
 	albumArtists        map[string]artist
@@ -95,16 +84,16 @@ type Library struct {
 	CpTrackName         string
 }
 
-func NewLibrary(api string, f func(p tview.Primitive) *tview.Application) *Library {
+func NewLibrary(api string, deps ILibrary) *Library {
 	return &Library{
+		deps:         deps,
 		API:          api,
 		albumArtists: map[string]artist{},
-		focus:        f,
 		cpArtistIdx:  -1,
 	}
 }
 
-func (l *Library) CreateContainer() (Container, error) {
+func (l *Library) CreateContainer() (*tview.Flex, error) {
 	err := l.fetchData()
 	if err != nil {
 		return nil, err
@@ -121,11 +110,7 @@ func (l *Library) CreateContainer() (Container, error) {
 
 	flex.SetInputCapture(l.KeyboardHandler)
 
-	return &ContainerWrapper{flex: flex}, nil
-}
-
-func (l *Library) AddItem(item tview.Primitive, proportion int, focus bool) {
-	l.container.AddItem(item, proportion, focus)
+	return flex, nil
 }
 
 func (l *Library) fetchData() error {

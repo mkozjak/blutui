@@ -8,34 +8,27 @@ import (
 	"github.com/mkozjak/tview"
 )
 
-type Container interface {
-	tview.Primitive
-}
-
-type ContainerWrapper struct {
-	tview.Primitive
-	table *tview.Table
-}
-
 type IStatusBar interface {
+	HighlightCpArtist(name string)
+	SetCpTrack(name string)
+	GetCurrentPage() string
+	AppDraw()
 }
 
-type Dependencies struct {
-}
-
+// injection target
 type StatusBar struct {
 	container *tview.Table
-	// Library        *library.Library
-	// GetCurrentPage func() string
-	// AppDraw        func()
+	deps      IStatusBar
 }
 
-func NewStatusBar(d Dependencies) *StatusBar {
-	return &StatusBar{}
+func NewStatusBar(deps IStatusBar) *StatusBar {
+	return &StatusBar{
+		deps: deps,
+	}
 }
 
 // bottom bar - status
-func (sb *StatusBar) CreateContainer() (Container, error) {
+func (sb *StatusBar) CreateContainer() (*tview.Table, error) {
 	t := tview.NewTable().
 		SetFixed(1, 3).
 		SetSelectable(false, false).
@@ -55,7 +48,7 @@ func (sb *StatusBar) CreateContainer() (Container, error) {
 
 	t.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
 
-	return &ContainerWrapper{table: t}, nil
+	return t, nil
 }
 
 func (sb *StatusBar) Listen(ch <-chan player.Status) {
@@ -70,8 +63,8 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			cpTitle = s.Artist + " - " + s.Track
 			cpFormat = s.Format
 			cpQuality = s.Quality
-			sb.Library.HighlightCpArtist(s.Artist)
-			sb.Library.CpTrackName = s.Track
+			sb.deps.HighlightCpArtist(s.Artist)
+			sb.deps.SetCpTrack(s.Track)
 		case "stream":
 			s.State = "streaming"
 			cpTitle = s.Title2
@@ -82,8 +75,8 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			cpTitle = ""
 			cpFormat = ""
 			cpQuality = ""
-			sb.Library.HighlightCpArtist("")
-			sb.Library.CpTrackName = ""
+			sb.deps.HighlightCpArtist("")
+			sb.deps.SetCpTrack("")
 		case "pause":
 			s.State = "paused"
 
@@ -108,7 +101,7 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			cpQuality = ""
 		}
 
-		currPage := sb.GetCurrentPage()
+		currPage := sb.deps.GetCurrentPage()
 		format := ""
 		if cpQuality != "" || cpFormat != "" {
 			format = " | " + cpQuality + " " + cpFormat
@@ -118,6 +111,6 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			" | " + s.State + format)
 		sb.container.GetCell(0, 1).SetText(cpTitle)
 		sb.container.GetCell(0, 2).SetText(currPage)
-		sb.AppDraw()
+		sb.deps.AppDraw()
 	}
 }
