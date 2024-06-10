@@ -172,6 +172,7 @@ func ExtractAlbumYear(y string) (int, error) {
 	return 0, errors.New("invalid date format")
 }
 
+// CleanTrackName removes prefixes such as track numbers
 func CleanTrackName(n string) string {
 	re := regexp.MustCompile(`^\d+\.\s`)
 	return re.ReplaceAllString(n, "")

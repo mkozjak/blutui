@@ -15,8 +15,10 @@ func main() {
 	// Create main app
 	a := app.NewApp()
 
+	// Create Player and start http long-polling Bluesound for updates
 	pUpd := make(chan player.Status)
 	p := player.NewPlayer("http://bluesound.local:11000", pUpd)
+	a.Player = p
 
 	// Create Library Page
 	lib := library.NewLibrary("http://bluesound.local:11000", a, p)
@@ -35,18 +37,12 @@ func main() {
 	}
 
 	go sb.Listen(pUpd)
+	go p.PollStatus()
 
 	libc.AddItem(sbc, 1, 1, false)
 
-	// Create Player and start http long-polling Bluesound for updates
-
-	a.Player = p
-
-	go p.PollStatus()
-
 	a.Pages = tview.NewPages().
 		AddAndSwitchToPage("library", libc, true)
-		// AddPage("help", a.HelpScreen, false, false)
 
 	a.Pages.SetBackgroundColor(tcell.ColorDefault)
 
