@@ -66,6 +66,13 @@ type artist struct {
 	albums []album
 }
 
+type Command interface {
+	SelectCpArtist()
+	HighlightCpArtist(name string)
+	SetCpTrackName(name string)
+}
+
+// FIXME: redo this. it is too generic
 type ILibrary interface {
 	SetAppFocus(p tview.Primitive)
 	Play(url string)
@@ -280,6 +287,10 @@ func (l *Library) getTrackURL(name, artist, album string) (string, string, error
 	}
 
 	return "", "", errors.New("no such track")
+}
+
+func (l *Library) SetCpTrackName(name string) {
+	l.CpTrackName = name
 }
 
 func sortArtists(input map[string]artist) []string {

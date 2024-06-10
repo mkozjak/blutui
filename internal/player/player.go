@@ -36,6 +36,16 @@ type Status struct {
 	State    string `xml:"state"`
 }
 
+type Command interface {
+	Playpause()
+	Stop()
+	Next()
+	Previous()
+	VolumeHold(bool)
+	ToggleMute()
+	GetState() string
+}
+
 type Player struct {
 	API               string
 	Updates           chan<- Status

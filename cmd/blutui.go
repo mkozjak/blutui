@@ -3,51 +3,17 @@ package main
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal"
+	"github.com/mkozjak/blutui/internal/app"
+	"github.com/mkozjak/blutui/internal/keyboard"
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/blutui/internal/statusbar"
 	"github.com/mkozjak/tview"
 )
 
-type App struct {
-	Application *tview.Application
-	Pages       *tview.Pages
-	Library     *library.Library
-	StatusBar   *tview.Table
-	HelpScreen  *tview.Modal
-	Player      *player.Player
-}
-
-func (a *App) AppDraw() {
-	a.Application.Draw()
-}
-
-func (a *App) Play(url string) {
-	go a.Player.Play(url)
-}
-
-func (a *App) GetCurrentPage() string {
-	n, _ := a.Pages.GetFrontPage()
-	return n
-}
-
-func (a *App) HighlightCpArtist(name string) {
-	a.Library.HighlightCpArtist(name)
-}
-
-func (a *App) SetAppFocus(p tview.Primitive) {
-	a.Application.SetFocus(p)
-}
-
-func (a *App) SetCpTrack(name string) {
-	a.Library.CpTrackName = name
-}
-
 func main() {
 	// Create main app
-	a := &App{
-		Application: tview.NewApplication(),
-	}
+	a := app.NewApp()
 
 	pUpd := make(chan player.Status)
 
@@ -61,7 +27,7 @@ func main() {
 	// Create Status Bar container and attach it to Library
 	// Hand over the Library instance to Status Bar
 	// Start listening for Player updates
-	sb := statusbar.NewStatusBar(a)
+	sb := statusbar.NewStatusBar(a, a.Library)
 	sbc, err := sb.CreateContainer()
 	if err != nil {
 		panic(err)
@@ -69,7 +35,7 @@ func main() {
 
 	go sb.Listen(pUpd)
 
-	libc.AddItem(sbc, 0, 1, false)
+	libc.AddItem(sbc, 1, 1, false)
 
 	// Create Player and hand the instance over to App and Library
 	// Start http long-polling Bluesound for updates
@@ -77,8 +43,6 @@ func main() {
 	a.Player = p
 
 	go p.PollStatus()
-
-	// a.CreateHelpScreen()
 
 	a.Pages = tview.NewPages().
 		AddAndSwitchToPage("library", libc, true)
@@ -93,10 +57,15 @@ func main() {
 		a.Application.SetAfterDrawFunc(nil)
 	})
 
-	// Set global keymap
-	a.Application.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		return internal.KeyboardHandler(event, a.Library.SelectCpArtist, a.Application.Stop, p)
-	})
+	// Configure global keybindings
+	gk := keyboard.NewGlobalHandler(a.Application, a.Player, a.Library, a.Pages)
+	a.Application.SetInputCapture(gk.Listen)
+
+	// Configure helpscreen keybindings
+	// Attach helpscreen to the app
+	hk := keyboard.NewHelpHandler(a.Pages)
+	h := internal.CreateHelpScreen(hk.Listen)
+	a.Pages.AddPage("help", h, false, false)
 
 	// Set app root screen
 	if err := a.Application.SetRoot(a.Pages, true).EnableMouse(true).Run(); err != nil {

@@ -4,26 +4,24 @@ import (
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/mkozjak/blutui/internal/app"
+	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/tview"
 )
 
-type IStatusBar interface {
-	HighlightCpArtist(name string)
-	SetCpTrack(name string)
-	GetCurrentPage() string
-	AppDraw()
-}
-
 // injection target
 type StatusBar struct {
 	container *tview.Table
-	deps      IStatusBar
+	app       *app.App
+	library   library.Command
 }
 
-func NewStatusBar(deps IStatusBar) *StatusBar {
+func NewStatusBar(a *app.App, l library.Command) *StatusBar {
+	// FIXME: this one is messy, as app includes lib in itself
 	return &StatusBar{
-		deps: deps,
+		app:     a,
+		library: l,
 	}
 }
 
@@ -32,7 +30,7 @@ func (sb *StatusBar) CreateContainer() (*tview.Table, error) {
 	sb.container = tview.NewTable().
 		SetFixed(1, 3).
 		SetSelectable(false, false).
-		SetCell(0, 0, tview.NewTableCell("connecting").
+		SetCell(0, 0, tview.NewTableCell("processing").
 			SetExpansion(1).
 			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignLeft)).
@@ -63,8 +61,8 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			cpTitle = s.Artist + " - " + s.Track
 			cpFormat = s.Format
 			cpQuality = s.Quality
-			sb.deps.HighlightCpArtist(s.Artist)
-			sb.deps.SetCpTrack(s.Track)
+			sb.library.HighlightCpArtist(s.Artist)
+			sb.library.SetCpTrackName(s.Track)
 		case "stream":
 			s.State = "streaming"
 			cpTitle = s.Title2
@@ -75,8 +73,8 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			cpTitle = ""
 			cpFormat = ""
 			cpQuality = ""
-			sb.deps.HighlightCpArtist("")
-			sb.deps.SetCpTrack("")
+			sb.library.HighlightCpArtist("")
+			sb.library.SetCpTrackName("")
 		case "pause":
 			s.State = "paused"
 
@@ -100,7 +98,7 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			cpFormat = ""
 			cpQuality = ""
 		}
-		currPage := sb.deps.GetCurrentPage()
+		currPage := sb.app.GetCurrentPage()
 		format := ""
 		if cpQuality != "" || cpFormat != "" {
 			format = " | " + cpQuality + " " + cpFormat
@@ -110,6 +108,6 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			" | " + s.State + format)
 		sb.container.GetCell(0, 1).SetText(cpTitle)
 		sb.container.GetCell(0, 2).SetText(currPage)
-		sb.deps.AppDraw()
+		sb.app.AppDraw()
 	}
 }
