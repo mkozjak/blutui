@@ -18,7 +18,6 @@ type StatusBar struct {
 }
 
 func NewStatusBar(a app.Command, l library.Command) *StatusBar {
-	// FIXME: this one is messy, as app includes lib in itself
 	return &StatusBar{
 		app:     a,
 		library: l,

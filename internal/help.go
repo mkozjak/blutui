@@ -5,15 +5,42 @@ import (
 	"github.com/mkozjak/tview"
 )
 
+// This is a library help screen
+// TODO: bind to Library
 func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview.Modal {
-	// TODO: do this the smarter way
+	var text string
+	keybindings := map[string]string{
+		"start playback":                   "↵",
+		"play/pause":                       "p",
+		"stop":                             "s",
+		"next song":                        ">",
+		"previous song":                    "<",
+		"volume up":                        "+",
+		"volume down":                      "-",
+		"toggle mute":                      "m",
+		"page down":                        "ctrl+f",
+		"page up":                          "ctrl+b",
+		"half page down":                   "ctrl+d",
+		"half page up":                     "ctrl+u",
+		"jump to currently playing artist": "o",
+		"update library":                   "u",
+		"show this screen":                 "h",
+		"quit app":                         "q",
+	}
+
+	order := []string{
+		"start playback", "play/pause", "stop", "next song", "previous song",
+		"volume up", "volume down", "toggle mute", "page down", "page up",
+		"half page down", "half page up", "jump to currently playing artist",
+		"update library", "show this screen", "quit",
+	}
+
+	for _, action := range order {
+		text = text + keybindings[action] + " - " + action + "\n"
+	}
+
 	c := tview.NewModal().
-		SetText("↵ - start playback\np - play/pause\ns - stop\n> - next song\n" +
-			"< - previous song\n+ - volume up\n- - volume down\nm - toggle mute\n" +
-			"ctrl+f - page down\nctrl+b - page up\n" +
-			"ctrl+d - half page down\nctrl+u - half page up\n" +
-			"o - jump to currently playing artist\nu - update library\n" +
-			"h - show help screen\nq - quit app").
+		SetText(text).
 		SetBackgroundColor(tcell.ColorDefault)
 
 	c.SetInputCapture(listen).
