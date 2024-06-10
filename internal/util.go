@@ -10,8 +10,6 @@ import (
 	"net/http/httputil"
 	"os"
 	"regexp"
-	"sort"
-	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -19,6 +17,15 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
+
+type Cache struct {
+	Data map[string]CacheItem
+}
+
+type CacheItem struct {
+	Response   []byte
+	Expiration time.Time
+}
 
 func LoadCache() (*Cache, error) {
 	cache := &Cache{Data: make(map[string]CacheItem)}
@@ -99,21 +106,6 @@ func FetchAndCache(url string, cache *Cache) ([]byte, error) {
 	return body, nil
 }
 
-func SortArtists(input map[string]Artist) []string {
-	// Iterate over the map keys and sort them alphabetically
-	names := make([]string, 0, len(input))
-
-	for n := range input {
-		names = append(names, n)
-	}
-
-	sort.Slice(names, func(i, j int) bool {
-		return strings.ToLower(names[i]) < strings.ToLower(names[j])
-	})
-
-	return names
-}
-
 func Log(data ...interface{}) error {
 	file, err := os.Create("/tmp/debug.log")
 	if err != nil {
@@ -180,7 +172,7 @@ func ExtractAlbumYear(y string) (int, error) {
 	return 0, errors.New("invalid date format")
 }
 
-func cleanTrackName(n string) string {
+func CleanTrackName(n string) string {
 	re := regexp.MustCompile(`^\d+\.\s`)
 	return re.ReplaceAllString(n, "")
 }

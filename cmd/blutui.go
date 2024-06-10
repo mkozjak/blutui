@@ -3,56 +3,71 @@ package main
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal"
+	"github.com/mkozjak/blutui/internal/app"
+	"github.com/mkozjak/blutui/internal/keyboard"
+	"github.com/mkozjak/blutui/internal/library"
+	"github.com/mkozjak/blutui/internal/player"
+	"github.com/mkozjak/blutui/internal/statusbar"
 	"github.com/mkozjak/tview"
 )
 
 func main() {
-	a := internal.App{
-		Application:  tview.NewApplication(),
-		Pages:        tview.NewPages(),
-		AlbumArtists: map[string]internal.Artist{},
-		CpArtistIdx:  -1,
-	}
+	// Create main app
+	a := app.NewApp()
 
-	err := a.FetchData()
+	pUpd := make(chan player.Status)
+
+	// Create Library Page
+	a.Library = library.NewLibrary("http://bluesound.local:11000", a)
+	libc, err := a.Library.CreateContainer()
 	if err != nil {
 		panic(err)
 	}
 
-	a.CreateArtistPane()
-	a.CreateAlbumPane()
-	a.CreateStatusBar()
-	a.CreateHelpScreen()
+	// Create Status Bar container and attach it to Library
+	// Hand over the Library instance to Status Bar
+	// Start listening for Player updates
+	sb := statusbar.NewStatusBar(a, a.Library)
+	sbc, err := sb.CreateContainer()
+	if err != nil {
+		panic(err)
+	}
 
-	// library page
-	libFlex := tview.NewFlex().SetDirection(tview.FlexRow).
-		// left and right pane
-		AddItem(tview.NewFlex().
-			AddItem(a.ArtistPane, 0, 1, true).
-			AddItem(a.AlbumPane, 0, 2, false), 0, 1, true).
-		// status bar
-		AddItem(a.StatusBar, 1, 1, false)
+	go sb.Listen(pUpd)
 
-	libFlex.SetInputCapture(a.KbLibHandler)
+	libc.AddItem(sbc, 1, 1, false)
 
-	// app
-	a.Pages.AddAndSwitchToPage("library", libFlex, true).
-		AddPage("help", a.HelpScreen, false, false).
-		SetBackgroundColor(tcell.ColorDefault)
+	// Create Player and hand the instance over to App and Library
+	// Start http long-polling Bluesound for updates
+	p := player.NewPlayer("http://bluesound.local:11000", pUpd)
+	a.Player = p
 
-	// draw initial album list for the first artist in the list
+	go p.PollStatus()
+
+	a.Pages = tview.NewPages().
+		AddAndSwitchToPage("library", libc, true)
+		// AddPage("help", a.HelpScreen, false, false)
+
+	a.Pages.SetBackgroundColor(tcell.ColorDefault)
+
+	// Draw initial album list for the first artist in the list
+	// Disable callback afterwards
 	a.Application.SetAfterDrawFunc(func(screen tcell.Screen) {
-		l := a.DrawCurrentArtist(a.Artists[0], a.AlbumPane)
-		a.AlbumPane.SetRows(l...)
-
-		// disable callback
+		a.Library.DrawInitAlbums()
 		a.Application.SetAfterDrawFunc(nil)
 	})
 
-	// set global keymap
-	a.Application.SetInputCapture(a.KbGlobalHandler)
+	// Configure global keybindings
+	gk := keyboard.NewGlobalHandler(a.Application, a.Player, a.Library, a.Pages)
+	a.Application.SetInputCapture(gk.Listen)
 
-	// set app root screen
+	// Configure helpscreen keybindings
+	// Attach helpscreen to the app
+	hk := keyboard.NewHelpHandler(a.Pages)
+	h := internal.CreateHelpScreen(hk.Listen)
+	a.Pages.AddPage("help", h, false, false)
+
+	// Set app root screen
 	if err := a.Application.SetRoot(a.Pages, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}

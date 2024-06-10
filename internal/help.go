@@ -5,9 +5,9 @@ import (
 	"github.com/mkozjak/tview"
 )
 
-func (a *App) CreateHelpScreen() {
+func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview.Modal {
 	// TODO: do this the smarter way
-	a.HelpScreen = tview.NewModal().
+	c := tview.NewModal().
 		SetText("↵ - start playback\np - play/pause\ns - stop\n> - next song\n" +
 			"< - previous song\n+ - volume up\n- - volume down\nm - toggle mute\n" +
 			"ctrl+f - page down\nctrl+b - page up\n" +
@@ -16,10 +16,12 @@ func (a *App) CreateHelpScreen() {
 			"h - show help screen\nq - quit app").
 		SetBackgroundColor(tcell.ColorDefault)
 
-	a.HelpScreen.SetInputCapture(a.KbHelpHandler).
+	c.SetInputCapture(listen).
 		SetBorder(true).
 		SetTitle("[::b]Keybindings").
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetCustomBorders(CustomBorders)
+
+	return c
 }

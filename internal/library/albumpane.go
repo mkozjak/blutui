@@ -1,27 +1,32 @@
-package internal
+package library
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
+	internal "github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/tview"
 )
 
 // right pane - albums
-func (a *App) CreateAlbumPane() {
-	a.AlbumPane = tview.NewGrid().
+func (l *Library) drawAlbumPane() *tview.Grid {
+	p := tview.NewGrid().
 		SetColumns(0)
 
-	a.AlbumPane.SetTitle(" [::b]Track ").
+	p.SetTitle(" [::b]Track ").
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(CustomBorders)
+		SetCustomBorders(internal.CustomBorders)
+
+	return p
 }
 
-func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.List {
+func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview.List {
 	textStyle := tcell.Style{}
 	textStyle.Background(tcell.ColorDefault)
-	d := FormatDuration(album.duration)
+	d := internal.FormatDuration(album.duration)
 
 	trackLst := tview.NewList().
 		SetHighlightFullLine(true).
@@ -49,13 +54,13 @@ func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.Lis
 	})
 
 	trackLst.SetSelectedFunc(func(i int, trackName, _ string, sh rune) {
-		_, autoplay, err := a.getTrackURL(trackName, artist, album.name)
+		_, autoplay, err := l.getTrackURL(trackName, artist, album.name)
 		if err != nil {
 			panic(err)
 		}
 
 		// play track and add subsequent album tracks to queue
-		go a.Play(autoplay)
+		l.deps.Play(autoplay)
 	})
 
 	// set album tracklist keymap
@@ -67,11 +72,11 @@ func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.Lis
 				// skip to next one if available
 				albumIndex, _ := c.GetOffset()
 
-				if albumIndex+1 != len(a.AlbumArtists[artist].albums) {
+				if albumIndex+1 != len(l.albumArtists[artist].albums) {
 					// this will redraw the screen
 					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
 					c.SetOffset(albumIndex+1, 0)
-					a.Application.SetFocus(a.currentArtistAlbums[albumIndex+1])
+					l.deps.SetAppFocus(l.currentArtistAlbums[albumIndex+1])
 				}
 			}
 
@@ -86,7 +91,7 @@ func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.Lis
 					// this will redraw the screen
 					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
 					c.SetOffset(albumIndex-1, 0)
-					a.Application.SetFocus(a.currentArtistAlbums[albumIndex-1])
+					l.deps.SetAppFocus(l.currentArtistAlbums[albumIndex-1])
 				}
 			}
 
@@ -102,10 +107,10 @@ func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.Lis
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(noBorders)
+		SetCustomBorders(internal.NoBorders)
 
 	for _, t := range album.tracks {
-		if a.cpTrackName != "" && a.cpTrackName == cleanTrackName(t.name) {
+		if l.CpTrackName != "" && l.CpTrackName == internal.CleanTrackName(t.name) {
 			trackLst.AddItem("[yellow]"+t.name, "", 0, nil)
 		} else {
 			trackLst.AddItem(t.name, "", 0, nil)
@@ -113,4 +118,42 @@ func (a *App) newAlbumList(artist string, album album, c *tview.Grid) *tview.Lis
 	}
 
 	return trackLst
+}
+
+func (l *Library) DrawInitAlbums() {
+	r := l.drawArtistAlbums(l.artists[0], l.albumPane)
+	l.albumPane.SetRows(r...)
+}
+
+func (l *Library) drawArtistAlbums(artist string, c *tview.Grid) []int {
+	alHeights := []int{}
+	l.currentArtistAlbums = nil
+
+	// remove style from the string
+	cArtist := strings.TrimPrefix(artist, "[yellow]")
+
+	for i, album := range l.albumArtists[cArtist].albums {
+		albumList := l.newAlbumList(cArtist, album, c)
+		alHeights = append(alHeights, len(album.tracks)+2)
+
+		// automatically focus the first track from the first album
+		// since grid is the parent, it will automatically lose focus
+		// and give it to the first album
+		if i == 0 {
+			c.AddItem(albumList, i, 0, 1, 1, 0, 0, true)
+		} else {
+			c.AddItem(albumList, i, 0, 1, 1, 0, 0, false)
+		}
+
+		l.currentArtistAlbums = append(l.currentArtistAlbums, albumList)
+	}
+
+	return alHeights
+}
+
+// draw selected artist's right pane (album items) on artist scroll
+func (l *Library) scrollCb(index int, artist string, _ string, shortcut rune) {
+	l.albumPane.Clear()
+	alHeights := l.drawArtistAlbums(artist, l.albumPane)
+	l.albumPane.SetRows(alHeights...)
 }

@@ -1,18 +1,36 @@
-package internal
+package statusbar
 
 import (
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/mkozjak/blutui/internal/app"
+	"github.com/mkozjak/blutui/internal/library"
+	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/tview"
 )
 
+// injection target
+type StatusBar struct {
+	container *tview.Table
+	app       *app.App
+	library   library.Command
+}
+
+func NewStatusBar(a *app.App, l library.Command) *StatusBar {
+	// FIXME: this one is messy, as app includes lib in itself
+	return &StatusBar{
+		app:     a,
+		library: l,
+	}
+}
+
 // bottom bar - status
-func (a *App) CreateStatusBar() {
-	a.StatusBar = tview.NewTable().
+func (sb *StatusBar) CreateContainer() (*tview.Table, error) {
+	sb.container = tview.NewTable().
 		SetFixed(1, 3).
 		SetSelectable(false, false).
-		SetCell(0, 0, tview.NewTableCell("connecting").
+		SetCell(0, 0, tview.NewTableCell("processing").
 			SetExpansion(1).
 			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignLeft)).
@@ -26,20 +44,13 @@ func (a *App) CreateStatusBar() {
 			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignRight))
 
-	a.StatusBar.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
+	sb.container.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
 
-	// channel for receiving player status updates
-	a.sbMessages = make(chan Status)
-
-	// start long-polling for updates
-	go a.PollStatus()
-
-	// start a goroutine for receiving the updates
-	go a.listener()
+	return sb.container, nil
 }
 
-func (a *App) listener() {
-	for s := range a.sbMessages {
+func (sb *StatusBar) Listen(ch <-chan player.Status) {
+	for s := range ch {
 		var cpTitle string
 		var cpFormat string
 		var cpQuality string
@@ -50,8 +61,8 @@ func (a *App) listener() {
 			cpTitle = s.Artist + " - " + s.Track
 			cpFormat = s.Format
 			cpQuality = s.Quality
-			a.cpHighlightArtist(s.Artist)
-			a.cpTrackName = s.Track
+			sb.library.HighlightCpArtist(s.Artist)
+			sb.library.SetCpTrackName(s.Track)
 		case "stream":
 			s.State = "streaming"
 			cpTitle = s.Title2
@@ -62,8 +73,8 @@ func (a *App) listener() {
 			cpTitle = ""
 			cpFormat = ""
 			cpQuality = ""
-			a.cpHighlightArtist("")
-			a.cpTrackName = ""
+			sb.library.HighlightCpArtist("")
+			sb.library.SetCpTrackName("")
 		case "pause":
 			s.State = "paused"
 
@@ -87,18 +98,16 @@ func (a *App) listener() {
 			cpFormat = ""
 			cpQuality = ""
 		}
-
-		currPage, _ := a.Pages.GetFrontPage()
+		currPage := sb.app.GetCurrentPage()
 		format := ""
 		if cpQuality != "" || cpFormat != "" {
 			format = " | " + cpQuality + " " + cpFormat
 		}
 
-		a.playerState = s.State
-		a.StatusBar.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) +
+		sb.container.GetCell(0, 0).SetText("vol: " + strconv.Itoa(s.Volume) +
 			" | " + s.State + format)
-		a.StatusBar.GetCell(0, 1).SetText(cpTitle)
-		a.StatusBar.GetCell(0, 2).SetText(currPage)
-		a.Application.Draw()
+		sb.container.GetCell(0, 1).SetText(cpTitle)
+		sb.container.GetCell(0, 2).SetText(currPage)
+		sb.app.AppDraw()
 	}
 }
