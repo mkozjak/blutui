@@ -29,7 +29,7 @@ func NewStatusBar(deps IStatusBar) *StatusBar {
 
 // bottom bar - status
 func (sb *StatusBar) CreateContainer() (*tview.Table, error) {
-	t := tview.NewTable().
+	sb.container = tview.NewTable().
 		SetFixed(1, 3).
 		SetSelectable(false, false).
 		SetCell(0, 0, tview.NewTableCell("connecting").
@@ -46,9 +46,9 @@ func (sb *StatusBar) CreateContainer() (*tview.Table, error) {
 			SetTextColor(tcell.ColorDefault).
 			SetAlign(tview.AlignRight))
 
-	t.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
+	sb.container.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
 
-	return t, nil
+	return sb.container, nil
 }
 
 func (sb *StatusBar) Listen(ch <-chan player.Status) {
@@ -100,7 +100,6 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			cpFormat = ""
 			cpQuality = ""
 		}
-
 		currPage := sb.deps.GetCurrentPage()
 		format := ""
 		if cpQuality != "" || cpFormat != "" {
