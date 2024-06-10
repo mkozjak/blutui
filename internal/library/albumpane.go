@@ -60,7 +60,7 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 		}
 
 		// play track and add subsequent album tracks to queue
-		l.deps.Play(autoplay)
+		l.player.Play(autoplay)
 	})
 
 	// set album tracklist keymap
@@ -76,7 +76,7 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 					// this will redraw the screen
 					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
 					c.SetOffset(albumIndex+1, 0)
-					l.deps.SetAppFocus(l.currentArtistAlbums[albumIndex+1])
+					l.app.SetFocus(l.currentArtistAlbums[albumIndex+1])
 				}
 			}
 
@@ -91,7 +91,7 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 					// this will redraw the screen
 					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
 					c.SetOffset(albumIndex-1, 0)
-					l.deps.SetAppFocus(l.currentArtistAlbums[albumIndex-1])
+					l.app.SetFocus(l.currentArtistAlbums[albumIndex-1])
 				}
 			}
 

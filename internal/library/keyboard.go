@@ -6,10 +6,10 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyTab:
 		if !l.albumPane.HasFocus() {
-			l.deps.SetAppFocus(l.albumPane)
+			l.app.SetFocus(l.albumPane)
 			l.artistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
 		} else {
-			l.deps.SetAppFocus(l.artistPane)
+			l.app.SetFocus(l.artistPane)
 			l.artistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 		}
 

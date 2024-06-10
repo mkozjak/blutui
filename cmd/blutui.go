@@ -16,10 +16,11 @@ func main() {
 	a := app.NewApp()
 
 	pUpd := make(chan player.Status)
+	p := player.NewPlayer("http://bluesound.local:11000", pUpd)
 
 	// Create Library Page
-	a.Library = library.NewLibrary("http://bluesound.local:11000", a)
-	libc, err := a.Library.CreateContainer()
+	lib := library.NewLibrary("http://bluesound.local:11000", a, p)
+	libc, err := lib.CreateContainer()
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +28,7 @@ func main() {
 	// Create Status Bar container and attach it to Library
 	// Hand over the Library instance to Status Bar
 	// Start listening for Player updates
-	sb := statusbar.NewStatusBar(a, a.Library)
+	sb := statusbar.NewStatusBar(a, lib)
 	sbc, err := sb.CreateContainer()
 	if err != nil {
 		panic(err)
@@ -37,9 +38,8 @@ func main() {
 
 	libc.AddItem(sbc, 1, 1, false)
 
-	// Create Player and hand the instance over to App and Library
-	// Start http long-polling Bluesound for updates
-	p := player.NewPlayer("http://bluesound.local:11000", pUpd)
+	// Create Player and start http long-polling Bluesound for updates
+
 	a.Player = p
 
 	go p.PollStatus()
@@ -53,12 +53,12 @@ func main() {
 	// Draw initial album list for the first artist in the list
 	// Disable callback afterwards
 	a.Application.SetAfterDrawFunc(func(screen tcell.Screen) {
-		a.Library.DrawInitAlbums()
+		lib.DrawInitAlbums()
 		a.Application.SetAfterDrawFunc(nil)
 	})
 
 	// Configure global keybindings
-	gk := keyboard.NewGlobalHandler(a.Application, a.Player, a.Library, a.Pages)
+	gk := keyboard.NewGlobalHandler(a, a.Player, lib, a.Pages)
 	a.Application.SetInputCapture(gk.Listen)
 
 	// Configure helpscreen keybindings

@@ -13,11 +13,11 @@ import (
 // injection target
 type StatusBar struct {
 	container *tview.Table
-	app       *app.App
+	app       app.Command
 	library   library.Command
 }
 
-func NewStatusBar(a *app.App, l library.Command) *StatusBar {
+func NewStatusBar(a app.Command, l library.Command) *StatusBar {
 	// FIXME: this one is messy, as app includes lib in itself
 	return &StatusBar{
 		app:     a,
@@ -108,6 +108,6 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			" | " + s.State + format)
 		sb.container.GetCell(0, 1).SetText(cpTitle)
 		sb.container.GetCell(0, 2).SetText(currPage)
-		sb.app.AppDraw()
+		sb.app.Draw()
 	}
 }

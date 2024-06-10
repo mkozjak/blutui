@@ -37,6 +37,7 @@ type Status struct {
 }
 
 type Command interface {
+	Play(url string)
 	Playpause()
 	Stop()
 	Next()

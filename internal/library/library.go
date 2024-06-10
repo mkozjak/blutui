@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	internal "github.com/mkozjak/blutui/internal"
+	"github.com/mkozjak/blutui/internal/app"
+	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/tview"
 )
 
@@ -72,15 +74,10 @@ type Command interface {
 	SetCpTrackName(name string)
 }
 
-// FIXME: redo this. it is too generic
-type ILibrary interface {
-	SetAppFocus(p tview.Primitive)
-	Play(url string)
-}
-
 type Library struct {
 	container           *tview.Flex
-	deps                ILibrary
+	app                 app.Command
+	player              player.Command
 	API                 string
 	artistPane          *tview.List
 	albumPane           *tview.Grid
@@ -91,9 +88,10 @@ type Library struct {
 	CpTrackName         string
 }
 
-func NewLibrary(api string, deps ILibrary) *Library {
+func NewLibrary(api string, a app.Command, p player.Command) *Library {
 	return &Library{
-		deps:         deps,
+		app:          a,
+		player:       p,
 		API:          api,
 		albumArtists: map[string]artist{},
 		cpArtistIdx:  -1,
