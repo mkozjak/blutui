@@ -52,7 +52,7 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 	case 'm':
 		go h.player.ToggleMute()
 	case 'o':
-		if h.player.GetState() == "playing" {
+		if h.player.GetState() == "play" {
 			h.library.SelectCpArtist()
 		}
 	case 'u':
