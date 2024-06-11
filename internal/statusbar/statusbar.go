@@ -60,8 +60,17 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			cpTitle = s.Artist + " - " + s.Track
 			cpFormat = s.Format
 			cpQuality = s.Quality
-			sb.library.HighlightCpArtist(s.Artist)
-			sb.library.SetCpTrackName(s.Track)
+
+			// TODO: should probably be done elsewhere
+			if sb.app.GetCurrentPage() == "library" {
+				if s.Service == "LocalMusic" {
+					sb.library.HighlightCpArtist(s.Artist)
+					sb.library.SetCpTrackName(s.Track)
+				} else {
+					sb.library.HighlightCpArtist("")
+					sb.library.SetCpTrackName("")
+				}
+			}
 		case "stream":
 			s.State = "streaming"
 			cpTitle = s.Title2
@@ -97,6 +106,7 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 			cpFormat = ""
 			cpQuality = ""
 		}
+
 		currPage := sb.app.GetCurrentPage()
 		format := ""
 		if cpQuality != "" || cpFormat != "" {
