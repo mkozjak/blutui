@@ -182,7 +182,7 @@ func CleanTrackName(n string) string {
 
 // JWSimilarity is the implementation of Jaro-Winkler similarity metric
 // It returns 1 if there's a 100% match and 0 if there's no matching characters.
-func JWDistance(s1, s2 string) float64 {
+func JWSimilarity(s1, s2 string) float64 {
 	s1 = strings.ToLower(s1)
 	s2 = strings.ToLower(s2)
 
