@@ -40,3 +40,23 @@ func BenchmarkJWSimilarity(b *testing.B) {
 
 	result = r
 }
+
+func BenchmarkNoJWSimilarity(b *testing.B) {
+	var r float64
+
+	for n := 0; n < b.N; n++ {
+		r = JWSimilarity("foo", "bar")
+	}
+
+	result = r
+}
+
+func BenchmarkExactJWSimilarity(b *testing.B) {
+	var r float64
+
+	for n := 0; n < b.N; n++ {
+		r = JWSimilarity("london", "london")
+	}
+
+	result = r
+}
