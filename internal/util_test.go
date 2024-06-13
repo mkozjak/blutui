@@ -1,62 +1,51 @@
 package internal
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestJWSimilarity(t *testing.T) {
-	var d float64
-
-	d = JWSimilarity("faremviel", "farmville")
-	if d != 0.91898 {
-		t.Error("Expected 0.91898, got ", d)
+	type test struct {
+		s1   string
+		s2   string
+		want float64
 	}
-}
 
-func TestNoJWSimilarity(t *testing.T) {
-	var d float64
-
-	d = JWSimilarity("foo", "bar")
-	if d != 0 {
-		t.Error("Expected 0, got ", d)
+	tests := []test{
+		{s1: "faremviel", s2: "farmville", want: 0.91898},
+		{s1: "foo", s2: "bar", want: 0},
+		{s1: "london", s2: "london", want: 1},
 	}
-}
 
-func TestExactJWSimilarity(t *testing.T) {
-	var d float64
-
-	d = JWSimilarity("london", "london")
-	if d != 1 {
-		t.Error("Expected 1, got ", d)
+	for _, tc := range tests {
+		got := JWSimilarity(tc.s1, tc.s2)
+		if !reflect.DeepEqual(tc.want, got) {
+			t.Fatalf("expected: %v, got: %v", tc.want, got)
+		}
 	}
 }
 
 var result float64
 
 func BenchmarkJWSimilarity(b *testing.B) {
-	var r float64
-
-	for n := 0; n < b.N; n++ {
-		r = JWSimilarity("faremviel", "farmville")
+	type benchmark struct {
+		name string
+		s1   string
+		s2   string
 	}
 
-	result = r
-}
-
-func BenchmarkNoJWSimilarity(b *testing.B) {
-	var r float64
-
-	for n := 0; n < b.N; n++ {
-		r = JWSimilarity("foo", "bar")
+	benchmarks := []benchmark{
+		{s1: "faremviel", s2: "farmville"},
+		{s1: "foo", s2: "bar"},
+		{s1: "london", s2: "london"},
 	}
 
-	result = r
-}
-
-func BenchmarkExactJWSimilarity(b *testing.B) {
-	var r float64
-
-	for n := 0; n < b.N; n++ {
-		r = JWSimilarity("london", "london")
+	for _, bm := range benchmarks {
+		b.Run(bm.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				JWSimilarity(bm.s1, bm.s2)
+			}
+		})
 	}
-
-	result = r
 }
