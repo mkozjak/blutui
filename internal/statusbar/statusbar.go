@@ -10,6 +10,10 @@ import (
 	"github.com/mkozjak/tview"
 )
 
+type Command interface {
+	SetCurrentPage(name string)
+}
+
 // injection target
 type StatusBar struct {
 	container *tview.Table
@@ -119,4 +123,8 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 		sb.container.GetCell(0, 2).SetText(currPage)
 		sb.app.Draw()
 	}
+}
+
+func (sb *StatusBar) SetCurrentPage(name string) {
+	sb.container.GetCell(0, 2).SetText(name)
 }
