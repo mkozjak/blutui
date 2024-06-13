@@ -11,6 +11,24 @@ func TestJWSimilarity(t *testing.T) {
 	}
 }
 
+func TestNoJWSimilarity(t *testing.T) {
+	var d float64
+
+	d = JWSimilarity("foo", "bar")
+	if d != 0 {
+		t.Error("Expected 0, got ", d)
+	}
+}
+
+func TestExactJWSimilarity(t *testing.T) {
+	var d float64
+
+	d = JWSimilarity("london", "london")
+	if d != 1 {
+		t.Error("Expected 1, got ", d)
+	}
+}
+
 var result float64
 
 func BenchmarkJWSimilarity(b *testing.B) {
