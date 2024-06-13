@@ -27,7 +27,7 @@ func main() {
 		panic(err)
 	}
 
-	// Create Status Bar container and attach it to Library
+	// Create Status Bar container
 	// Hand over the Library instance to Status Bar
 	// Start listening for Player updates
 	sb := statusbar.NewStatusBar(a, lib)
@@ -38,8 +38,6 @@ func main() {
 
 	go sb.Listen(pUpd)
 	go p.PollStatus()
-
-	libc.AddItem(sbc, 1, 1, false)
 
 	a.Pages = tview.NewPages().
 		AddAndSwitchToPage("library", libc, true)
@@ -63,8 +61,14 @@ func main() {
 	h := internal.CreateHelpScreen(hk.Listen)
 	a.Pages.AddPage("help", h, false, false)
 
+	// Draw root app window
+	// Root consists of pages (library, etc.) and the status/bottom bar
+	root := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(a.Pages, 0, 1, true).
+		AddItem(sbc, 1, 0, false)
+
 	// Set app root screen
-	if err := a.Application.SetRoot(a.Pages, true).EnableMouse(true).Run(); err != nil {
+	if err := a.Application.SetRoot(root, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 }
