@@ -54,7 +54,7 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 	})
 
 	trackLst.SetSelectedFunc(func(i int, trackName, _ string, sh rune) {
-		_, autoplay, err := l.getTrackURL(trackName, artist, album.name)
+		_, autoplay, err := l.trackURL(trackName, artist, album.name)
 		if err != nil {
 			panic(err)
 		}

@@ -88,7 +88,7 @@ type Library struct {
 	CpTrackName         string
 }
 
-func NewLibrary(api string, a app.Command, p player.Command) *Library {
+func New(api string, a app.Command, p player.Command) *Library {
 	return &Library{
 		app:          a,
 		player:       p,
@@ -269,7 +269,7 @@ func (l *Library) fetchData() error {
 func (l *Library) RefreshData() {
 }
 
-func (l *Library) getTrackURL(name, artist, album string) (string, string, error) {
+func (l *Library) trackURL(name, artist, album string) (string, string, error) {
 	for _, a := range l.albumArtists[artist].albums {
 		if a.name != album {
 			continue

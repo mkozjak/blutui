@@ -65,7 +65,7 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 			cpQuality = s.Quality
 
 			// TODO: should probably be done elsewhere
-			if sb.app.GetCurrentPage() == "library" {
+			if sb.app.CurrentPage() == "library" {
 				if s.Service == "LocalMusic" {
 					sb.library.HighlightCpArtist(s.Artist)
 					sb.library.SetCpTrackName(s.Track)
@@ -110,7 +110,7 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 			cpQuality = ""
 		}
 
-		currPage := sb.app.GetCurrentPage()
+		currPage := sb.app.CurrentPage()
 		format := ""
 		if cpQuality != "" || cpFormat != "" {
 			format = " | " + cpQuality + " " + cpFormat

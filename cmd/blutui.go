@@ -13,15 +13,15 @@ import (
 
 func main() {
 	// Create main app
-	a := app.NewApp()
+	a := app.New()
 
 	// Create Player and start http long-polling Bluesound for updates
 	pUpd := make(chan player.Status)
-	p := player.NewPlayer("http://bluesound.local:11000", pUpd)
+	p := player.New("http://bluesound.local:11000", pUpd)
 	a.Player = p
 
 	// Create Library Page
-	lib := library.NewLibrary("http://bluesound.local:11000", a, p)
+	lib := library.New("http://bluesound.local:11000", a, p)
 	libc, err := lib.CreateContainer()
 	if err != nil {
 		panic(err)
@@ -29,7 +29,7 @@ func main() {
 
 	// Create a bottom Bar container along with its components
 	// Start listening for Player updates
-	bar := bar.NewBar(a, lib)
+	bar := bar.New(a, lib)
 	sb, err := bar.CreateStatusBar(pUpd)
 	if err != nil {
 		panic(err)

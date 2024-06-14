@@ -7,7 +7,7 @@ import (
 
 type Command interface {
 	Draw() *tview.Application
-	GetCurrentPage() string
+	CurrentPage() string
 	SetFocus(p tview.Primitive) *tview.Application
 	Stop()
 }
@@ -20,7 +20,7 @@ type App struct {
 	Player      *player.Player
 }
 
-func NewApp() *App {
+func New() *App {
 	return &App{
 		Application: tview.NewApplication(),
 	}
@@ -30,7 +30,7 @@ func (a *App) Draw() *tview.Application {
 	return a.Application.Draw()
 }
 
-func (a *App) GetCurrentPage() string {
+func (a *App) CurrentPage() string {
 	n, _ := a.Pages.GetFrontPage()
 	return n
 }

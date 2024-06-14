@@ -12,7 +12,7 @@ type Bar struct {
 	library library.Command
 }
 
-func NewBar(a app.Command, l library.Command) *Bar {
+func New(a app.Command, l library.Command) *Bar {
 	return &Bar{
 		app:     a,
 		library: l,

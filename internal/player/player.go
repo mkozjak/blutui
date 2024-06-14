@@ -44,7 +44,7 @@ type Command interface {
 	Previous()
 	VolumeHold(bool)
 	ToggleMute()
-	GetState() string
+	State() string
 }
 
 type Player struct {
@@ -57,14 +57,14 @@ type Player struct {
 	volumeHoldMutex   sync.Mutex
 }
 
-func NewPlayer(api string, s chan<- Status) *Player {
+func New(api string, s chan<- Status) *Player {
 	return &Player{
 		API:     api,
 		Updates: s,
 	}
 }
 
-func (p *Player) GetState() string {
+func (p *Player) State() string {
 	return p.status.State
 }
 
