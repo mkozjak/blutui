@@ -28,13 +28,9 @@ func main() {
 	}
 
 	// Create a bottom Bar container along with its components
-	// Start listening for Player updates
-	b := bar.New(a, lib)
-	sb, err := b.CreateStatusBar(pUpd)
-	if err != nil {
-		panic(err)
-	}
+	b := bar.New(a, lib, pUpd)
 
+	// Start listening for Player updates
 	go p.PollStatus()
 
 	a.Pages = tview.NewPages().
@@ -63,7 +59,7 @@ func main() {
 	// Root consists of pages (library, etc.) and the status/bottom bar
 	root := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(a.Pages, 0, 1, true).
-		AddItem(sb, 1, 0, false)
+		AddItem(b.StatusContainer(), 1, 0, false)
 
 	// Set app root screen
 	if err := a.Application.SetRoot(root, true).EnableMouse(true).Run(); err != nil {

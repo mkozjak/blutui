@@ -10,29 +10,32 @@ import (
 type Bar struct {
 	app     app.Command
 	library library.Command
+	status  *tview.Table
+	search  *tview.InputField
 }
 
-func New(a app.Command, l library.Command) *Bar {
+func New(a app.Command, l library.Command, ch <-chan player.Status) *Bar {
+	stb := newStatusBar(a, l)
+	stbc := stb.createContainer()
+	go stb.listen(ch)
+
+	srb := newSearchBar()
+	srbc := srb.createContainer()
+
 	return &Bar{
 		app:     a,
 		library: l,
+		status: stbc,
+		search: srbc,
 	}
 }
 
-func (b *Bar) CreateStatusBar(ch <-chan player.Status) (*tview.Table, error) {
-	sb := newStatusBar(b.app, b.library)
-	sbc, err := sb.createContainer()
-	if err != nil {
-		return nil, err
-	}
-
-	go sb.listen(ch)
-	return sbc, nil
+func (b *Bar) StatusContainer() *tview.Table {
+	return b.status
 }
 
-func (b *Bar) CreateSearchBar() *tview.InputField {
-	ib := newSearchBar()
-	return ib.createContainer()
+func (b *Bar) SearchContainer() *tview.InputField {
+	return b.search
 }
 
 func (b *Bar) Show(name string) {

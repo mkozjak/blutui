@@ -28,7 +28,7 @@ func newStatusBar(a app.Command, l library.Command) *StatusBar {
 	}
 }
 
-func (sb *StatusBar) createContainer() (*tview.Table, error) {
+func (sb *StatusBar) createContainer() *tview.Table {
 	sb.container = tview.NewTable().
 		SetFixed(1, 3).
 		SetSelectable(false, false).
@@ -48,7 +48,7 @@ func (sb *StatusBar) createContainer() (*tview.Table, error) {
 
 	sb.container.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
 
-	return sb.container, nil
+	return sb.container
 }
 
 func (sb *StatusBar) listen(ch <-chan player.Status) {
