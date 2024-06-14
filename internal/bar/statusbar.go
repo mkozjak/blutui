@@ -1,4 +1,4 @@
-package statusbar
+package bar
 
 import (
 	"strconv"
@@ -21,15 +21,14 @@ type StatusBar struct {
 	library   library.Command
 }
 
-func NewStatusBar(a app.Command, l library.Command) *StatusBar {
+func newStatusBar(a app.Command, l library.Command) *StatusBar {
 	return &StatusBar{
 		app:     a,
 		library: l,
 	}
 }
 
-// bottom bar - status
-func (sb *StatusBar) CreateContainer() (*tview.Table, error) {
+func (sb *StatusBar) createContainer() (*tview.Table, error) {
 	sb.container = tview.NewTable().
 		SetFixed(1, 3).
 		SetSelectable(false, false).
@@ -52,7 +51,7 @@ func (sb *StatusBar) CreateContainer() (*tview.Table, error) {
 	return sb.container, nil
 }
 
-func (sb *StatusBar) Listen(ch <-chan player.Status) {
+func (sb *StatusBar) listen(ch <-chan player.Status) {
 	for s := range ch {
 		var cpTitle string
 		var cpFormat string
@@ -125,6 +124,6 @@ func (sb *StatusBar) Listen(ch <-chan player.Status) {
 	}
 }
 
-func (sb *StatusBar) SetCurrentPage(name string) {
+func (sb *StatusBar) setCurrentPage(name string) {
 	sb.container.GetCell(0, 2).SetText(name)
 }
