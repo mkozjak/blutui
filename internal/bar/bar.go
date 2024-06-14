@@ -30,11 +30,11 @@ func New(a app.Command, l library.Command, ch <-chan player.Status) *Bar {
 	}
 }
 
-func (b *Bar) StatusContainer() *tview.Table {
+func (b *Bar) StatusContainer() tview.Primitive {
 	return b.status
 }
 
-func (b *Bar) SearchContainer() *tview.InputField {
+func (b *Bar) SearchContainer() tview.Primitive {
 	return b.search
 }
 
