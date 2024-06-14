@@ -29,8 +29,8 @@ func main() {
 
 	// Create a bottom Bar container along with its components
 	// Start listening for Player updates
-	bar := bar.New(a, lib)
-	sb, err := bar.CreateStatusBar(pUpd)
+	b := bar.New(a, lib)
+	sb, err := b.CreateStatusBar(pUpd)
 	if err != nil {
 		panic(err)
 	}
