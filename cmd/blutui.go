@@ -46,7 +46,7 @@ func main() {
 	})
 
 	// Configure global keybindings
-	gk := keyboard.NewGlobalHandler(a, a.Player, lib, a.Pages)
+	gk := keyboard.NewGlobalHandler(a, a.Player, lib, a.Pages, b)
 	a.Application.SetInputCapture(gk.Listen)
 
 	// Configure helpscreen keybindings
@@ -57,12 +57,12 @@ func main() {
 
 	// Draw root app window
 	// Root consists of pages (library, etc.) and the status/bottom bar
-	root := tview.NewFlex().SetDirection(tview.FlexRow).
+	a.Root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(a.Pages, 0, 1, true).
 		AddItem(b.StatusContainer(), 1, 0, false)
 
 	// Set app root screen
-	if err := a.Application.SetRoot(root, true).EnableMouse(true).Run(); err != nil {
+	if err := a.Application.SetRoot(a.Root, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 }

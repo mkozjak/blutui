@@ -39,4 +39,10 @@ func (b *Bar) SearchContainer() tview.Primitive {
 }
 
 func (b *Bar) Show(name string) {
+	switch name {
+	case "search":
+		b.app.ShowComponent(b.search)
+	case "status":
+		b.app.ShowComponent(b.status)
+	}
 }

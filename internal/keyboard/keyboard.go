@@ -3,6 +3,7 @@ package keyboard
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal/app"
+	"github.com/mkozjak/blutui/internal/bar"
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/tview"
@@ -19,14 +20,16 @@ type GlobalHandler struct {
 	player  player.Command
 	library library.Command
 	pages   pagesManager
+	bar     *bar.Bar
 }
 
-func NewGlobalHandler(a app.Command, p player.Command, l library.Command, pg pagesManager) *GlobalHandler {
+func NewGlobalHandler(a app.Command, p player.Command, l library.Command, pg pagesManager, b *bar.Bar) *GlobalHandler {
 	return &GlobalHandler{
 		app:     a,
 		player:  p,
 		library: l,
 		pages:   pg,
+		bar:     b,
 	}
 }
 
@@ -63,6 +66,10 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 			h.pages.ShowPage("help")
 			return nil
 		}
+	case '/':
+		h.bar.Show("search")
+		h.app.SetFocus(h.bar.SearchContainer())
+		return nil
 	case 'q':
 		h.app.Stop()
 	}
