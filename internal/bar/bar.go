@@ -30,5 +30,10 @@ func (b *Bar) CreateStatusBar(ch <-chan player.Status) (*tview.Table, error) {
 	return sbc, nil
 }
 
+func (b *Bar) CreateSearchBar() *tview.InputField {
+	ib := newSearchBar()
+	return ib.createContainer()
+}
+
 func (b *Bar) Show(name string) {
 }
