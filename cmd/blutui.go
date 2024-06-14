@@ -4,10 +4,10 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/blutui/internal/app"
+	"github.com/mkozjak/blutui/internal/bar"
 	"github.com/mkozjak/blutui/internal/keyboard"
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
-	"github.com/mkozjak/blutui/internal/statusbar"
 	"github.com/mkozjak/tview"
 )
 
@@ -27,16 +27,14 @@ func main() {
 		panic(err)
 	}
 
-	// Create Status Bar container
-	// Hand over the Library instance to Status Bar
+	// Create a bottom Bar container along with its components
 	// Start listening for Player updates
-	sb := statusbar.NewStatusBar(a, lib)
-	sbc, err := sb.CreateContainer()
+	bar := bar.NewBar(a, lib)
+	sb, err := bar.CreateStatusBar(pUpd)
 	if err != nil {
 		panic(err)
 	}
 
-	go sb.Listen(pUpd)
 	go p.PollStatus()
 
 	a.Pages = tview.NewPages().
@@ -65,7 +63,7 @@ func main() {
 	// Root consists of pages (library, etc.) and the status/bottom bar
 	root := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(a.Pages, 0, 1, true).
-		AddItem(sbc, 1, 0, false)
+		AddItem(sb, 1, 0, false)
 
 	// Set app root screen
 	if err := a.Application.SetRoot(root, true).EnableMouse(true).Run(); err != nil {
