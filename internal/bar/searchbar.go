@@ -17,7 +17,7 @@ func newSearchBar(s switcher) *SearchBar {
 func (s *SearchBar) createContainer() *tview.InputField {
 	i := tview.NewInputField().
 		SetLabel("search: ").
-		SetLabelColor(tcell.ColorWhite).
+		SetLabelColor(tcell.ColorDefault).
 		SetFieldBackgroundColor(tcell.ColorDefault).
 		SetAcceptanceFunc(tview.InputFieldMaxLength(50))
 
@@ -31,7 +31,7 @@ func (s *SearchBar) createContainer() *tview.InputField {
 		}
 	})
 
-	i.SetBackgroundColor(tcell.ColorDefault).SetTitleColor(tcell.ColorDefault)
+	i.SetBackgroundColor(tcell.ColorDefault).SetTitleColor(tcell.ColorDefault).SetBorderPadding(0, 0, 1, 1)
 
 	return i
 }
