@@ -7,10 +7,8 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	case tcell.KeyTab:
 		if !l.albumPane.HasFocus() {
 			l.app.SetFocus(l.albumPane)
-			l.artistPane.SetSelectedBackgroundColor(tcell.ColorLightGray)
 		} else {
 			l.app.SetFocus(l.artistPane)
-			l.artistPane.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 		}
 
 		return nil
@@ -34,6 +32,17 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 
 			return nil
 		}
+	}
+
+	return event
+}
+
+func (l *Library) artistPaneKeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Rune() {
+	case 'j':
+		return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+	case 'k':
+		return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
 	}
 
 	return event
