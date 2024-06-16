@@ -181,7 +181,7 @@ func CleanTrackName(n string) string {
 }
 
 // JWSimilarity is the implementation of Jaro-Winkler similarity metric
-// It returns 1 if there's a 100% match and 0 if there's no matching characters.
+// It returns 1 if there's a 100% match and 0% if there's no matching characters.
 func JWSimilarity(s1, s2 string) float64 {
 	s1 = strings.ToLower(s1)
 	s2 = strings.ToLower(s2)
@@ -200,7 +200,7 @@ func JWSimilarity(s1, s2 string) float64 {
 	// Count the number of matching characters
 	// faremviel, farmville
 	for i, s1Char := range s1 {
-		pos:
+	pos:
 		for j, s2Char := range s2 {
 			// If the characters match and are not farther than dMax
 			if s1Char == s2Char && math.Abs(float64(i)-float64(j)) <= dMax {
@@ -233,7 +233,7 @@ func JWSimilarity(s1, s2 string) float64 {
 					continue
 				}
 			} else if l > 1 {
-				if trsp[l - 1] == mc {
+				if trsp[l-1] == mc {
 					continue
 				}
 			}
@@ -242,9 +242,9 @@ func JWSimilarity(s1, s2 string) float64 {
 		}
 	}
 
-	t := float64(len(trsp)/2)
+	t := float64(len(trsp) / 2)
 
-	jaro := roundFloat((m/ls1 + m/ls2 + (m-t)/m)/3, 5)
+	jaro := roundFloat((m/ls1+m/ls2+(m-t)/m)/3, 5)
 
 	// Distance threshold not met
 	if jaro < 0.75 {
@@ -261,12 +261,12 @@ func JWSimilarity(s1, s2 string) float64 {
 		}
 	}
 
-	sim := jaro + l * p * (1 - jaro)
+	sim := jaro + l*p*(1-jaro)
 
 	return roundFloat(sim, 5)
 }
 
 func roundFloat(val float64, precision uint) float64 {
-    ratio := math.Pow(10, float64(precision))
-    return math.Round(val*ratio) / ratio
+	ratio := math.Pow(10, float64(precision))
+	return math.Round(val*ratio) / ratio
 }
