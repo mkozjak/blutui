@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -257,7 +258,7 @@ func (p *Player) PollStatus() {
 			uerr := url.Error{Err: err}
 			var derr *net.DNSError
 
-			if errors.As(err, &derr) {
+			if errors.As(err, &derr) || errors.Is(err, syscall.ECONNREFUSED) {
 				s := Status{State: "neterr"}
 
 				p.status = s
