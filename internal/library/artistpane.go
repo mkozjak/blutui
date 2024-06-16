@@ -28,19 +28,13 @@ func (l *Library) drawArtistPane() *tview.List {
 		SetTitleAlign(tview.AlignLeft).
 		SetCustomBorders(internal.CustomBorders).
 		// set artists list keymap
-		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-			switch event.Rune() {
-			case 'j':
-				return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
-			case 'k':
-				return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
-			}
-
-			return event
+		SetInputCapture(l.artistPaneKeyboardHandler).
+		SetFocusFunc(func() {
+			p.SetSelectedBackgroundColor(tcell.ColorCornflowerBlue)
 		}).
 		SetBlurFunc(func() {
-			internal.Log("artistpane focus lost")
 			l.app.SetPrevFocused("artistpane")
+			p.SetSelectedBackgroundColor(tcell.ColorLightGray)
 		})
 
 	for _, artist := range l.artists {

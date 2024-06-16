@@ -109,7 +109,6 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 		SetTitleAlign(tview.AlignLeft).
 		SetCustomBorders(internal.NoBorders).
 		SetBlurFunc(func() {
-			internal.Log("albumpane focus lost")
 			l.app.SetPrevFocused("albumpane")
 		})
 
