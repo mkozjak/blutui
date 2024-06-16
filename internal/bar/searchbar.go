@@ -19,7 +19,8 @@ func (s *SearchBar) createContainer() *tview.InputField {
 		SetLabel("search: ").
 		SetLabelColor(tcell.ColorDefault).
 		SetFieldBackgroundColor(tcell.ColorDefault).
-		SetAcceptanceFunc(tview.InputFieldMaxLength(50))
+		SetFieldTextColor(tcell.ColorDefault).
+		SetAcceptanceFunc(tview.InputFieldMaxLength(40))
 
 	i.SetDoneFunc(func(key tcell.Key) {
 		switch key {
