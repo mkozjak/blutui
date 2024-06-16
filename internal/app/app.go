@@ -8,7 +8,9 @@ import (
 type Command interface {
 	Draw() *tview.Application
 	CurrentPage() string
+	PrevFocused() tview.Primitive
 	SetFocus(p tview.Primitive) *tview.Application
+	SetPrevFocused(p string)
 	ShowComponent(p tview.Primitive)
 	Stop()
 }
@@ -16,10 +18,12 @@ type Command interface {
 type App struct {
 	Application *tview.Application
 	Root        *tview.Flex
+	Library     *tview.Flex
 	Pages       *tview.Pages
 	StatusBar   *tview.Table
 	HelpScreen  *tview.Modal
 	Player      *player.Player
+	prevFocused string
 }
 
 func New() *App {
@@ -39,6 +43,21 @@ func (a *App) CurrentPage() string {
 
 func (a *App) Play(url string) {
 	go a.Player.Play(url)
+}
+
+func (a *App) PrevFocused() tview.Primitive {
+	switch a.prevFocused {
+	case "artistpane":
+		fallthrough
+	case "albumpane":
+		return a.Library.GetItem(0)
+	}
+
+	return nil
+}
+
+func (a *App) SetPrevFocused(p string) {
+	a.prevFocused = p
 }
 
 func (a *App) SetFocus(p tview.Primitive) *tview.Application {

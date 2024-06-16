@@ -27,6 +27,8 @@ func main() {
 		panic(err)
 	}
 
+	a.Library = libc
+
 	// Create a bottom Bar container along with its components
 	b := bar.New(a, lib, pUpd)
 
@@ -34,7 +36,7 @@ func main() {
 	go p.PollStatus()
 
 	a.Pages = tview.NewPages().
-		AddAndSwitchToPage("library", libc, true)
+		AddAndSwitchToPage("library", a.Library, true)
 
 	a.Pages.SetBackgroundColor(tcell.ColorDefault)
 

@@ -107,7 +107,11 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(internal.NoBorders)
+		SetCustomBorders(internal.NoBorders).
+		SetBlurFunc(func() {
+			internal.Log("albumpane focus lost")
+			l.app.SetPrevFocused("albumpane")
+		})
 
 	for _, t := range album.tracks {
 		if l.CpTrackName != "" && l.CpTrackName == internal.CleanTrackName(t.name) {

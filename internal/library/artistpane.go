@@ -37,6 +37,10 @@ func (l *Library) drawArtistPane() *tview.List {
 			}
 
 			return event
+		}).
+		SetBlurFunc(func() {
+			internal.Log("artistpane focus lost")
+			l.app.SetPrevFocused("artistpane")
 		})
 
 	for _, artist := range l.artists {

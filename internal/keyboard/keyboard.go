@@ -39,6 +39,10 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 		h.app.Stop()
 	}
 
+	if h.bar.CurrentContainer() != "status" {
+		return event
+	}
+
 	switch event.Rune() {
 	case 'p':
 		go h.player.Playpause()
