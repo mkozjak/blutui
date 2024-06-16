@@ -71,6 +71,11 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 	case '/':
+		p, _ := h.pages.GetFrontPage()
+		if p == "help" {
+			return event
+		}
+
 		h.bar.Show("search")
 		h.app.SetFocus(h.bar.SearchContainer())
 		return nil
