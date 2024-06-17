@@ -51,7 +51,7 @@ func LoadCache() (*Cache, error) {
 	return cache, nil
 }
 
-func SaveCache(cache *Cache) error {
+func saveCache(cache *Cache) error {
 	file, err := os.OpenFile("/Users/mkozjak/.config/blutui/cache", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -74,10 +74,10 @@ func SaveCache(cache *Cache) error {
 	return nil
 }
 
-func FetchAndCache(url string, cache *Cache) ([]byte, error) {
+func FetchAndCache(url string, cache *Cache, cached bool) ([]byte, error) {
 	var body []byte
 
-	if item, found := cache.Data[url]; found && item.Expiration.After(time.Now()) {
+	if item, found := cache.Data[url]; cached && found && item.Expiration.After(time.Now()) {
 		// Use cached response
 		body = item.Response
 	} else {
@@ -99,7 +99,7 @@ func FetchAndCache(url string, cache *Cache) ([]byte, error) {
 			Expiration: time.Now().Add(7 * 24 * time.Hour), // Set cache expiration to 1 week
 		}
 
-		if err = SaveCache(cache); err != nil {
+		if err = saveCache(cache); err != nil {
 			log.Println("Error saving data to local cache:", err)
 			return nil, err
 		}

@@ -63,7 +63,8 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 			h.library.SelectCpArtist()
 		}
 	case 'u':
-		// go p.RefreshData()
+		// TODO: show error on bar
+		go h.library.FetchData(false)
 	case 'h':
 		p, _ := h.pages.GetFrontPage()
 		if p != "help" {

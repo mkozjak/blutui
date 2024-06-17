@@ -70,6 +70,7 @@ type artist struct {
 
 type Command interface {
 	Artists() []string
+	FetchData(cached bool) error
 	FilterArtistPane(f []string)
 	HighlightCpArtist(name string)
 	IsFiltered() bool
@@ -109,7 +110,7 @@ func (l *Library) Artists() []string {
 }
 
 func (l *Library) CreateContainer() (*tview.Flex, error) {
-	err := l.fetchData()
+	err := l.FetchData(true)
 	if err != nil {
 		return nil, err
 	}
@@ -129,14 +130,14 @@ func (l *Library) CreateContainer() (*tview.Flex, error) {
 	return flex, nil
 }
 
-func (l *Library) fetchData() error {
+func (l *Library) FetchData(cached bool) error {
 	cache, err := internal.LoadCache()
 	if err != nil {
 		log.Println("Error loading local cache:", err)
 		return err
 	}
 
-	body, err := internal.FetchAndCache(l.API+"/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic", cache)
+	body, err := internal.FetchAndCache(l.API+"/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic", cache, cached)
 	if err != nil {
 		log.Println("Error fetching/caching data:", err)
 		return err
@@ -151,7 +152,7 @@ func (l *Library) fetchData() error {
 
 	// parse album sections (alphabetical order) from xml
 	for _, item := range sections.Items {
-		body, err = internal.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(item.BrowseKey), cache)
+		body, err = internal.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(item.BrowseKey), cache, cached)
 		if err != nil {
 			log.Println("Error fetching album sections:", err)
 			return err
@@ -169,7 +170,7 @@ func (l *Library) fetchData() error {
 			var duration int
 
 			// fetch album tracks
-			body, err = internal.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(al.BrowseKey), cache)
+			body, err = internal.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(al.BrowseKey), cache, cached)
 			if err != nil {
 				log.Println("Error fetching album tracks:", err)
 				return err
@@ -207,7 +208,7 @@ func (l *Library) fetchData() error {
 			// fetch album date from /Songs
 			body, err = internal.FetchAndCache(
 				strings.ReplaceAll(l.API+"/Songs?service=LocalMusic&album="+al.Text+"&artist="+arName, " ", "+"),
-				cache)
+				cache, cached)
 			if err != nil {
 				log.Println("Error fetching album date:", err)
 				return err
