@@ -70,17 +70,21 @@ type artist struct {
 
 type Command interface {
 	Artists() []string
-	SelectCpArtist()
+	FilterArtistPane(f []string)
 	HighlightCpArtist(name string)
+	IsFiltered() bool
+	SelectCpArtist()
 	SetCpTrackName(name string)
 }
 
 type Library struct {
-	container           *tview.Flex
-	app                 app.Command
-	player              player.Command
-	API                 string
+	container *tview.Flex
+	app       app.Command
+	player    player.Command
+	API       string
+	// TODO: should move these into a separate ap struct?
 	artistPane          *tview.List
+	artistPaneFiltered  bool
 	albumPane           *tview.Grid
 	albumArtists        map[string]artist
 	artists             []string
@@ -91,11 +95,12 @@ type Library struct {
 
 func New(api string, a app.Command, p player.Command) *Library {
 	return &Library{
-		app:          a,
-		player:       p,
-		API:          api,
-		albumArtists: map[string]artist{},
-		cpArtistIdx:  -1,
+		app:                a,
+		player:             p,
+		API:                api,
+		albumArtists:       map[string]artist{},
+		cpArtistIdx:        -1,
+		artistPaneFiltered: false,
 	}
 }
 
@@ -109,8 +114,9 @@ func (l *Library) CreateContainer() (*tview.Flex, error) {
 		return nil, err
 	}
 
-	l.artistPane = l.drawArtistPane()
-	l.albumPane = l.drawAlbumPane()
+	l.artistPane = l.createArtistContainer()
+	l.drawArtistPane()
+	l.albumPane = l.createAlbumContainer()
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		// left and right pane
@@ -269,6 +275,10 @@ func (l *Library) fetchData() error {
 	}
 
 	return nil
+}
+
+func (l *Library) IsFiltered() bool {
+	return l.artistPaneFiltered
 }
 
 func (l *Library) RefreshData() {

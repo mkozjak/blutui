@@ -9,7 +9,7 @@ import (
 )
 
 // right pane - albums
-func (l *Library) drawAlbumPane() *tview.Grid {
+func (l *Library) createAlbumContainer() *tview.Grid {
 	p := tview.NewGrid().
 		SetColumns(0)
 

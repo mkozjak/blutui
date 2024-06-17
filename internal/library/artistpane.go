@@ -1,6 +1,7 @@
 package library
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -9,7 +10,7 @@ import (
 )
 
 // left pane - artists
-func (l *Library) drawArtistPane() *tview.List {
+func (l *Library) createArtistContainer() *tview.List {
 	artistPaneStyle := tcell.Style{}
 	artistPaneStyle.Background(tcell.ColorDefault)
 
@@ -37,13 +38,31 @@ func (l *Library) drawArtistPane() *tview.List {
 			p.SetSelectedBackgroundColor(tcell.ColorLightGray)
 		})
 
-	for _, artist := range l.artists {
-		p.AddItem(artist, "", 0, nil)
+	return p
+}
+
+func (l *Library) FilterArtistPane(f []string) {
+	for _, a := range l.artists {
+		if !slices.Contains(f, a) {
+			r := l.artistPane.FindItems(a, "", false, true)
+			l.artistPane.RemoveItem(r[0])
+		}
 	}
 
-	p.SetChangedFunc(l.scrollCb)
+	if len(f) > 0 {
+		l.artistPaneFiltered = true
+	}
+}
 
-	return p
+func (l *Library) drawArtistPane() {
+	// Delete existing records, possibly after clearing the search results
+	l.artistPane.Clear()
+
+	for _, artist := range l.artists {
+		l.artistPane.AddItem(artist, "", 0, nil)
+	}
+
+	l.artistPane.SetChangedFunc(l.scrollCb)
 }
 
 func (l *Library) SelectCpArtist() {
