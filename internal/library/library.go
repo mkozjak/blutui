@@ -69,6 +69,7 @@ type artist struct {
 }
 
 type Command interface {
+	Artists() []string
 	SelectCpArtist()
 	HighlightCpArtist(name string)
 	SetCpTrackName(name string)
@@ -96,6 +97,10 @@ func New(api string, a app.Command, p player.Command) *Library {
 		albumArtists: map[string]artist{},
 		cpArtistIdx:  -1,
 	}
+}
+
+func (l *Library) Artists() []string {
+	return l.artists
 }
 
 func (l *Library) CreateContainer() (*tview.Flex, error) {

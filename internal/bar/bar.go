@@ -29,7 +29,7 @@ func New(a app.Command, l library.Command, ch <-chan player.Status) *Bar {
 	stbc := stb.createContainer()
 	go stb.listen(ch)
 
-	srb := newSearchBar(bar)
+	srb := newSearchBar(bar, l)
 	srbc := srb.createContainer()
 
 	bar.status = stbc
