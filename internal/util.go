@@ -255,7 +255,7 @@ func JWSimilarity(s1, s2 string) float64 {
 	var l float64 = 0
 	var p float64 = 0.1
 
-	for i := 0; i < len(s1); i++ {
+	for i := 0; i < len(s1) && i < len(s2); i++ {
 		if s1[i] == s2[i] {
 			l++
 		}
