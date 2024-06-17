@@ -14,8 +14,10 @@ func TestJWSimilarity(t *testing.T) {
 
 	tests := []test{
 		{s1: "faremviel", s2: "farmville", want: 0.91898},
-		{s1: "foo", s2: "bar", want: 0},
-		{s1: "london", s2: "london", want: 1},
+		{s1: "korn", s2: "cynic", want: 0},
+		{s1: "limp bizkit", s2: "limp bizkit", want: 1},
+		{s1: "drmea theter", s2: "dream theater", want: 0.9453},
+		{s1: "inter", s2: "In", want: 0.84},
 	}
 
 	for _, tc := range tests {
