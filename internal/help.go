@@ -11,6 +11,7 @@ func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview
 	var text string
 	keybindings := map[string]string{
 		"start playback":                   "↵",
+		"play selected song only":          "x",
 		"play/pause":                       "p",
 		"stop":                             "s",
 		"next song":                        ">",
@@ -30,10 +31,10 @@ func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview
 	}
 
 	order := []string{
-		"start playback", "play/pause", "stop", "next song", "previous song",
-		"volume up", "volume down", "toggle mute", "page down", "page up",
-		"half page down", "half page up", "jump to currently playing artist",
-		"search artists", "update library", "show this screen", "quit",
+		"start playback", "play selected song only", "play/pause", "stop",
+		"next song", "previous song", "volume up", "volume down", "toggle mute",
+		"page down", "page up", "half page down", "half page up", "jump to currently playing artist",
+		"search artists", "update library", "show this screen", "quit app",
 	}
 
 	for _, action := range order {

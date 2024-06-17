@@ -96,6 +96,17 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 			}
 
 			return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
+		case 'x':
+			trackName, _ := trackLst.GetItemText(trackLst.GetCurrentItem())
+
+			u, _, err := l.trackURL(trackName, artist, album.name)
+			if err != nil {
+				panic(err)
+			}
+
+			// play currently selected track only
+			go l.player.Play(u)
+			return nil
 		}
 
 		return event
