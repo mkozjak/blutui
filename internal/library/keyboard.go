@@ -1,6 +1,8 @@
 package library
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"github.com/gdamore/tcell/v2"
+)
 
 func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
@@ -38,6 +40,15 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func (l *Library) artistPaneKeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Key() {
+	case tcell.KeyEscape:
+		if l.artistPaneFiltered {
+			l.drawArtistPane()
+			l.artistPaneFiltered = false
+			return nil
+		}
+	}
+
 	switch event.Rune() {
 	case 'j':
 		return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)

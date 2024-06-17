@@ -9,7 +9,7 @@ import (
 )
 
 // right pane - albums
-func (l *Library) drawAlbumPane() *tview.Grid {
+func (l *Library) createAlbumContainer() *tview.Grid {
 	p := tview.NewGrid().
 		SetColumns(0)
 
@@ -107,7 +107,10 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(internal.NoBorders)
+		SetCustomBorders(internal.NoBorders).
+		SetBlurFunc(func() {
+			l.app.SetPrevFocused("albumpane")
+		})
 
 	for _, t := range album.tracks {
 		if l.CpTrackName != "" && l.CpTrackName == internal.CleanTrackName(t.name) {

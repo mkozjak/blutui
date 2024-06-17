@@ -7,27 +7,40 @@ import (
 	"github.com/mkozjak/tview"
 )
 
+type switcher interface {
+	Show(name string)
+}
+
 type Bar struct {
-	app     app.Command
-	library library.Command
-	status  *tview.Table
-	search  *tview.InputField
+	app      app.Command
+	library  library.Command
+	status   *tview.Table
+	search   *tview.InputField
+	currCont string
 }
 
 func New(a app.Command, l library.Command, ch <-chan player.Status) *Bar {
+	bar := &Bar{
+		app:     a,
+		library: l,
+	}
+
 	stb := newStatusBar(a, l)
 	stbc := stb.createContainer()
 	go stb.listen(ch)
 
-	srb := newSearchBar()
+	srb := newSearchBar(bar, l)
 	srbc := srb.createContainer()
 
-	return &Bar{
-		app:     a,
-		library: l,
-		status: stbc,
-		search: srbc,
-	}
+	bar.status = stbc
+	bar.search = srbc
+	bar.currCont = "status"
+
+	return bar
+}
+
+func (b *Bar) CurrentContainer() string {
+	return b.currCont
 }
 
 func (b *Bar) StatusContainer() tview.Primitive {
@@ -39,4 +52,15 @@ func (b *Bar) SearchContainer() tview.Primitive {
 }
 
 func (b *Bar) Show(name string) {
+	switch name {
+	case "search":
+		b.app.ShowComponent(b.search)
+		b.currCont = "search"
+	case "status":
+		b.app.ShowComponent(b.status)
+		p := b.app.PrevFocused()
+		b.app.SetPrevFocused("search")
+		b.currCont = "status"
+		b.app.SetFocus(p)
+	}
 }
