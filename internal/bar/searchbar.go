@@ -60,7 +60,10 @@ func (s *SearchBar) done(key tcell.Key) {
 			}
 		}
 
-		s.library.FilterArtistPane(m)
+		if len(m) > 0 {
+			s.library.FilterArtistPane(m)
+		}
+
 		s.container.SetText("")
 		s.switcher.Show("status")
 	case tcell.KeyEscape:
