@@ -14,7 +14,7 @@ type switcher interface {
 type Bar struct {
 	app      app.Command
 	library  library.Command
-	status   *tview.Table
+	status   *tview.Grid
 	search   *tview.InputField
 	currCont string
 }
