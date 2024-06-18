@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mkozjak/blutui/cache"
 	internal "github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/blutui/internal/app"
 	"github.com/mkozjak/blutui/internal/player"
@@ -131,13 +132,13 @@ func (l *Library) CreateContainer() (*tview.Flex, error) {
 }
 
 func (l *Library) FetchData(cached bool) error {
-	cache, err := internal.LoadCache()
+	c, err := cache.LoadCache()
 	if err != nil {
 		log.Println("Error loading local cache:", err)
 		return err
 	}
 
-	body, err := internal.FetchAndCache(l.API+"/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic", cache, cached)
+	body, err := cache.FetchAndCache(l.API+"/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic", c, cached)
 	if err != nil {
 		log.Println("Error fetching/caching data:", err)
 		return err
@@ -152,7 +153,7 @@ func (l *Library) FetchData(cached bool) error {
 
 	// parse album sections (alphabetical order) from xml
 	for _, item := range sections.Items {
-		body, err = internal.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(item.BrowseKey), cache, cached)
+		body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(item.BrowseKey), c, cached)
 		if err != nil {
 			log.Println("Error fetching album sections:", err)
 			return err
@@ -170,7 +171,7 @@ func (l *Library) FetchData(cached bool) error {
 			var duration int
 
 			// fetch album tracks
-			body, err = internal.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(al.BrowseKey), cache, cached)
+			body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(al.BrowseKey), c, cached)
 			if err != nil {
 				log.Println("Error fetching album tracks:", err)
 				return err
@@ -206,9 +207,9 @@ func (l *Library) FetchData(cached bool) error {
 			arName := internal.Caser(al.Text2)
 
 			// fetch album date from /Songs
-			body, err = internal.FetchAndCache(
+			body, err = cache.FetchAndCache(
 				strings.ReplaceAll(l.API+"/Songs?service=LocalMusic&album="+al.Text+"&artist="+arName, " ", "+"),
-				cache, cached)
+				c, cached)
 			if err != nil {
 				log.Println("Error fetching album date:", err)
 				return err
