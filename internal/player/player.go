@@ -13,6 +13,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/mkozjak/blutui/spinner"
 )
 
 type volume struct {
@@ -51,6 +53,7 @@ type Command interface {
 type Player struct {
 	API               string
 	Updates           chan<- Status
+	spinner           spinner.Command
 	status            Status
 	volumeHoldCount   int
 	volumeHoldBlocker bool
@@ -58,10 +61,11 @@ type Player struct {
 	volumeHoldMutex   sync.Mutex
 }
 
-func New(api string, s chan<- Status) *Player {
+func New(api string, sp spinner.Command, s chan<- Status) *Player {
 	return &Player{
 		API:     api,
 		Updates: s,
+		spinner: sp,
 	}
 }
 
@@ -70,43 +74,53 @@ func (p *Player) State() string {
 }
 
 func (p *Player) Play(url string) {
+	go p.spinner.Start()
 	_, err := http.Get(p.API + url)
 	if err != nil {
 		log.Println("Error autoplaying track:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
+	p.spinner.Stop()
 }
 
 func (p *Player) Playpause() {
+	go p.spinner.Start()
 	_, err := http.Get(p.API + "/Pause?toggle=1")
 	if err != nil {
 		log.Println("Error toggling play/pause:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
+	p.spinner.Stop()
 }
 
 func (p *Player) Stop() {
+	go p.spinner.Start()
 	_, err := http.Get(p.API + "/Stop")
 	if err != nil {
 		log.Println("Error stopping playback:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
+	p.spinner.Stop()
 }
 
 func (p *Player) Next() {
+	go p.spinner.Start()
 	_, err := http.Get(p.API + "/Skip")
 	if err != nil {
 		log.Println("Error switching to next track:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
+	p.spinner.Stop()
 }
 
 func (p *Player) Previous() {
+	go p.spinner.Start()
 	_, err := http.Get(p.API + "/Back")
 	if err != nil {
 		log.Println("Error switching to previous track:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
+	p.spinner.Stop()
 }
 
 func (p *Player) volumeUp(bigstep bool) {
@@ -170,6 +184,8 @@ func (p *Player) VolumeHold(up bool) {
 		done <- true
 	}()
 
+	go p.spinner.Start()
+
 	for {
 		select {
 		case <-done:
@@ -199,6 +215,7 @@ func (p *Player) VolumeHold(up bool) {
 			}
 
 			p.volumeHoldCount = 0
+			p.spinner.Stop()
 			return
 		}
 	}
