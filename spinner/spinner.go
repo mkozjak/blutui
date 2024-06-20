@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/mkozjak/blutui/internal/app"
 	"github.com/mkozjak/tview"
 )
 
@@ -24,8 +23,8 @@ type Spinner struct {
 	currentStyle SpinnerStyle
 	styles       map[SpinnerStyle][]rune
 	active       bool
-	drawer       app.Drawer
 	stop         chan bool
+	draw         func() *tview.Application
 }
 
 type SpinnerStyle int
@@ -50,7 +49,7 @@ const (
 )
 
 // NewSpinner returns a new spinner widget.
-func New(app app.Drawer) *Spinner {
+func New(d func() *tview.Application) *Spinner {
 	return &Spinner{
 		Box:          tview.NewBox(),
 		currentStyle: SpinnerDotsCircling,
@@ -72,7 +71,7 @@ func New(app app.Drawer) *Spinner {
 			SpinnerBoxBounce:      []rune(`▌▀▐▄`),
 		},
 		active: false,
-		drawer: app,
+		draw:   d,
 		stop:   make(chan bool),
 	}
 }
@@ -95,6 +94,10 @@ func (s *Spinner) Draw(screen tcell.Screen) {
 }
 
 func (s *Spinner) Start() {
+	if s.active {
+		return
+	}
+
 	s.active = true
 	tick := time.NewTicker(100 * time.Millisecond)
 
@@ -102,17 +105,21 @@ func (s *Spinner) Start() {
 		select {
 		case <-tick.C:
 			s.counter++
-			s.drawer.Draw()
+			s.draw()
 		case <-s.stop:
 			s.counter = 0
 			s.active = false
-			s.drawer.Draw()
+			s.draw()
 			return
 		}
 	}
 }
 
 func (s *Spinner) Stop() {
+	if !s.active {
+		return
+	}
+
 	s.stop <- true
 }
 

@@ -15,11 +15,11 @@ import (
 func main() {
 	// Create main app
 	a := app.New()
-	sp := spinner.New(a)
+	sp := spinner.New(a.Draw)
 
 	// Create Player and start http long-polling Bluesound for updates
 	pUpd := make(chan player.Status)
-	p := player.New("http://bluesound.local:11000", pUpd)
+	p := player.New("http://bluesound.local:11000", sp, pUpd)
 	a.Player = p
 
 	// Create Library Page
