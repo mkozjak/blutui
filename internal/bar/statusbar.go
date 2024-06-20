@@ -7,10 +7,11 @@ import (
 	"github.com/mkozjak/blutui/internal/app"
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
+	"github.com/mkozjak/blutui/spinner"
 	"github.com/mkozjak/tview"
 )
 
-type Command interface {
+type StatusCommand interface {
 	SetCurrentPage(name string)
 }
 
@@ -19,24 +20,26 @@ type StatusBar struct {
 	container    *tview.Grid
 	app          app.Command
 	library      library.Command
+	spinner      spinner.Command
 	volume       *tview.Table
 	playerStatus *tview.TextView
 	nowPlaying   *tview.TextView
 	currentPage  *tview.TextView
 }
 
-func newStatusBar(a app.Command, l library.Command) *StatusBar {
+func newStatusBar(a app.Command, l library.Command, sp spinner.Command) *StatusBar {
 	return &StatusBar{
-		app:     a,
-		library: l,
+		app:      a,
+		library:  l,
+		spinner: sp,
 	}
 }
 
 func (sb *StatusBar) createContainer() *tview.Grid {
 	sb.volume = tview.NewTable().
 		SetFixed(1, 2).SetSelectable(false, false).
-		SetCell(0, 0, tview.NewTableCell("vol:").SetTextColor(tcell.ColorDefault)).
-		SetCell(0, 1, tview.NewTableCell("0").SetTextColor(tcell.ColorDefault))
+		SetCell(0, 0, tview.NewTableCell("").SetTextColor(tcell.ColorDefault)).
+		SetCell(0, 1, tview.NewTableCell("").SetTextColor(tcell.ColorDefault))
 
 	sb.playerStatus = tview.NewTextView()
 	sb.playerStatus.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
@@ -48,11 +51,12 @@ func (sb *StatusBar) createContainer() *tview.Grid {
 	sb.currentPage.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
 
 	sb.container = tview.NewGrid().
-		AddItem(sb.volume, 0, 0, 1, 1, 1, 8, false).
-		AddItem(sb.playerStatus, 0, 1, 1, 1, 1, 20, false).
-		AddItem(sb.nowPlaying, 0, 2, 1, 1, 1, 50, false).
-		AddItem(sb.currentPage, 0, 3, 1, 1, 1, 10, false).
-		SetColumns(8, 20, 0, 10)
+		AddItem(sb.spinner.GetContainer(), 0, 0, 1, 1, 1, 1, false).
+		AddItem(sb.volume, 0, 1, 1, 1, 1, 8, false).
+		AddItem(sb.playerStatus, 0, 2, 1, 1, 1, 20, false).
+		AddItem(sb.nowPlaying, 0, 3, 1, 1, 1, 50, false).
+		AddItem(sb.currentPage, 0, 4, 1, 1, 1, 10, false).
+		SetColumns(3, 8, 20, 0, 10)
 
 	sb.container.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
 
@@ -124,6 +128,7 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 			format = " | " + cpQuality + " " + cpFormat
 		}
 
+		sb.volume.SetCell(0, 0, tview.NewTableCell("vol:").SetTextColor(tcell.ColorDefault))
 		sb.volume.SetCell(0, 1, tview.NewTableCell(strconv.Itoa(s.Volume)).SetTextColor(tcell.ColorDefault))
 		sb.playerStatus.SetText(s.State + format).SetTextAlign(tview.AlignLeft)
 		sb.nowPlaying.SetText(cpTitle).SetTextAlign(tview.AlignCenter)

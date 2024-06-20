@@ -13,6 +13,7 @@ import (
 	internal "github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/blutui/internal/app"
 	"github.com/mkozjak/blutui/internal/player"
+	"github.com/mkozjak/blutui/spinner"
 	"github.com/mkozjak/tview"
 )
 
@@ -83,6 +84,7 @@ type Library struct {
 	container *tview.Flex
 	app       app.Command
 	player    player.Command
+	spinner   spinner.Command
 	API       string
 	// TODO: should move these into a separate ap struct?
 	artistPane          *tview.List
@@ -95,10 +97,11 @@ type Library struct {
 	CpTrackName         string
 }
 
-func New(api string, a app.Command, p player.Command) *Library {
+func New(api string, a app.Command, p player.Command, sp spinner.Command) *Library {
 	return &Library{
 		app:                a,
 		player:             p,
+		spinner:            sp,
 		API:                api,
 		albumArtists:       map[string]artist{},
 		cpArtistIdx:        -1,
@@ -132,6 +135,8 @@ func (l *Library) CreateContainer() (*tview.Flex, error) {
 }
 
 func (l *Library) FetchData(cached bool) error {
+	go l.spinner.Start()
+
 	c, err := cache.LoadCache()
 	if err != nil {
 		log.Println("Error loading local cache:", err)
@@ -276,6 +281,7 @@ func (l *Library) FetchData(cached bool) error {
 		l.albumArtists[artistName] = ar
 	}
 
+	l.spinner.Stop()
 	return nil
 }
 

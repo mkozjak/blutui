@@ -15,6 +15,10 @@ type Command interface {
 	Stop()
 }
 
+type Drawer interface {
+	Draw() *tview.Application
+}
+
 type App struct {
 	Application *tview.Application
 	Root        *tview.Flex

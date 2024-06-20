@@ -4,6 +4,7 @@ import (
 	"github.com/mkozjak/blutui/internal/app"
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
+	"github.com/mkozjak/blutui/spinner"
 	"github.com/mkozjak/tview"
 )
 
@@ -16,16 +17,18 @@ type Bar struct {
 	library  library.Command
 	status   *tview.Grid
 	search   *tview.InputField
+	spinner  spinner.Command
 	currCont string
 }
 
-func New(a app.Command, l library.Command, ch <-chan player.Status) *Bar {
+func New(a app.Command, l library.Command, sp spinner.Command, ch <-chan player.Status) *Bar {
 	bar := &Bar{
 		app:     a,
 		library: l,
+		spinner: sp,
 	}
 
-	stb := newStatusBar(a, l)
+	stb := newStatusBar(a, l, sp)
 	stbc := stb.createContainer()
 	go stb.listen(ch)
 

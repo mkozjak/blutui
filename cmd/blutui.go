@@ -8,12 +8,14 @@ import (
 	"github.com/mkozjak/blutui/internal/keyboard"
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
+	"github.com/mkozjak/blutui/spinner"
 	"github.com/mkozjak/tview"
 )
 
 func main() {
 	// Create main app
 	a := app.New()
+	sp := spinner.New(a)
 
 	// Create Player and start http long-polling Bluesound for updates
 	pUpd := make(chan player.Status)
@@ -21,7 +23,7 @@ func main() {
 	a.Player = p
 
 	// Create Library Page
-	lib := library.New("http://bluesound.local:11000", a, p)
+	lib := library.New("http://bluesound.local:11000", a, p, sp)
 	libc, err := lib.CreateContainer()
 	if err != nil {
 		panic(err)
@@ -30,7 +32,7 @@ func main() {
 	a.Library = libc
 
 	// Create a bottom Bar container along with its components
-	b := bar.New(a, lib, pUpd)
+	b := bar.New(a, lib, sp, pUpd)
 
 	// Start listening for Player updates
 	go p.PollStatus()
