@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/blutui/internal/app"
 	"github.com/mkozjak/tview"
 )
@@ -17,7 +16,6 @@ type Command interface {
 	Start()
 	Stop()
 }
-
 
 // Spinner represents a spinner widget.
 type Spinner struct {
@@ -85,8 +83,6 @@ func (s *Spinner) GetContainer() tview.Primitive {
 
 // Draw draws this primitive onto the screen.
 func (s *Spinner) Draw(screen tcell.Screen) {
-	internal.Log("check:", s.active)
-
 	if s.active {
 		s.Box.DrawForSubclass(screen, s)
 		x, y, width, _ := s.Box.GetInnerRect()

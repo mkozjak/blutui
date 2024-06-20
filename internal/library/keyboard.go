@@ -43,7 +43,7 @@ func (l *Library) artistPaneKeyboardHandler(event *tcell.EventKey) *tcell.EventK
 	switch event.Key() {
 	case tcell.KeyEscape:
 		if l.artistPaneFiltered {
-			l.drawArtistPane()
+			l.DrawArtistPane()
 			l.artistPaneFiltered = false
 			return nil
 		}

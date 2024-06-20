@@ -72,12 +72,16 @@ type artist struct {
 
 type Command interface {
 	Artists() []string
-	FetchData(cached bool) error
+	FetchData(cached bool, doneCh chan<- FetchDone)
 	FilterArtistPane(f []string)
 	HighlightCpArtist(name string)
 	IsFiltered() bool
 	SelectCpArtist()
 	SetCpTrackName(name string)
+}
+
+type FetchDone struct {
+	Error error
 }
 
 type Library struct {
@@ -113,14 +117,9 @@ func (l *Library) Artists() []string {
 	return l.artists
 }
 
-func (l *Library) CreateContainer() (*tview.Flex, error) {
-	err := l.FetchData(true)
-	if err != nil {
-		return nil, err
-	}
-
+func (l *Library) CreateContainer() *tview.Flex {
 	l.artistPane = l.createArtistContainer()
-	l.drawArtistPane()
+	l.DrawArtistPane()
 	l.albumPane = l.createAlbumContainer()
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
@@ -131,29 +130,32 @@ func (l *Library) CreateContainer() (*tview.Flex, error) {
 
 	flex.SetInputCapture(l.KeyboardHandler)
 
-	return flex, nil
+	return flex
 }
 
-func (l *Library) FetchData(cached bool) error {
+func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 	go l.spinner.Start()
 
 	c, err := cache.LoadCache()
 	if err != nil {
 		log.Println("Error loading local cache:", err)
-		return err
+		doneCh <- FetchDone{Error: err}
+		return
 	}
 
 	body, err := cache.FetchAndCache(l.API+"/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic", c, cached)
 	if err != nil {
 		log.Println("Error fetching/caching data:", err)
-		return err
+		doneCh <- FetchDone{Error: err}
+		return
 	}
 
 	var sections browse
 	err = xml.Unmarshal(body, &sections)
 	if err != nil {
 		log.Println("Error parsing the sections XML:", err)
-		return err
+		doneCh <- FetchDone{Error: err}
+		return
 	}
 
 	// parse album sections (alphabetical order) from xml
@@ -161,14 +163,16 @@ func (l *Library) FetchData(cached bool) error {
 		body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(item.BrowseKey), c, cached)
 		if err != nil {
 			log.Println("Error fetching album sections:", err)
-			return err
+			doneCh <- FetchDone{Error: err}
+			return
 		}
 
 		var albums browse
 		err = xml.Unmarshal(body, &albums)
 		if err != nil {
 			log.Println("Error parsing the albums XML:", err)
-			return err
+			doneCh <- FetchDone{Error: err}
+			return
 		}
 
 		// iterate albums and fill m.albumArtists
@@ -179,14 +183,16 @@ func (l *Library) FetchData(cached bool) error {
 			body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(al.BrowseKey), c, cached)
 			if err != nil {
 				log.Println("Error fetching album tracks:", err)
-				return err
+				doneCh <- FetchDone{Error: err}
+				return
 			}
 
 			var tracks browse
 			err = xml.Unmarshal(body, &tracks)
 			if err != nil {
 				log.Println("Error parsing the album tracks XML:", err)
-				return err
+				doneCh <- FetchDone{Error: err}
+				return
 			}
 
 			var albumTracks []track
@@ -217,7 +223,8 @@ func (l *Library) FetchData(cached bool) error {
 				c, cached)
 			if err != nil {
 				log.Println("Error fetching album date:", err)
-				return err
+				doneCh <- FetchDone{Error: err}
+				return
 			}
 
 			var s songs
@@ -225,7 +232,8 @@ func (l *Library) FetchData(cached bool) error {
 			err = xml.Unmarshal(body, &s)
 			if err != nil {
 				log.Println("Error parsing the album songs XML:", err)
-				return err
+				doneCh <- FetchDone{Error: err}
+				return
 			}
 
 			if len(s.Album) > 0 {
@@ -282,7 +290,7 @@ func (l *Library) FetchData(cached bool) error {
 	}
 
 	l.spinner.Stop()
-	return nil
+	doneCh <- FetchDone{Error: nil}
 }
 
 func (l *Library) IsFiltered() bool {

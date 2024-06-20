@@ -54,7 +54,7 @@ func (l *Library) FilterArtistPane(f []string) {
 	}
 }
 
-func (l *Library) drawArtistPane() {
+func (l *Library) DrawArtistPane() {
 	// Delete existing records, possibly after clearing the search results
 	l.artistPane.Clear()
 

@@ -64,7 +64,7 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 		}
 	case 'u':
 		// TODO: show error on bar
-		go h.library.FetchData(false)
+		go h.library.FetchData(false, nil)
 	case 'h':
 		p, _ := h.pages.GetFrontPage()
 		if p != "help" {

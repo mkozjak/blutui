@@ -23,11 +23,27 @@ func main() {
 	a.Player = p
 
 	// Create Library Page
+	fc := make(chan library.FetchDone)
 	lib := library.New("http://bluesound.local:11000", a, p, sp)
-	libc, err := lib.CreateContainer()
-	if err != nil {
-		panic(err)
-	}
+	libc := lib.CreateContainer()
+
+	// Start initial fetching of data
+	go lib.FetchData(true, fc)
+
+	go func() {
+		for {
+			msg := <-fc
+			if msg.Error != nil {
+				// TODO: should probably use os.Exit(1) here
+				panic("failed fetching initial data: " + msg.Error.Error())
+			}
+
+			// Draw initial album list for the first artist in the list
+			lib.DrawArtistPane()
+			lib.DrawInitAlbums()
+			return
+		}
+	}()
 
 	a.Library = libc
 
@@ -41,13 +57,6 @@ func main() {
 		AddAndSwitchToPage("library", a.Library, true)
 
 	a.Pages.SetBackgroundColor(tcell.ColorDefault)
-
-	// Draw initial album list for the first artist in the list
-	// Disable callback afterwards
-	a.Application.SetAfterDrawFunc(func(screen tcell.Screen) {
-		lib.DrawInitAlbums()
-		a.Application.SetAfterDrawFunc(nil)
-	})
 
 	// Configure global keybindings
 	gk := keyboard.NewGlobalHandler(a, a.Player, lib, a.Pages, b)
