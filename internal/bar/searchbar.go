@@ -62,6 +62,8 @@ func (s *SearchBar) createContainer() *tview.InputField {
 // A result that has a better JW score is then chosen for that artist.
 // A method then calls [library.FilterArtistPane] that redraws Artist Pane with
 // search results, or matched artists.
+// In case when Escape is pressed, this method just resets the Search Bar input and
+// shows the Status Bar component.
 //
 // This method is used by tview.InputField.SetDoneFunc method in [createContainer].
 func (s *SearchBar) done(key tcell.Key) {
