@@ -11,22 +11,35 @@ import (
 	"github.com/mkozjak/tview"
 )
 
-type StatusCommand interface {
-	SetCurrentPage(name string)
-}
-
-// injection target
+// A StatusBar is a [Bar] component that provides important player information
+// such as network activity (net i/o), current volume, state of playback,
+// artist and song names and currently shown page, such as library.
+// StatusBar is permanently shown on Bar, meaning, all other components fall back to it
+// after they are done with their work.
 type StatusBar struct {
+	// A tview-specific widget that holds all status bar information spread across
+	// the grid view.
 	container    *tview.Grid
+
+	// The following fields hold interfaces that are used for communicating with
+	// app, library and spinner instances.
 	app          app.Command
 	library      library.Command
 	spinner      spinner.Command
+
+	// The following fields are tview-specific widgets responsible for holding player
+	// information like currently set volume level, player's current playback state,
+	// a currently playing song (if any) and a currently shown app page.
 	volume       *tview.Table
 	playerStatus *tview.TextView
 	nowPlaying   *tview.TextView
 	currentPage  *tview.TextView
 }
 
+// newStatusBar returns a new [StatusBar] given its dependencies app, library and
+// spinner instances.
+// StatusBar is then used for the creation of its child containers for volume,
+// player status, currently played song and currently shown app page.
 func newStatusBar(a app.Command, l library.Command, sp spinner.Command) *StatusBar {
 	return &StatusBar{
 		app:      a,
@@ -35,6 +48,9 @@ func newStatusBar(a app.Command, l library.Command, sp spinner.Command) *StatusB
 	}
 }
 
+// createContainer creates a [StatusBar] container returning a pointer to
+// tview's Grid type, that is directly used by app in order to turn on
+// the status bar on [Bar] to show important player status messages.
 func (sb *StatusBar) createContainer() *tview.Grid {
 	sb.volume = tview.NewTable().
 		SetFixed(1, 2).SetSelectable(false, false).
@@ -63,6 +79,11 @@ func (sb *StatusBar) createContainer() *tview.Grid {
 	return sb.container
 }
 
+// listen starts iterating player updates given its input read-only channel
+// that is used to communicate player status via its long-polling API.
+// This method takes care about reacting to player updates such as playback
+// state, song changes, streaming quality information feeds, network and
+// management errors.
 func (sb *StatusBar) listen(ch <-chan player.Status) {
 	for s := range ch {
 		var cpTitle string
@@ -138,6 +159,8 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 	}
 }
 
+// setCurrentPage updates the label showing currently open application page
+// such as Library or Help screen given its input page name.
 func (sb *StatusBar) setCurrentPage(name string) {
 	sb.currentPage.SetText(name)
 }
