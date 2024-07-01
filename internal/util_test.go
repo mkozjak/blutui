@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -143,6 +144,8 @@ func TestJWSimilarity(t *testing.T) {
 
 	for _, tc := range tests {
 		got := JWSimilarity(tc.s1, tc.s2)
+		fmt.Printf("Test case: %s vs %s -> Result: %.5f\n", tc.s1, tc.s2, got)
+
 		if !reflect.DeepEqual(tc.want, got) {
 			t.Fatalf("expected: %v, got: %v", tc.want, got)
 		}
