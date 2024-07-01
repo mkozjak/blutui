@@ -111,12 +111,11 @@ func JWSimilarity(s1, s2 string) float64 {
 	// Count the number of matching characters
 	// faremviel, farmville
 	for i, s1Char := range s1 {
-	pos:
 		for j, s2Char := range s2 {
 			// If the characters match and are not farther than dMax
 			if s1Char == s2Char && math.Abs(float64(i)-float64(j)) <= dMax {
 				matches = append(matches, string(s1Char))
-				break pos
+				break
 			}
 		}
 	}
