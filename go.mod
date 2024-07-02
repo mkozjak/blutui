@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/gdamore/tcell/v2 v2.7.4
-	github.com/mkozjak/tview v0.0.0-20240601122708-efcc973349cf
+	github.com/mkozjak/tview v0.0.0-20240702222717-573fa74a8c06
 	golang.org/x/text v0.15.0
 )
 
