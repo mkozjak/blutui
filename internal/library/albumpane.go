@@ -189,7 +189,7 @@ func (l *Library) drawArtistAlbums(artist string, c *tview.Grid) []int {
 			c.AddItem(albumTable, i, 0, 1, 1, 0, 0, false)
 		}
 
-		l.currentArtistAlbums = append(l.currentArtistAlbums, albumList)
+		l.currentArtistAlbums = append(l.currentArtistAlbums, albumTable)
 	}
 
 	return alHeights
