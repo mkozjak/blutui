@@ -28,7 +28,7 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 	durms := internal.FormatDuration(album.duration)
 
 	c := tview.NewTable().
-		SetSelectable(true, false)
+		SetSelectable(false, false)
 
 	c.SetTitle(fmt.Sprintf("[::b]%s (%d)", album.name, album.year)).
 		SetBorder(true).
@@ -68,10 +68,6 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 
 		return event
 	})
-
-	// c.SetSelectionChangedFunc(func(row, col int) {
-	// 	c.GetCell(row, col).SetBackgroundColor(tcell.ColorCornflowerBlue)
-	// })
 
 	c.SetSelectedFunc(func(row, col int) {
 		_, autoplay, err := l.trackURL(album.tracks[row].name, artist, album.name)

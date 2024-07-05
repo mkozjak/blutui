@@ -9,7 +9,7 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	case tcell.KeyTab:
 		if l.artistPane.HasFocus() {
 			l.app.SetFocus(l.albumPane)
-			l.highlightTrack(0)
+			l.currentArtistAlbums[0].SetSelectable(true, false)
 		} else {
 			l.app.SetFocus(l.artistPane)
 		}
