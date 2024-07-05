@@ -9,8 +9,8 @@ build:
 run: build
 	/tmp/${BINARY_NAME}
 
-install:
-	go install cmd/blutui.go
+install: build
+	cp /tmp/${BINARY_NAME} $$GOPATH/bin/blutui
 
 clean:
 	go clean
