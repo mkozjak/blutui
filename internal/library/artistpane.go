@@ -82,7 +82,7 @@ func (l *Library) HighlightCpArtist(name string) {
 	}
 
 	// highlight artist
-	// track is highlighted through a.newAlbumList
+	// track is highlighted through l.drawAlbum
 	idx := l.artistPane.FindItems(name, "", false, true)
 	if len(idx) < 1 {
 		return

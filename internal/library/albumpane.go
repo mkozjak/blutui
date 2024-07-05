@@ -1,6 +1,7 @@
 package library
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -23,97 +24,13 @@ func (l *Library) createAlbumContainer() *tview.Grid {
 	return p
 }
 
-func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview.List {
-	textStyle := tcell.Style{}
-	textStyle.Background(tcell.ColorDefault)
-	d := internal.FormatDuration(album.duration)
+func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Table {
+	durms := internal.FormatDuration(album.duration)
 
-	trackLst := tview.NewList().
-		SetHighlightFullLine(true).
-		SetWrapAround(false).
-		SetSelectedFocusOnly(true).
-		SetSelectedTextColor(tcell.ColorWhite).
-		SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
-		ShowSecondaryText(false).
-		SetMainTextStyle(textStyle)
+	c := tview.NewTable().
+		SetSelectable(true, false)
 
-	// create a custom list line for album length etc.
-	trackLst.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		centerY := y + height/trackLst.GetItemCount()/2
-
-		for cx := x + len(trackLst.GetTitle()) - 3; cx < x+width-len(d)-2; cx++ {
-			screen.SetContent(cx, centerY, tview.BoxDrawingsLightHorizontal, nil,
-				tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue))
-		}
-
-		// write album length along the horizontal line
-		tview.Print(screen, "[::b]"+d, x+1, centerY, width-2, tview.AlignRight, tcell.ColorWhite)
-
-		// space for other content
-		return x + 1, centerY + 1, width - 2, height - (centerY + 1 - y)
-	})
-
-	trackLst.SetSelectedFunc(func(i int, trackName, _ string, sh rune) {
-		_, autoplay, err := l.trackURL(trackName, artist, album.name)
-		if err != nil {
-			panic(err)
-		}
-
-		// play track and add subsequent album tracks to queue
-		go l.player.Play(autoplay)
-	})
-
-	// set album tracklist keymap
-	trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Rune() {
-		case 'j':
-			if trackLst.GetCurrentItem()+1 == trackLst.GetItemCount() {
-				// reached the end of current album
-				// skip to next one if available
-				albumIndex, _ := c.GetOffset()
-
-				if albumIndex+1 != len(l.albumArtists[artist].albums) {
-					// this will redraw the screen
-					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
-					c.SetOffset(albumIndex+1, 0)
-					l.app.SetFocus(l.currentArtistAlbums[albumIndex+1])
-				}
-			}
-
-			return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
-		case 'k':
-			if trackLst.GetCurrentItem() == 0 {
-				// reached the beginning of current album
-				// skip to previous one if available
-				albumIndex, _ := c.GetOffset()
-
-				if albumIndex != 0 {
-					// this will redraw the screen
-					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
-					c.SetOffset(albumIndex-1, 0)
-					l.app.SetFocus(l.currentArtistAlbums[albumIndex-1])
-				}
-			}
-
-			return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
-		case 'x':
-			trackName, _ := trackLst.GetItemText(trackLst.GetCurrentItem())
-
-			u, _, err := l.trackURL(trackName, artist, album.name)
-			if err != nil {
-				panic(err)
-			}
-
-			// play currently selected track only
-			go l.player.Play(u)
-			return nil
-		}
-
-		return event
-	})
-
-	trackLst.
-		SetTitle("[::b]" + album.name).
+	c.SetTitle(fmt.Sprintf("[::b]%s (%d)", album.name, album.year)).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
@@ -123,15 +40,150 @@ func (l *Library) newAlbumList(artist string, album album, c *tview.Grid) *tview
 			l.app.SetPrevFocused("albumpane")
 		})
 
-	for _, t := range album.tracks {
-		if l.CpTrackName != "" && l.CpTrackName == internal.CleanTrackName(t.name) {
-			trackLst.AddItem("[yellow]"+t.name, "", 0, nil)
-		} else {
-			trackLst.AddItem(t.name, "", 0, nil)
+	c.SetCell(0, 0, tview.NewTableCell(album.name).SetTransparency(true))
+
+	// create a custom list line for album length etc.
+	c.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		centerY := y + height/c.GetRowCount()/2
+
+		for cx := x + len(c.GetTitle()) - 3; cx < x+width-len(durms)-2; cx++ {
+			screen.SetContent(cx, centerY, tview.BoxDrawingsLightHorizontal, nil,
+				tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue))
 		}
+
+		// write album length along the horizontal line
+		tview.Print(screen, "[::b]"+durms, x+1, centerY, width-2, tview.AlignRight, tcell.ColorWhite)
+
+		// space for other content
+		return x + 1, centerY + 1, width - 2, height - (centerY + 1 - y)
+	})
+
+	c.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Rune() {
+		case 'j':
+			return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+		case 'k':
+			return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
+		}
+
+		return event
+	})
+
+	// c.SetSelectionChangedFunc(func(row, col int) {
+	// 	c.GetCell(row, col).SetBackgroundColor(tcell.ColorCornflowerBlue)
+	// })
+
+	c.SetSelectedFunc(func(row, col int) {
+		_, autoplay, err := l.trackURL(album.tracks[row].name, artist, album.name)
+		if err != nil {
+			panic(err)
+		}
+
+		// play track and add subsequent album tracks to queue
+		go l.player.Play(autoplay)
+	})
+
+	// print album tracks
+	for i, t := range album.tracks {
+		track := tview.NewTableCell("").
+			SetTextColor(tcell.ColorDefault).
+			SetSelectedStyle(tcell.Style{}.
+				Background(tcell.ColorCornflowerBlue).
+				Foreground(tcell.ColorWhite)).
+			SetAlign(tview.AlignLeft).
+			SetExpansion(1).
+			SetTransparency(true).
+			SetSelectable(true)
+
+		if l.CpTrackName != "" && l.CpTrackName == internal.CleanTrackName(t.name) {
+			track.SetText("[yellow]" + t.name)
+		} else {
+			track.SetText(t.name)
+		}
+
+		dur := tview.NewTableCell(internal.FormatDuration(t.duration)).
+			SetTextColor(tcell.ColorDefault).
+			SetSelectedStyle(tcell.Style{}.
+				Background(tcell.ColorCornflowerBlue).
+				Foreground(tcell.ColorWhite)).
+			SetAlign(tview.AlignRight).
+			SetExpansion(1).
+			SetTransparency(true).
+			SetSelectable(true)
+
+		c.SetCell(i, 0, track)
+		c.SetCell(i, 1, dur)
 	}
 
-	return trackLst
+	return c
+
+	// trackLst := tview.NewList().
+	// 	SetHighlightFullLine(true).
+	// 	SetWrapAround(false).
+	// 	SetSelectedFocusOnly(true).
+	// 	SetSelectedTextColor(tcell.ColorWhite).
+	// 	SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
+	// 	ShowSecondaryText(false).
+	// 	SetMainTextStyle(textStyle)
+
+	// trackLst.SetSelectedFunc(func(i int, trackName, _ string, sh rune) {
+	// 	_, autoplay, err := l.trackURL(trackName, artist, album.name)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+
+	// 	// play track and add subsequent album tracks to queue
+	// 	go l.player.Play(autoplay)
+	// })
+
+	// // set album tracklist keymap
+	// trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// 	switch event.Rune() {
+	// 	case 'j':
+	// 		if trackLst.GetCurrentItem()+1 == trackLst.GetItemCount() {
+	// 			// reached the end of current album
+	// 			// skip to next one if available
+	// 			albumIndex, _ := c.GetOffset()
+
+	// 			if albumIndex+1 != len(l.albumArtists[artist].albums) {
+	// 				// this will redraw the screen
+	// 				// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
+	// 				c.SetOffset(albumIndex+1, 0)
+	// 				l.app.SetFocus(l.currentArtistAlbums[albumIndex+1])
+	// 			}
+	// 		}
+
+	// 		return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+	// 	case 'k':
+	// 		if trackLst.GetCurrentItem() == 0 {
+	// 			// reached the beginning of current album
+	// 			// skip to previous one if available
+	// 			albumIndex, _ := c.GetOffset()
+
+	// 			if albumIndex != 0 {
+	// 				// this will redraw the screen
+	// 				// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
+	// 				c.SetOffset(albumIndex-1, 0)
+	// 				l.app.SetFocus(l.currentArtistAlbums[albumIndex-1])
+	// 			}
+	// 		}
+
+	// 		return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
+	// 	case 'x':
+	// 		trackName, _ := trackLst.GetItemText(trackLst.GetCurrentItem())
+
+	// 		u, _, err := l.trackURL(trackName, artist, album.name)
+	// 		if err != nil {
+	// 			panic(err)
+	// 		}
+
+	// 		// play currently selected track only
+	// 		go l.player.Play(u)
+	// 		return nil
+	// 	}
+
+	// 	return event
+	// })
 }
 
 func (l *Library) DrawInitAlbums() {
@@ -147,7 +199,7 @@ func (l *Library) drawArtistAlbums(artist string, c *tview.Grid) []int {
 	cArtist := strings.TrimPrefix(artist, "[yellow]")
 
 	for i, album := range l.albumArtists[cArtist].albums {
-		albumList := l.newAlbumList(cArtist, album, c)
+		albumList := l.drawAlbum(cArtist, album, c)
 		alHeights = append(alHeights, len(album.tracks)+2)
 
 		// automatically focus the first track from the first album

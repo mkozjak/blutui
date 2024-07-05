@@ -7,8 +7,9 @@ import (
 func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyTab:
-		if !l.albumPane.HasFocus() {
+		if l.artistPane.HasFocus() {
 			l.app.SetFocus(l.albumPane)
+			l.highlightTrack(0)
 		} else {
 			l.app.SetFocus(l.artistPane)
 		}

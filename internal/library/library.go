@@ -90,13 +90,14 @@ type Library struct {
 	player    player.Command
 	spinner   spinner.Command
 	API       string
+
 	// TODO: should move these into a separate ap struct?
 	artistPane          *tview.List
 	artistPaneFiltered  bool
 	albumPane           *tview.Grid
 	albumArtists        map[string]artist
 	artists             []string
-	currentArtistAlbums []*tview.List
+	currentArtistAlbums []*tview.Table
 	cpArtistIdx         int
 	CpTrackName         string
 }
