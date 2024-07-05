@@ -27,6 +27,8 @@ func (l *Library) createAlbumContainer() *tview.Grid {
 func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Table {
 	durms := internal.FormatDuration(album.duration)
 
+	// Create a new album and set it as not selectable by default
+	// so that it's first track doesn't get highlighted.
 	c := tview.NewTable().
 		SetSelectable(false, false)
 
@@ -42,7 +44,7 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 
 	c.SetCell(0, 0, tview.NewTableCell(album.name).SetTransparency(true))
 
-	// create a custom list line for album length etc.
+	// Create a custom list line for album length etc.
 	c.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		centerY := y + height/c.GetRowCount()/2
 
@@ -51,19 +53,67 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 				tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue))
 		}
 
-		// write album length along the horizontal line
+		// Write album length along the horizontal line
 		tview.Print(screen, "[::b]"+durms, x+1, centerY, width-2, tview.AlignRight, tcell.ColorWhite)
 
-		// space for other content
+		// Space for other content
 		return x + 1, centerY + 1, width - 2, height - (centerY + 1 - y)
 	})
 
+	// Set album tracklist keymap
 	c.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
 		case 'j':
+			currRow, _ := c.GetSelection()
+
+			// Reached the end of current album, so skip to next one if available.
+			if currRow+1 == c.GetRowCount() {
+				albumIndex, _ := g.GetOffset()
+
+				if albumIndex+1 != len(l.albumArtists[artist].albums) {
+					// Set this current table as not selectable so it loses the highlighting.
+					c.SetSelectable(false, false)
+					l.currentArtistAlbums[albumIndex+1].SetSelectable(true, false)
+
+					// This will redraw the screen
+					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
+					g.SetOffset(albumIndex+1, 0)
+					l.app.SetFocus(l.currentArtistAlbums[albumIndex+1])
+				}
+			}
+
 			return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
+
 		case 'k':
+			currRow, _ := c.GetSelection()
+
+			if currRow == 0 {
+				albumIndex, _ := g.GetOffset()
+
+				if albumIndex != 0 {
+					c.SetSelectable(false, false)
+					l.currentArtistAlbums[albumIndex-1].SetSelectable(true, false)
+					// This will redraw the screen
+					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
+					g.SetOffset(albumIndex-1, 0)
+					l.app.SetFocus(l.currentArtistAlbums[albumIndex-1])
+				}
+			}
+
 			return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
+
+		case 'x':
+			currRow, _ := c.GetSelection()
+			trackName := c.GetCell(currRow, 0).Text
+
+			u, _, err := l.trackURL(trackName, artist, album.name)
+			if err != nil {
+				panic(err)
+			}
+
+			// play currently selected track only
+			go l.player.Play(u)
+			return nil
 		}
 
 		return event
@@ -112,74 +162,6 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 	}
 
 	return c
-
-	// trackLst := tview.NewList().
-	// 	SetHighlightFullLine(true).
-	// 	SetWrapAround(false).
-	// 	SetSelectedFocusOnly(true).
-	// 	SetSelectedTextColor(tcell.ColorWhite).
-	// 	SetSelectedBackgroundColor(tcell.ColorCornflowerBlue).
-	// 	ShowSecondaryText(false).
-	// 	SetMainTextStyle(textStyle)
-
-	// trackLst.SetSelectedFunc(func(i int, trackName, _ string, sh rune) {
-	// 	_, autoplay, err := l.trackURL(trackName, artist, album.name)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-
-	// 	// play track and add subsequent album tracks to queue
-	// 	go l.player.Play(autoplay)
-	// })
-
-	// // set album tracklist keymap
-	// trackLst.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-	// 	switch event.Rune() {
-	// 	case 'j':
-	// 		if trackLst.GetCurrentItem()+1 == trackLst.GetItemCount() {
-	// 			// reached the end of current album
-	// 			// skip to next one if available
-	// 			albumIndex, _ := c.GetOffset()
-
-	// 			if albumIndex+1 != len(l.albumArtists[artist].albums) {
-	// 				// this will redraw the screen
-	// 				// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
-	// 				c.SetOffset(albumIndex+1, 0)
-	// 				l.app.SetFocus(l.currentArtistAlbums[albumIndex+1])
-	// 			}
-	// 		}
-
-	// 		return tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone)
-	// 	case 'k':
-	// 		if trackLst.GetCurrentItem() == 0 {
-	// 			// reached the beginning of current album
-	// 			// skip to previous one if available
-	// 			albumIndex, _ := c.GetOffset()
-
-	// 			if albumIndex != 0 {
-	// 				// this will redraw the screen
-	// 				// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
-	// 				c.SetOffset(albumIndex-1, 0)
-	// 				l.app.SetFocus(l.currentArtistAlbums[albumIndex-1])
-	// 			}
-	// 		}
-
-	// 		return tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone)
-	// 	case 'x':
-	// 		trackName, _ := trackLst.GetItemText(trackLst.GetCurrentItem())
-
-	// 		u, _, err := l.trackURL(trackName, artist, album.name)
-	// 		if err != nil {
-	// 			panic(err)
-	// 		}
-
-	// 		// play currently selected track only
-	// 		go l.player.Play(u)
-	// 		return nil
-	// 	}
-
-	// 	return event
-	// })
 }
 
 func (l *Library) DrawInitAlbums() {
@@ -195,16 +177,16 @@ func (l *Library) drawArtistAlbums(artist string, c *tview.Grid) []int {
 	cArtist := strings.TrimPrefix(artist, "[yellow]")
 
 	for i, album := range l.albumArtists[cArtist].albums {
-		albumList := l.drawAlbum(cArtist, album, c)
+		albumTable := l.drawAlbum(cArtist, album, c)
 		alHeights = append(alHeights, len(album.tracks)+2)
 
 		// automatically focus the first track from the first album
 		// since grid is the parent, it will automatically lose focus
 		// and give it to the first album
 		if i == 0 {
-			c.AddItem(albumList, i, 0, 1, 1, 0, 0, true)
+			c.AddItem(albumTable, i, 0, 1, 1, 0, 0, true)
 		} else {
-			c.AddItem(albumList, i, 0, 1, 1, 0, 0, false)
+			c.AddItem(albumTable, i, 0, 1, 1, 0, 0, false)
 		}
 
 		l.currentArtistAlbums = append(l.currentArtistAlbums, albumList)
