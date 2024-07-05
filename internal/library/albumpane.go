@@ -68,16 +68,12 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 
 			// Reached the end of current album, so skip to next one if available.
 			if currRow+1 == c.GetRowCount() {
-				albumIndex, _ := g.GetOffset()
+				albumIndex := l.selectedAlbumIdx()
 
 				if albumIndex+1 != len(l.albumArtists[artist].albums) {
 					// Set this current table as not selectable so it loses the highlighting.
 					c.SetSelectable(false, false)
 					l.currentArtistAlbums[albumIndex+1].SetSelectable(true, false)
-
-					// This will redraw the screen
-					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
-					g.SetOffset(albumIndex+1, 0)
 					l.app.SetFocus(l.currentArtistAlbums[albumIndex+1])
 				}
 			}
@@ -88,14 +84,11 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 			currRow, _ := c.GetSelection()
 
 			if currRow == 0 {
-				albumIndex, _ := g.GetOffset()
+				albumIndex := l.selectedAlbumIdx()
 
 				if albumIndex != 0 {
 					c.SetSelectable(false, false)
 					l.currentArtistAlbums[albumIndex-1].SetSelectable(true, false)
-					// This will redraw the screen
-					// TODO: only use SetOffset if the next album cannot fit into the current screen in its entirety
-					g.SetOffset(albumIndex-1, 0)
 					l.app.SetFocus(l.currentArtistAlbums[albumIndex-1])
 				}
 			}
@@ -193,6 +186,21 @@ func (l *Library) drawArtistAlbums(artist string, c *tview.Grid) []int {
 	}
 
 	return alHeights
+}
+
+// selectedAlbumIdx returns an index of the currently focused album
+// based on the fact whether rows of an album are selectable.
+// In this application, only the currently focused album is marked as selectable.
+// If none of the albums are selectable, the method returns -1.
+func (l *Library) selectedAlbumIdx() int {
+	for i, t := range l.currentArtistAlbums {
+		r, _ := t.GetSelectable()
+		if r == true {
+			return i
+		}
+	}
+
+	return -1
 }
 
 // draw selected artist's right pane (album items) on artist scroll
