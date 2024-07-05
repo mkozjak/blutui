@@ -1,6 +1,9 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/blutui/internal/app"
@@ -12,7 +15,18 @@ import (
 	"github.com/mkozjak/tview"
 )
 
+var appVersion string
+
 func main() {
+	// Define the version flag
+	versionFlag := flag.Bool("version", false, "Display app version")
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println(appVersion)
+		return
+	}
+
 	// Create main app
 	a := app.New()
 	sp := spinner.New(a.Draw)
