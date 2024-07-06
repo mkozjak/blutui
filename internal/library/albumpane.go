@@ -38,7 +38,13 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
 		SetCustomBorders(internal.NoBorders).
+		SetFocusFunc(func() {
+			// Set this current table as selectable so its selected rows get highlighted
+			c.SetSelectable(true, false)
+		}).
 		SetBlurFunc(func() {
+			// Set this current table as not selectable so it loses the highlighting
+			c.SetSelectable(false, false)
 			l.app.SetPrevFocused("albumpane")
 		})
 
@@ -71,9 +77,6 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 				albumIndex := l.selectedAlbumIdx()
 
 				if albumIndex+1 != len(l.albumArtists[artist].albums) {
-					// Set this current table as not selectable so it loses the highlighting.
-					c.SetSelectable(false, false)
-					l.currentArtistAlbums[albumIndex+1].SetSelectable(true, false)
 					l.app.SetFocus(l.currentArtistAlbums[albumIndex+1])
 				}
 			}
@@ -87,8 +90,6 @@ func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Ta
 				albumIndex := l.selectedAlbumIdx()
 
 				if albumIndex != 0 {
-					c.SetSelectable(false, false)
-					l.currentArtistAlbums[albumIndex-1].SetSelectable(true, false)
 					l.app.SetFocus(l.currentArtistAlbums[albumIndex-1])
 				}
 			}
