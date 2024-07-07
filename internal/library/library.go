@@ -29,13 +29,14 @@ type volume struct {
 }
 
 type item struct {
-	Text        string `xml:"text,attr"`  // album name; track name
-	Text2       string `xml:"text2,attr"` // artist name
-	BrowseKey   string `xml:"browseKey,attr"`
-	Type        string `xml:"type,attr"`
-	PlayURL     string `xml:"playURL,attr"`
-	AutoplayURL string `xml:"autoplayURL,attr"`
-	Duration    string `xml:"duration,attr"`
+	Text           string `xml:"text,attr"`  // album name; track name
+	Text2          string `xml:"text2,attr"` // artist name
+	BrowseKey      string `xml:"browseKey,attr"`
+	Type           string `xml:"type,attr"`
+	PlayURL        string `xml:"playURL,attr"`
+	AutoplayURL    string `xml:"autoplayURL,attr"`
+	ContextMenuKey string `xml:"contextMenuKey,attr"`
+	Duration       string `xml:"duration,attr"`
 }
 
 // Used for parsing data from /Songs
@@ -244,6 +245,8 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 						if err != nil {
 							log.Println("Error extracting album's year:", err)
 						}
+					} else {
+						year, err = internal.HackAlbumYear(tracks.Items[0].ContextMenuKey)
 					}
 				}
 			}

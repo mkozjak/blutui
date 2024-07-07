@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -79,6 +81,39 @@ func ExtractAlbumYear(y string) (int, error) {
 	}
 
 	return 0, errors.New("invalid date format")
+}
+
+// HackAlbumYear extracts year from ContextMenuKey URL.
+// This function is used as a fallback way of getting album's
+// release year, because the API sometimes doesn't return it.
+// It searches key for substrings such as [2002] or (2002) and
+// used the last occurence of it to extract year out of key.
+func HackAlbumYear(key string) (int, error) {
+	u, err := url.Parse(key)
+	if err != nil {
+		return 0, errors.New("failed parsing context url")
+	}
+
+	q := u.Query()
+	for k, v := range q {
+		if k != "filename" {
+			continue
+		}
+
+		r, _ := regexp.Compile(`\[(\d{4})\]|\((\d{4})\)`)
+		matches := r.FindStringSubmatch(v[0])
+
+		if matches != nil && len(matches) > 1 {
+			y, err := strconv.Atoi(matches[1])
+			if err != nil {
+				return 0, err
+			}
+
+			return y, nil
+		}
+	}
+
+	return 0, errors.New("year could not be found")
 }
 
 // EscapeStyleTag disables tview style tagging when, for example,

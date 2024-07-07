@@ -105,6 +105,43 @@ func TestExtractAlbumYear(t *testing.T) {
 
 }
 
+func TestHackAlbumYear(t *testing.T) {
+	type ok struct {
+		url  string
+		want int
+	}
+
+	type nok struct {
+		url  string
+		want string
+	}
+
+	oks := []ok{
+		{url: "LocalMusic:contextMenu/Song?filename=%2Fvar%2Fmnt%2FHOME-music%2F" +
+			"Kamelot%2F%5B2003%5D%20Epica%2F01%20-%20Prologue.flac", want: 2003},
+	}
+
+	for _, tc := range oks {
+		got, _ := HackAlbumYear(tc.url)
+		if !reflect.DeepEqual(tc.want, got) {
+			t.Fatalf("expected: %v, got: %v", tc.want, got)
+		}
+	}
+
+	fails := []nok{
+		{url: "LocalMusic:contextMenu/Song?filename=%2Fvar%2Fmnt%2FHOME-music%2F" +
+			"_acoustic%2FJay%20Smith%20-%20Let%20My%20Heart%20Go.mp3", want: "year could not be found"},
+	}
+
+	for _, tc := range fails {
+		_, err := HackAlbumYear(tc.url)
+		if !reflect.DeepEqual(err.Error(), tc.want) {
+			t.Errorf("expected: %v, got: %v", tc.want, err.Error())
+		}
+	}
+
+}
+
 func TestEscapeStyleTag(t *testing.T) {
 	type test struct {
 		s    string
