@@ -24,7 +24,7 @@ func (l *Library) createAlbumContainer() *tview.Grid {
 	return p
 }
 
-func (l *Library) drawAlbum(artist string, album album, g *tview.Grid) *tview.Table {
+func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 	durms := internal.FormatDuration(album.duration)
 
 	// Create a new album and set it as not selectable by default
@@ -171,7 +171,7 @@ func (l *Library) drawArtistAlbums(artist string, c *tview.Grid) []int {
 	cArtist := strings.TrimPrefix(artist, "[yellow]")
 
 	for i, album := range l.albumArtists[cArtist].albums {
-		albumTable := l.drawAlbum(cArtist, album, c)
+		albumTable := l.drawAlbum(cArtist, album)
 		alHeights = append(alHeights, len(album.tracks)+2)
 
 		// automatically focus the first track from the first album
