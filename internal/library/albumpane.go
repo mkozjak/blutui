@@ -32,7 +32,7 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 	c := tview.NewTable().
 		SetSelectable(false, false)
 
-	c.SetTitle(fmt.Sprintf("[::b]%s (%d)", album.name, album.year)).
+	c.SetTitle(fmt.Sprintf("[::b]%s (%d)", internal.EscapeStyleTag(album.name), album.year)).
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).

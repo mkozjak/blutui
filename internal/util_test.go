@@ -105,6 +105,26 @@ func TestExtractAlbumYear(t *testing.T) {
 
 }
 
+func TestEscapeStyleTag(t *testing.T) {
+	type test struct {
+		s    string
+		want string
+	}
+
+	tests := []test{
+		{s: "Chilombo [clean]", want: "Chilombo [clean[]"},
+		{s: "What (Deluxe)", want: "What (Deluxe)"},
+		{s: "Tomorrow", want: "Tomorrow"},
+	}
+
+	for _, tc := range tests {
+		got := EscapeStyleTag(tc.s)
+		if !reflect.DeepEqual(tc.want, got) {
+			t.Fatalf("expected: %v, got: %v", tc.want, got)
+		}
+	}
+}
+
 func TestCleanTrackName(t *testing.T) {
 	type test struct {
 		s    string

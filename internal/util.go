@@ -81,6 +81,15 @@ func ExtractAlbumYear(y string) (int, error) {
 	return 0, errors.New("invalid date format")
 }
 
+// EscapeStyleTag disables tview style tagging when, for example,
+// literal square brackets are needed to be printed.
+// In example, album name "Chilombo [clean]" should be printed as is.
+// To enable this, a closing square bracket needs to be prepended by an
+// opening square bracket. This will result in "Chilombo [clean[]".
+func EscapeStyleTag(s string) string {
+	return strings.Replace(s, "]", "[]", 1)
+}
+
 // CleanTrackName removes prefixes such as track numbers
 func CleanTrackName(n string) string {
 	re := regexp.MustCompile(`^\d+\.\s`)
