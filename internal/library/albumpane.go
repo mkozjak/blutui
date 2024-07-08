@@ -171,7 +171,6 @@ func (l *Library) MarkCpTrack(track, artist, album string) {
 	}
 
 	if l.artists[l.cpArtistIdx] != artist {
-		internal.Log(l.artists[l.cpArtistIdx], "not the same to", artist, "\n")
 		return
 	}
 
@@ -191,7 +190,6 @@ func (l *Library) MarkCpTrack(track, artist, album string) {
 				continue
 			}
 
-			internal.Log("matching track", track)
 			al.SetCell(i, 0, c.SetText("[yellow]"+origTrack))
 		}
 	}
