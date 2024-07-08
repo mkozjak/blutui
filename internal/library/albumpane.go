@@ -135,7 +135,9 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 			SetTransparency(true).
 			SetSelectable(true)
 
-		if l.CpTrackName != "" && l.CpTrackName == internal.CleanTrackName(t.name) {
+		if l.CpTrackName != "" &&
+			l.CpTrackName == internal.CleanTrackName(t.name) &&
+			l.CpAlbumName == album.name {
 			track.SetText("[yellow]" + t.name)
 		} else {
 			track.SetText(t.name)
@@ -161,6 +163,36 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 func (l *Library) DrawInitAlbums() {
 	r := l.drawArtistAlbums(l.artists[0], l.albumPane)
 	l.albumPane.SetRows(r...)
+}
+
+func (l *Library) MarkCpTrack(track, artist, album string) {
+	if l.cpArtistIdx < 0 {
+		return
+	}
+
+	if l.artists[l.cpArtistIdx] != artist {
+		return
+	}
+
+	for _, al := range l.currentArtistAlbums {
+		alName := internal.CleanAlbumName(al.GetTitle())
+		if alName != album {
+			continue
+		}
+
+		for i := 1; i < al.GetRowCount(); i++ {
+			c := al.GetCell(i, 0)
+			origTrack := c.Text
+
+			// Unmark track if not played currently
+			if internal.CleanTrackName(origTrack) != track {
+				al.SetCell(i, 0, c.SetText(strings.TrimPrefix(origTrack, "[yellow]")))
+				continue
+			}
+
+			al.SetCell(i, 0, c.SetText("[yellow]"+origTrack))
+		}
+	}
 }
 
 func (l *Library) drawArtistAlbums(artist string, c *tview.Grid) []int {

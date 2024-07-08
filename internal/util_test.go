@@ -182,6 +182,24 @@ func TestCleanTrackName(t *testing.T) {
 	}
 }
 
+func TestCleanAlbumName(t *testing.T) {
+	type test struct {
+		s    string
+		want string
+	}
+
+	tests := []test{
+		{s: "[::b]It Was Good Until It Wasn't [clean[] (2020)", want: "It Was Good Until It Wasn't [clean]"},
+	}
+
+	for _, tc := range tests {
+		got := CleanAlbumName(tc.s)
+		if !reflect.DeepEqual(tc.want, got) {
+			t.Fatalf("expected: %v, got: %v", tc.want, got)
+		}
+	}
+}
+
 func TestJWSimilarity(t *testing.T) {
 	type test struct {
 		s1   string

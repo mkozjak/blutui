@@ -125,7 +125,19 @@ func EscapeStyleTag(s string) string {
 	return strings.Replace(s, "]", "[]", 1)
 }
 
-// CleanTrackName removes prefixes such as track numbers
+// CleanAlbumName removes all tview style tags and album year annotations
+// that are suffixed to the album name.
+func CleanAlbumName(s string) string {
+	s = strings.Replace(s, "[::b]", "", 1)
+	s = strings.Replace(s, "[]", "]", 1)
+
+	r, _ := regexp.Compile(` \(\d{4}\)$`)
+	s = r.ReplaceAllString(s, "")
+
+	return s
+}
+
+// CleanTrackName removes prefixes such as track numbers.
 func CleanTrackName(n string) string {
 	re := regexp.MustCompile(`^\d+\.\s`)
 	return re.ReplaceAllString(n, "")

@@ -19,13 +19,13 @@ import (
 type StatusBar struct {
 	// A tview-specific widget that holds all status bar information spread across
 	// the grid view.
-	container    *tview.Grid
+	container *tview.Grid
 
 	// The following fields hold interfaces that are used for communicating with
 	// app, library and spinner instances.
-	app          app.Command
-	library      library.Command
-	spinner      spinner.Command
+	app     app.Command
+	library library.Command
+	spinner spinner.Command
 
 	// The following fields are tview-specific widgets responsible for holding player
 	// information like currently set volume level, player's current playback state,
@@ -42,8 +42,8 @@ type StatusBar struct {
 // player status, currently played song and currently shown app page.
 func newStatusBar(a app.Command, l library.Command, sp spinner.Command) *StatusBar {
 	return &StatusBar{
-		app:      a,
-		library:  l,
+		app:     a,
+		library: l,
 		spinner: sp,
 	}
 }
@@ -100,10 +100,13 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 			// TODO: should probably be done elsewhere
 			if sb.app.CurrentPage() == "library" {
 				if s.Service == "LocalMusic" {
-					sb.library.HighlightCpArtist(s.Artist)
+					sb.library.MarkCpArtist(s.Artist)
+					sb.library.MarkCpTrack(s.Track, s.Artist, s.Album)
 					sb.library.SetCpTrackName(s.Track)
+					sb.library.SetCpAlbumName(s.Album)
 				} else {
-					sb.library.HighlightCpArtist("")
+					sb.library.MarkCpArtist("")
+					sb.library.MarkCpTrack("", "", "")
 					sb.library.SetCpTrackName("")
 				}
 			}
@@ -117,7 +120,7 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 			cpTitle = ""
 			cpFormat = ""
 			cpQuality = ""
-			sb.library.HighlightCpArtist("")
+			sb.library.MarkCpArtist("")
 			sb.library.SetCpTrackName("")
 		case "pause":
 			s.State = "paused"
