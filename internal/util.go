@@ -125,6 +125,16 @@ func EscapeStyleTag(s string) string {
 	return strings.Replace(s, "]", "[]", 1)
 }
 
+func CleanAlbumName(s string) string {
+	s = strings.Replace(s, "[::b]", "", 1)
+	s = strings.Replace(s, "[]", "]", 1)
+
+	r, _ := regexp.Compile(` \(\d{4}\)$`)
+	s = r.ReplaceAllString(s, "")
+
+	return s
+}
+
 // CleanTrackName removes prefixes such as track numbers
 func CleanTrackName(n string) string {
 	re := regexp.MustCompile(`^\d+\.\s`)

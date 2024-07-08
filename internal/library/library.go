@@ -75,9 +75,11 @@ type Command interface {
 	Artists() []string
 	FetchData(cached bool, doneCh chan<- FetchDone)
 	FilterArtistPane(f []string)
-	HighlightCpArtist(name string)
+	MarkCpArtist(name string)
+	MarkCpTrack(track, artist, album string)
 	IsFiltered() bool
 	SelectCpArtist()
+	SetCpAlbumName(name string)
 	SetCpTrackName(name string)
 }
 
@@ -100,6 +102,7 @@ type Library struct {
 	artists             []string
 	currentArtistAlbums []*tview.Table
 	cpArtistIdx         int
+	CpAlbumName         string
 	CpTrackName         string
 }
 
@@ -320,6 +323,10 @@ func (l *Library) trackURL(name, artist, album string) (string, string, error) {
 	}
 
 	return "", "", errors.New("no such track")
+}
+
+func (l *Library) SetCpAlbumName(name string) {
+	l.CpAlbumName = name
 }
 
 func (l *Library) SetCpTrackName(name string) {

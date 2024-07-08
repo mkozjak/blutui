@@ -69,7 +69,7 @@ func (l *Library) SelectCpArtist() {
 	l.artistPane.SetCurrentItem(l.cpArtistIdx)
 }
 
-func (l *Library) HighlightCpArtist(name string) {
+func (l *Library) MarkCpArtist(name string) {
 	// clear previously highlighted items
 	if l.cpArtistIdx >= 0 {
 		n, _ := l.artistPane.GetItemText(l.cpArtistIdx)
