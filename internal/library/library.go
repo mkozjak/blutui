@@ -305,6 +305,7 @@ func (l *Library) IsFiltered() bool {
 }
 
 func (l *Library) RefreshData() {
+	l.DrawArtistPane()
 }
 
 func (l *Library) trackURL(name, artist, album string) (string, string, error) {
