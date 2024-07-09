@@ -19,6 +19,7 @@ func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview
 		"volume up":                        "+",
 		"volume down":                      "-",
 		"toggle mute":                      "m",
+		"toggle repeat mode":               "r",
 		"page down":                        "ctrl+f",
 		"page up":                          "ctrl+b",
 		"half page down":                   "ctrl+d",
@@ -32,7 +33,7 @@ func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview
 
 	order := []string{
 		"start playback", "play selected song only", "play/pause", "stop",
-		"next song", "previous song", "volume up", "volume down", "toggle mute",
+		"next song", "previous song", "volume up", "volume down", "toggle mute", "toggle repeat mode",
 		"page down", "page up", "half page down", "half page up", "jump to currently playing artist",
 		"search artists", "update library", "show this screen", "quit app",
 	}

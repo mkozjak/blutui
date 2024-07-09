@@ -17,6 +17,10 @@ import (
 	"github.com/mkozjak/blutui/spinner"
 )
 
+type repeat struct {
+	Mode string `xml:"repeat,attr"`
+}
+
 type volume struct {
 	XMLName xml.Name `xml:"volume"`
 	Value   int      `xml:",chardata"`
@@ -37,6 +41,7 @@ type Status struct {
 	Service  string `xml:"service"`
 	Secs     int    `xml:"secs"`
 	State    string `xml:"state"`
+	Repeat   int    `xml:"repeat"`
 }
 
 type Command interface {
@@ -47,6 +52,7 @@ type Command interface {
 	Previous()
 	VolumeHold(bool)
 	ToggleMute()
+	ToggleRepeatMode()
 	State() string
 }
 
@@ -237,6 +243,54 @@ func (p *Player) ToggleMute() {
 		log.Println("Error toggling mute state:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
+}
+
+func (p *Player) ToggleRepeatMode() {
+	r, err := p.currentRepeatMode()
+	if err != nil {
+		log.Println("Error getting current repeat mode:", err)
+		p.Updates <- Status{State: "ctrlerr"}
+	}
+
+	switch r % 3 {
+	case 0:
+		_, err = http.Get(p.API + "/Repeat?state=1")
+	case 1:
+		_, err = http.Get(p.API + "/Repeat?state=2")
+	case 2:
+		_, err = http.Get(p.API + "/Repeat?state=0")
+	}
+	if err != nil {
+		log.Println("Error toggling repeat mode:", err)
+		p.Updates <- Status{State: "ctrlerr"}
+	}
+}
+
+func (p *Player) currentRepeatMode() (int, error) {
+	resp, err := http.Get(p.API + "/Repeat")
+	if err != nil {
+		return -1, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return -1, err
+	}
+
+	var repeatRes repeat
+
+	err = xml.Unmarshal(body, &repeatRes)
+	if err != nil {
+		return -1, err
+	}
+
+	m, err := strconv.Atoi(repeatRes.Mode)
+	if err != nil {
+		return -1, err
+	}
+
+	return m, nil
 }
 
 func (p *Player) currentVolume() (int, bool, error) {

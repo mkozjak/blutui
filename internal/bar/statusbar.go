@@ -149,12 +149,22 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 		currPage := sb.app.CurrentPage()
 		format := ""
 		if cpQuality != "" || cpFormat != "" {
-			format = " | " + cpQuality + " " + cpFormat
+			format = cpQuality + " " + cpFormat
+		}
+
+		var repeat string
+		switch s.Repeat {
+		case 0:
+			repeat = " ♯ "
+		case 1:
+			repeat = " ∞ "
+		default:
+			repeat = " "
 		}
 
 		sb.volume.SetCell(0, 0, tview.NewTableCell("vol:").SetTextColor(tcell.ColorDefault))
 		sb.volume.SetCell(0, 1, tview.NewTableCell(strconv.Itoa(s.Volume)).SetTextColor(tcell.ColorDefault))
-		sb.playerStatus.SetText(s.State + format).SetTextAlign(tview.AlignLeft)
+		sb.playerStatus.SetText(s.State + repeat + format).SetTextAlign(tview.AlignLeft)
 		sb.nowPlaying.SetText(cpTitle).SetTextAlign(tview.AlignCenter)
 		sb.currentPage.SetText(currPage).SetTextAlign(tview.AlignRight)
 
