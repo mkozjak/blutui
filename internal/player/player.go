@@ -228,6 +228,7 @@ func (p *Player) VolumeHold(up bool) {
 }
 
 func (p *Player) ToggleMute() {
+	go p.spinner.Start()
 	_, m, err := p.currentVolume()
 	if err != nil {
 		log.Println("Error getting mute state:", err)
@@ -243,9 +244,11 @@ func (p *Player) ToggleMute() {
 		log.Println("Error toggling mute state:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
+	go p.spinner.Stop()
 }
 
 func (p *Player) ToggleRepeatMode() {
+	go p.spinner.Start()
 	r, err := p.currentRepeatMode()
 	if err != nil {
 		log.Println("Error getting current repeat mode:", err)
@@ -264,6 +267,7 @@ func (p *Player) ToggleRepeatMode() {
 		log.Println("Error toggling repeat mode:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
+	go p.spinner.Stop()
 }
 
 func (p *Player) currentRepeatMode() (int, error) {
