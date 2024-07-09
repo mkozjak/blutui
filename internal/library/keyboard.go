@@ -40,6 +40,21 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 		}
 	}
 
+	switch event.Rune() {
+	case 'g':
+		if l.artistPane.HasFocus() {
+			l.artistPane.SetCurrentItem(0)
+		}
+
+		return nil
+	case 'G':
+		if l.artistPane.HasFocus() {
+			l.artistPane.SetCurrentItem(-1)
+		}
+
+		return nil
+	}
+
 	return event
 }
 
