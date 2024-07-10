@@ -14,15 +14,22 @@ type switcher interface {
 	Show(name string)
 }
 
+type IApp interface {
+	app.Focuser
+	app.StatusbarShower
+	app.PageViewer
+	app.Drawer
+}
+
 // A Bar represents a bottom bar that holds containers such as [SearchBar] or [StatusBar].
 type Bar struct {
 	// The following fields hold interfaces that are used for communicating with
 	// app, library and spinner instances. App is used for focusing-specific tasks,
 	// library for music data manipulation by search and status bar components and
 	// spinner in order to start or stop the loading indicator.
-	app     app.Command
+	app     IApp
 	library library.Command
-	spinner spinner.Command
+	spinner spinner.Container
 
 	// tview-specific widgets that represent types compatible with flex widget or
 	// app focusing methods that are used to draw these widgets to the screen.
@@ -40,7 +47,7 @@ type Bar struct {
 // Returned Bar is suitable to be used for getting tview.Primitive that can be sent to
 // tview's components for drawing to the screen. It is also used for switching between
 // [StatusBar] and [SearchBar].
-func New(a app.Command, l library.Command, sp spinner.Command, ch <-chan player.Status) *Bar {
+func New(a IApp, l library.Command, sp spinner.Container, ch <-chan player.Status) *Bar {
 	bar := &Bar{
 		app:     a,
 		library: l,

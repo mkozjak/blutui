@@ -15,101 +15,113 @@ type pagesManager interface {
 	HidePage(name string) *tview.Pages
 }
 
-type GlobalHandler struct {
-	app     app.Command
-	player  player.Controller
-	library library.Command
-	pages   pagesManager
-	bar     *bar.Bar
+type GlobalDependencies struct {
+	App     app.Command
+	Player  player.Controller
+	Library library.Command
+	Pages   pagesManager
+	Bar     *bar.Bar
 }
 
-func NewGlobalHandler(a app.Command, p player.Controller, l library.Command, pg pagesManager, b *bar.Bar) *GlobalHandler {
+type HelpDependencies struct {
+	Pages pagesManager
+}
+
+type GlobalHandler struct {
+	GlobalDependencies
+}
+
+type HelpHandler struct {
+	HelpDependencies
+}
+
+func NewGlobalHandler(deps GlobalDependencies) *GlobalHandler {
 	return &GlobalHandler{
-		app:     a,
-		player:  p,
-		library: l,
-		pages:   pg,
-		bar:     b,
+		GlobalDependencies{
+			App:     deps.App,
+			Player:  deps.Player,
+			Library: deps.Library,
+			Pages:   deps.Pages,
+			Bar:     deps.Bar,
+		},
 	}
 }
 
 func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyCtrlQ:
-		h.app.Stop()
+		h.App.Stop()
 	}
 
-	if h.bar.CurrentContainer() != "status" {
+	if h.Bar.CurrentContainer() != "status" {
 		return event
 	}
 
 	switch event.Rune() {
 	case 'p':
-		go h.player.Playpause()
+		go h.Player.Playpause()
 	case 's':
-		go h.player.Stop()
+		go h.Player.Stop()
 	case '>':
-		go h.player.Next()
+		go h.Player.Next()
 	case '<':
-		go h.player.Previous()
+		go h.Player.Previous()
 	case '+':
-		go h.player.VolumeHold(true)
+		go h.Player.VolumeHold(true)
 	case '-':
-		go h.player.VolumeHold(false)
+		go h.Player.VolumeHold(false)
 	case 'm':
-		go h.player.ToggleMute()
+		go h.Player.ToggleMute()
 	case 'o':
-		if h.player.State() == "play" {
-			h.library.SelectCpArtist()
+		if h.Player.State() == "play" {
+			h.Library.SelectCpArtist()
 		}
 	case 'r':
-		go h.player.ToggleRepeatMode()
+		go h.Player.ToggleRepeatMode()
 	case 'u':
-		go h.library.UpdateData()
+		go h.Library.UpdateData()
 	case 'h':
-		p, _ := h.pages.GetFrontPage()
+		p, _ := h.Pages.GetFrontPage()
 		if p != "help" {
-			h.pages.ShowPage("help")
+			h.Pages.ShowPage("help")
 			return nil
 		}
 	case '/':
-		p, _ := h.pages.GetFrontPage()
-		if p == "help" || h.library.IsFiltered() {
+		p, _ := h.Pages.GetFrontPage()
+		if p == "help" || h.Library.IsFiltered() {
 			return event
 		}
 
-		h.bar.Show("search")
-		h.app.SetFocus(h.bar.SearchContainer())
+		h.Bar.Show("search")
+		h.App.SetFocus(h.Bar.SearchContainer())
 		return nil
 	case 'q':
-		h.app.Stop()
+		h.App.Stop()
 	}
 
 	return event
 }
 
-type HelpHandler struct {
-	pages pagesManager
-}
-
-func NewHelpHandler(pg pagesManager) *HelpHandler {
+func NewHelpHandler(deps HelpDependencies) *HelpHandler {
 	return &HelpHandler{
-		pages: pg,
+		HelpDependencies{
+			Pages: deps.Pages,
+		},
 	}
 }
 
 func (k *HelpHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyEscape:
-		k.pages.HidePage("help")
+		k.Pages.HidePage("help")
 		return nil
 	}
 
 	switch event.Rune() {
 	case 'h':
-		p, _ := k.pages.GetFrontPage()
+		p, _ := k.Pages.GetFrontPage()
 		if p == "help" {
-			k.pages.HidePage("help")
+			k.Pages.HidePage("help")
 			return nil
 		}
 	}

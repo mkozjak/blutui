@@ -10,10 +10,13 @@ import (
 	"github.com/mkozjak/tview"
 )
 
-type Command interface {
-	GetContainer() tview.Primitive
+type StartStopper interface {
 	Start()
 	Stop()
+}
+
+type Container interface {
+	Container() tview.Primitive
 }
 
 // Spinner represents a spinner widget.
@@ -76,7 +79,7 @@ func New(d func() *tview.Application) *Spinner {
 	}
 }
 
-func (s *Spinner) GetContainer() tview.Primitive {
+func (s *Spinner) Container() tview.Primitive {
 	return s
 }
 

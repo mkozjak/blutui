@@ -6,17 +6,32 @@ import (
 )
 
 type Command interface {
-	Draw() *tview.Application
-	CurrentPage() string
+	Drawer
+	PageViewer
+	Focuser
+	Stopper
+}
+
+type Focuser interface {
 	PrevFocused() tview.Primitive
 	SetFocus(p tview.Primitive) *tview.Application
 	SetPrevFocused(p string)
+}
+
+type StatusbarShower interface {
 	ShowBarComponent(p tview.Primitive)
-	Stop()
+}
+
+type PageViewer interface {
+	CurrentPage() string
 }
 
 type Drawer interface {
 	Draw() *tview.Application
+}
+
+type Stopper interface {
+	Stop()
 }
 
 type App struct {
