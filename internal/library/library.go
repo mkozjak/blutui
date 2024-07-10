@@ -164,6 +164,8 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		return
 	}
 
+	l.albumArtists = make(map[string]artist)
+
 	// parse album sections (alphabetical order) from xml
 	for _, item := range sections.Items {
 		body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(item.BrowseKey), c, cached)
@@ -181,7 +183,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 			return
 		}
 
-		// iterate albums and fill m.albumArtists
+		// iterate albums and fill l.albumArtists
 		for _, al := range albums.Items {
 			var duration int
 
@@ -320,7 +322,6 @@ func (l *Library) UpdateData() {
 		// Refresh artist pane
 		l.DrawArtistPane()
 		l.app.SetFocus(l.artistPane)
-		internal.Log(l.albumArtists)
 		return
 	}
 }
