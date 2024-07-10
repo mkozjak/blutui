@@ -44,7 +44,7 @@ type Status struct {
 	Repeat   int    `xml:"repeat"`
 }
 
-type Command interface {
+type Controller interface {
 	Play(url string)
 	Playpause()
 	Stop()

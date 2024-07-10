@@ -17,13 +17,13 @@ type pagesManager interface {
 
 type GlobalHandler struct {
 	app     app.Command
-	player  player.Command
+	player  player.Controller
 	library library.Command
 	pages   pagesManager
 	bar     *bar.Bar
 }
 
-func NewGlobalHandler(a app.Command, p player.Command, l library.Command, pg pagesManager, b *bar.Bar) *GlobalHandler {
+func NewGlobalHandler(a app.Command, p player.Controller, l library.Command, pg pagesManager, b *bar.Bar) *GlobalHandler {
 	return &GlobalHandler{
 		app:     a,
 		player:  p,

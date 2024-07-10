@@ -90,7 +90,7 @@ type FetchDone struct {
 type Library struct {
 	container *tview.Flex
 	app       app.Command
-	player    player.Command
+	player    player.Controller
 	spinner   spinner.Command
 	API       string
 
@@ -106,7 +106,7 @@ type Library struct {
 	CpTrackName         string
 }
 
-func New(api string, a app.Command, p player.Command, sp spinner.Command) *Library {
+func New(api string, a app.Command, p player.Controller, sp spinner.Command) *Library {
 	return &Library{
 		app:                a,
 		player:             p,
