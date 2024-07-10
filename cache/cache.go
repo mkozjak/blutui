@@ -3,13 +3,13 @@ package cache
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/fs"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"time"
+
+	"github.com/mkozjak/blutui/internal"
 )
 
 type Cache struct {
@@ -37,7 +37,7 @@ func LoadCache() (*Cache, error) {
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(cache)
 	if err != nil {
-		fmt.Println("Error decoding cache file:", err)
+		internal.Log("Error decoding cache file:", err)
 	}
 
 	return cache, nil
@@ -60,7 +60,7 @@ func saveCache(cache *Cache) error {
 	encoder := json.NewEncoder(file)
 	err = encoder.Encode(cache)
 	if err != nil {
-		fmt.Println("Error encoding cache to file:", err)
+		internal.Log("Error encoding cache to file:", err)
 	}
 
 	return nil
@@ -75,14 +75,14 @@ func FetchAndCache(url string, cache *Cache, cached bool) ([]byte, error) {
 	} else {
 		resp, err := http.Get(url)
 		if err != nil {
-			log.Println("Error fetching album section list:", err)
+			internal.Log("Error fetching album section list:", err)
 			return nil, err
 		}
 		defer resp.Body.Close()
 
 		body, err = httputil.DumpResponse(resp, true)
 		if err != nil {
-			log.Println("Error reading response body:", err)
+			internal.Log("Error reading response body:", err)
 			return nil, err
 		}
 
@@ -92,7 +92,7 @@ func FetchAndCache(url string, cache *Cache, cached bool) ([]byte, error) {
 		}
 
 		if err = saveCache(cache); err != nil {
-			log.Println("Error saving data to local cache:", err)
+			internal.Log("Error saving data to local cache:", err)
 			return nil, err
 		}
 	}

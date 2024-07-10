@@ -113,7 +113,7 @@ func HackAlbumYear(key string) (int, error) {
 		}
 	}
 
-	return 0, errors.New("year could not be found")
+	return 0, errors.New(key + ": year could not be found")
 }
 
 // EscapeStyleTag disables tview style tagging when, for example,

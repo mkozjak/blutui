@@ -3,7 +3,6 @@ package library
 import (
 	"encoding/xml"
 	"errors"
-	"log"
 	"net/url"
 	"sort"
 	"strconv"
@@ -144,14 +143,14 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 
 	c, err := cache.LoadCache()
 	if err != nil {
-		log.Println("Error loading local cache:", err)
+		internal.Log("Error loading local cache:", err)
 		doneCh <- FetchDone{Error: err}
 		return
 	}
 
 	body, err := cache.FetchAndCache(l.API+"/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic", c, cached)
 	if err != nil {
-		log.Println("Error fetching/caching data:", err)
+		internal.Log("Error fetching/caching data:", err)
 		doneCh <- FetchDone{Error: err}
 		return
 	}
@@ -159,7 +158,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 	var sections browse
 	err = xml.Unmarshal(body, &sections)
 	if err != nil {
-		log.Println("Error parsing the sections XML:", err)
+		internal.Log("Error parsing the sections XML:", err)
 		doneCh <- FetchDone{Error: err}
 		return
 	}
@@ -170,7 +169,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 	for _, item := range sections.Items {
 		body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(item.BrowseKey), c, cached)
 		if err != nil {
-			log.Println("Error fetching album sections:", err)
+			internal.Log("Error fetching album sections:", err)
 			doneCh <- FetchDone{Error: err}
 			return
 		}
@@ -178,7 +177,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		var albums browse
 		err = xml.Unmarshal(body, &albums)
 		if err != nil {
-			log.Println("Error parsing the albums XML:", err)
+			internal.Log("Error parsing the albums XML:", err)
 			doneCh <- FetchDone{Error: err}
 			return
 		}
@@ -190,7 +189,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 			// fetch album tracks
 			body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(al.BrowseKey), c, cached)
 			if err != nil {
-				log.Println("Error fetching album tracks:", err)
+				internal.Log("Error fetching album tracks:", err)
 				doneCh <- FetchDone{Error: err}
 				return
 			}
@@ -198,7 +197,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 			var tracks browse
 			err = xml.Unmarshal(body, &tracks)
 			if err != nil {
-				log.Println("Error parsing the album tracks XML:", err)
+				internal.Log("Error parsing the album tracks XML:", err)
 				doneCh <- FetchDone{Error: err}
 				return
 			}
@@ -230,7 +229,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 				strings.ReplaceAll(l.API+"/Songs?service=LocalMusic&album="+al.Text+"&artist="+arName, " ", "+"),
 				c, cached)
 			if err != nil {
-				log.Println("Error fetching album date:", err)
+				internal.Log("Error fetching album date:", err)
 				doneCh <- FetchDone{Error: err}
 				return
 			}
@@ -239,7 +238,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 			var year int
 			err = xml.Unmarshal(body, &s)
 			if err != nil {
-				log.Println("Error parsing the album songs XML:", err)
+				internal.Log("Error parsing the album songs XML:", err)
 				doneCh <- FetchDone{Error: err}
 				return
 			}
@@ -248,12 +247,12 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 				if s.Album[0].Song[0].Date != "" {
 					year, err = internal.ExtractAlbumYear(s.Album[0].Song[0].Date)
 					if err != nil {
-						log.Println("Error extracting album's year:", err)
+						internal.Log("Error extracting album's year:", err)
 					}
 				} else {
 					year, err = internal.HackAlbumYear(tracks.Items[0].ContextMenuKey)
 					if err != nil {
-						log.Println("Error hacking album's year:", err)
+						internal.Log("Error hacking album's year:", err)
 					}
 				}
 			}

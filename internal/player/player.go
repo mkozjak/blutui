@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/blutui/spinner"
 )
 
@@ -83,7 +83,7 @@ func (p *Player) Play(url string) {
 	go p.spinner.Start()
 	_, err := http.Get(p.API + url)
 	if err != nil {
-		log.Println("Error autoplaying track:", err)
+		internal.Log("Error autoplaying track:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 	p.spinner.Stop()
@@ -93,7 +93,7 @@ func (p *Player) Playpause() {
 	go p.spinner.Start()
 	_, err := http.Get(p.API + "/Pause?toggle=1")
 	if err != nil {
-		log.Println("Error toggling play/pause:", err)
+		internal.Log("Error toggling play/pause:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 	p.spinner.Stop()
@@ -103,7 +103,7 @@ func (p *Player) Stop() {
 	go p.spinner.Start()
 	_, err := http.Get(p.API + "/Stop")
 	if err != nil {
-		log.Println("Error stopping playback:", err)
+		internal.Log("Error stopping playback:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 	p.spinner.Stop()
@@ -113,7 +113,7 @@ func (p *Player) Next() {
 	go p.spinner.Start()
 	_, err := http.Get(p.API + "/Skip")
 	if err != nil {
-		log.Println("Error switching to next track:", err)
+		internal.Log("Error switching to next track:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 	p.spinner.Stop()
@@ -123,7 +123,7 @@ func (p *Player) Previous() {
 	go p.spinner.Start()
 	_, err := http.Get(p.API + "/Back")
 	if err != nil {
-		log.Println("Error switching to previous track:", err)
+		internal.Log("Error switching to previous track:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 	p.spinner.Stop()
@@ -139,13 +139,13 @@ func (p *Player) volumeUp(bigstep bool) {
 
 	v, _, err := p.currentVolume()
 	if err != nil {
-		log.Println("Error fetching volume state:", err)
+		internal.Log("Error fetching volume state:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 
 	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", p.API, v+step))
 	if err != nil {
-		log.Println("Error setting volume up:", err)
+		internal.Log("Error setting volume up:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 }
@@ -160,13 +160,13 @@ func (p *Player) volumeDown(bigstep bool) {
 
 	v, _, err := p.currentVolume()
 	if err != nil {
-		log.Println("Error fetching volume state:", err)
+		internal.Log("Error fetching volume state:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 
 	_, err = http.Get(fmt.Sprintf("%s/Volume?level=%d", p.API, v-step))
 	if err != nil {
-		log.Println("Error setting volume down:", err)
+		internal.Log("Error setting volume down:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 }
@@ -231,7 +231,7 @@ func (p *Player) ToggleMute() {
 	go p.spinner.Start()
 	_, m, err := p.currentVolume()
 	if err != nil {
-		log.Println("Error getting mute state:", err)
+		internal.Log("Error getting mute state:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 
@@ -241,7 +241,7 @@ func (p *Player) ToggleMute() {
 		_, err = http.Get(p.API + "/Volume?mute=0")
 	}
 	if err != nil {
-		log.Println("Error toggling mute state:", err)
+		internal.Log("Error toggling mute state:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 	go p.spinner.Stop()
@@ -254,7 +254,7 @@ func (p *Player) ToggleRepeatMode() {
 	go p.spinner.Start()
 	r, err := p.currentRepeatMode()
 	if err != nil {
-		log.Println("Error getting current repeat mode:", err)
+		internal.Log("Error getting current repeat mode:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 
@@ -267,7 +267,7 @@ func (p *Player) ToggleRepeatMode() {
 		_, err = http.Get(p.API + "/Repeat?state=0")
 	}
 	if err != nil {
-		log.Println("Error toggling repeat mode:", err)
+		internal.Log("Error toggling repeat mode:", err)
 		p.Updates <- Status{State: "ctrlerr"}
 	}
 	go p.spinner.Stop()
