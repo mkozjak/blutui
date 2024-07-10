@@ -87,7 +87,7 @@ func ExtractAlbumYear(y string) (int, error) {
 // This function is used as a fallback way of getting album's
 // release year, because the API sometimes doesn't return it.
 // It searches key for substrings such as [2002] or (2002) and
-// used the last occurence of it to extract year out of key.
+// used the last occurence of it to extract the year.
 func HackAlbumYear(key string) (int, error) {
 	u, err := url.Parse(key)
 	if err != nil {
