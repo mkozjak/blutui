@@ -28,16 +28,16 @@ type HelpDependencies struct {
 }
 
 type GlobalHandler struct {
-	GlobalDependencies
+	d GlobalDependencies
 }
 
 type HelpHandler struct {
-	HelpDependencies
+	d HelpDependencies
 }
 
 func NewGlobalHandler(deps GlobalDependencies) *GlobalHandler {
 	return &GlobalHandler{
-		GlobalDependencies{
+		d: GlobalDependencies{
 			App:     deps.App,
 			Player:  deps.Player,
 			Library: deps.Library,
@@ -50,53 +50,53 @@ func NewGlobalHandler(deps GlobalDependencies) *GlobalHandler {
 func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyCtrlQ:
-		h.App.Stop()
+		h.d.App.Stop()
 	}
 
-	if h.Bar.CurrentContainer() != "status" {
+	if h.d.Bar.CurrentContainer() != "status" {
 		return event
 	}
 
 	switch event.Rune() {
 	case 'p':
-		go h.Player.Playpause()
+		go h.d.Player.Playpause()
 	case 's':
-		go h.Player.Stop()
+		go h.d.Player.Stop()
 	case '>':
-		go h.Player.Next()
+		go h.d.Player.Next()
 	case '<':
-		go h.Player.Previous()
+		go h.d.Player.Previous()
 	case '+':
-		go h.Player.VolumeHold(true)
+		go h.d.Player.VolumeHold(true)
 	case '-':
-		go h.Player.VolumeHold(false)
+		go h.d.Player.VolumeHold(false)
 	case 'm':
-		go h.Player.ToggleMute()
+		go h.d.Player.ToggleMute()
 	case 'o':
-		if h.Player.State() == "play" {
-			h.Library.SelectCpArtist()
+		if h.d.Player.State() == "play" {
+			h.d.Library.SelectCpArtist()
 		}
 	case 'r':
-		go h.Player.ToggleRepeatMode()
+		go h.d.Player.ToggleRepeatMode()
 	case 'u':
-		go h.Library.UpdateData()
+		go h.d.Library.UpdateData()
 	case 'h':
-		p, _ := h.Pages.GetFrontPage()
+		p, _ := h.d.Pages.GetFrontPage()
 		if p != "help" {
-			h.Pages.ShowPage("help")
+			h.d.Pages.ShowPage("help")
 			return nil
 		}
 	case '/':
-		p, _ := h.Pages.GetFrontPage()
-		if p == "help" || h.Library.IsFiltered() {
+		p, _ := h.d.Pages.GetFrontPage()
+		if p == "help" || h.d.Library.IsFiltered() {
 			return event
 		}
 
-		h.Bar.Show("search")
-		h.App.SetFocus(h.Bar.SearchContainer())
+		h.d.Bar.Show("search")
+		h.d.App.SetFocus(h.d.Bar.SearchContainer())
 		return nil
 	case 'q':
-		h.App.Stop()
+		h.d.App.Stop()
 	}
 
 	return event
@@ -104,7 +104,7 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 
 func NewHelpHandler(deps HelpDependencies) *HelpHandler {
 	return &HelpHandler{
-		HelpDependencies{
+		d: HelpDependencies{
 			Pages: deps.Pages,
 		},
 	}
@@ -113,15 +113,15 @@ func NewHelpHandler(deps HelpDependencies) *HelpHandler {
 func (k *HelpHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyEscape:
-		k.Pages.HidePage("help")
+		k.d.Pages.HidePage("help")
 		return nil
 	}
 
 	switch event.Rune() {
 	case 'h':
-		p, _ := k.Pages.GetFrontPage()
+		p, _ := k.d.Pages.GetFrontPage()
 		if p == "help" {
-			k.Pages.HidePage("help")
+			k.d.Pages.HidePage("help")
 			return nil
 		}
 	}

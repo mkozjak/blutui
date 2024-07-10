@@ -21,15 +21,19 @@ type IApp interface {
 	app.Drawer
 }
 
+type Dependencies struct {
+	App     IApp
+	Library library.Command
+	Spinner spinner.Container
+}
+
 // A Bar represents a bottom bar that holds containers such as [SearchBar] or [StatusBar].
 type Bar struct {
 	// The following fields hold interfaces that are used for communicating with
 	// app, library and spinner instances. App is used for focusing-specific tasks,
 	// library for music data manipulation by search and status bar components and
 	// spinner in order to start or stop the loading indicator.
-	app     IApp
-	library library.Command
-	spinner spinner.Container
+	d Dependencies
 
 	// tview-specific widgets that represent types compatible with flex widget or
 	// app focusing methods that are used to draw these widgets to the screen.
@@ -47,18 +51,20 @@ type Bar struct {
 // Returned Bar is suitable to be used for getting tview.Primitive that can be sent to
 // tview's components for drawing to the screen. It is also used for switching between
 // [StatusBar] and [SearchBar].
-func New(a IApp, l library.Command, sp spinner.Container, ch <-chan player.Status) *Bar {
+func New(deps Dependencies, ch <-chan player.Status) *Bar {
 	bar := &Bar{
-		app:     a,
-		library: l,
-		spinner: sp,
+		d: Dependencies{
+			App:     deps.App,
+			Library: deps.Library,
+			Spinner: deps.Spinner,
+		},
 	}
 
-	stb := newStatusBar(a, l, sp)
+	stb := newStatusBar(deps.App, deps.Library, deps.Spinner)
 	stbc := stb.createContainer()
 	go stb.listen(ch)
 
-	srb := newSearchBar(bar, l)
+	srb := newSearchBar(bar, deps.Library)
 	srbc := srb.createContainer()
 
 	bar.status = stbc
@@ -90,13 +96,13 @@ func (b *Bar) SearchContainer() tview.Primitive {
 func (b *Bar) Show(name string) {
 	switch name {
 	case "search":
-		b.app.ShowBarComponent(b.search)
+		b.d.App.ShowBarComponent(b.search)
 		b.currCont = "search"
 	case "status":
-		b.app.ShowBarComponent(b.status)
-		p := b.app.PrevFocused()
-		b.app.SetPrevFocused("search")
+		b.d.App.ShowBarComponent(b.status)
+		p := b.d.App.PrevFocused()
+		b.d.App.SetPrevFocused("search")
 		b.currCont = "status"
-		b.app.SetFocus(p)
+		b.d.App.SetFocus(p)
 	}
 }

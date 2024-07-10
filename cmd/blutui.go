@@ -62,7 +62,11 @@ func main() {
 	a.Library = libc
 
 	// Create a bottom Bar container along with its components
-	b := bar.New(a, lib, sp, pUpd)
+	b := bar.New(bar.Dependencies{
+		App:     a,
+		Library: lib,
+		Spinner: sp,
+	}, pUpd)
 
 	// Start listening for Player updates
 	go p.PollStatus()
