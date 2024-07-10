@@ -226,7 +226,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 
 			// fetch album date from /Songs
 			body, err = cache.FetchAndCache(
-				strings.ReplaceAll(l.API+"/Songs?service=LocalMusic&album="+al.Text+"&artist="+arName, " ", "+"),
+				strings.ReplaceAll(l.API+"/Songs?service=LocalMusic&album="+al.Text+"&artist="+al.Text2, " ", "+"),
 				c, cached)
 			if err != nil {
 				internal.Log("Error fetching album date:", err)
@@ -244,8 +244,9 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 			}
 
 			if len(s.Album) > 0 && len(s.Album[0].Song) > 0 {
-				if s.Album[0].Song[0].Date != "" {
-					year, err = internal.ExtractAlbumYear(s.Album[0].Song[0].Date)
+				d := s.Album[0].Song[0].Date
+				if d != "" && d != "0" {
+					year, err = internal.ExtractAlbumYear(d)
 					if err != nil {
 						internal.Log("Error extracting album's year:", err)
 					}

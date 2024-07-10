@@ -119,6 +119,11 @@ func TestHackAlbumYear(t *testing.T) {
 	oks := []ok{
 		{url: "LocalMusic:contextMenu/Song?filename=%2Fvar%2Fmnt%2FHOME-music%2F" +
 			"Kamelot%2F%5B2003%5D%20Epica%2F01%20-%20Prologue.flac", want: 2003},
+		{url: "LocalMusic:contextMenu/Song?filename=%2Fvar%2Fmnt%2FHOME-music%2F" +
+			"Bohren%20and%20Der%20Club%20of%20Gore%2F%5B2002%5D%20Black%20Earth%2F01%20-" +
+			"%20Midnight%20Black%20Earth.flac", want: 2002},
+		{url: "LocalMusic:contextMenu/Song?filename=%2Fvar%2Fmnt%2FHOME-music%2F" +
+			"Rage%20Against%20The%20Machine%2F%5B2000%5D%20Renegades%2F01.%20Microphone%20Fiend.flac", want: 2000},
 	}
 
 	for _, tc := range oks {
