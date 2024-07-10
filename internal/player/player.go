@@ -247,6 +247,9 @@ func (p *Player) ToggleMute() {
 	go p.spinner.Stop()
 }
 
+// ToggleRepeatMode cycles between repeat modes in ascending order
+// based on player's current repeat mode. Mode is either 0, 1 or 2.
+// 0 means repeat play queue, 1 means repeat a track, and 2 means repeat off.
 func (p *Player) ToggleRepeatMode() {
 	go p.spinner.Start()
 	r, err := p.currentRepeatMode()
