@@ -242,15 +242,16 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 				return
 			}
 
-			if len(s.Album) > 0 {
-				if len(s.Album[0].Song) > 0 {
-					if s.Album[0].Song[0].Date != "" {
-						year, err = internal.ExtractAlbumYear(s.Album[0].Song[0].Date)
-						if err != nil {
-							log.Println("Error extracting album's year:", err)
-						}
-					} else {
-						year, err = internal.HackAlbumYear(tracks.Items[0].ContextMenuKey)
+			if len(s.Album) > 0 && len(s.Album[0].Song) > 0 {
+				if s.Album[0].Song[0].Date != "" {
+					year, err = internal.ExtractAlbumYear(s.Album[0].Song[0].Date)
+					if err != nil {
+						log.Println("Error extracting album's year:", err)
+					}
+				} else {
+					year, err = internal.HackAlbumYear(tracks.Items[0].ContextMenuKey)
+					if err != nil {
+						log.Println("Error hacking album's year:", err)
 					}
 				}
 			}
