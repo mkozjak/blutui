@@ -74,6 +74,7 @@ type artist struct {
 type Command interface {
 	Artists() []string
 	FetchData(cached bool, doneCh chan<- FetchDone)
+	UpdateData()
 	FilterArtistPane(f []string)
 	MarkCpArtist(name string)
 	MarkCpTrack(track, artist, album string)
@@ -163,6 +164,8 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		return
 	}
 
+	l.albumArtists = make(map[string]artist)
+
 	// parse album sections (alphabetical order) from xml
 	for _, item := range sections.Items {
 		body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(item.BrowseKey), c, cached)
@@ -180,7 +183,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 			return
 		}
 
-		// iterate albums and fill m.albumArtists
+		// iterate albums and fill l.albumArtists
 		for _, al := range albums.Items {
 			var duration int
 
@@ -305,7 +308,22 @@ func (l *Library) IsFiltered() bool {
 	return l.artistPaneFiltered
 }
 
-func (l *Library) RefreshData() {
+func (l *Library) UpdateData() {
+	ch := make(chan FetchDone)
+	go l.FetchData(false, ch)
+
+	for {
+		msg := <-ch
+		if msg.Error != nil {
+			// TODO: show error on bar
+			panic("failed fetching initial data: " + msg.Error.Error())
+		}
+
+		// Refresh artist pane
+		l.DrawArtistPane()
+		l.app.SetFocus(l.artistPane)
+		return
+	}
 }
 
 func (l *Library) trackURL(name, artist, album string) (string, string, error) {

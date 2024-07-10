@@ -83,10 +83,10 @@ func (b *Bar) SearchContainer() tview.Primitive {
 func (b *Bar) Show(name string) {
 	switch name {
 	case "search":
-		b.app.ShowComponent(b.search)
+		b.app.ShowBarComponent(b.search)
 		b.currCont = "search"
 	case "status":
-		b.app.ShowComponent(b.status)
+		b.app.ShowBarComponent(b.status)
 		p := b.app.PrevFocused()
 		b.app.SetPrevFocused("search")
 		b.currCont = "status"

@@ -65,8 +65,7 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 	case 'r':
 		go h.player.ToggleRepeatMode()
 	case 'u':
-		// TODO: show error on bar
-		go h.library.FetchData(false, nil)
+		go h.library.UpdateData()
 	case 'h':
 		p, _ := h.pages.GetFrontPage()
 		if p != "help" {

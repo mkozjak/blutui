@@ -11,7 +11,7 @@ type Command interface {
 	PrevFocused() tview.Primitive
 	SetFocus(p tview.Primitive) *tview.Application
 	SetPrevFocused(p string)
-	ShowComponent(p tview.Primitive)
+	ShowBarComponent(p tview.Primitive)
 	Stop()
 }
 
@@ -68,7 +68,7 @@ func (a *App) SetFocus(p tview.Primitive) *tview.Application {
 	return a.Application.SetFocus(p)
 }
 
-func (a *App) ShowComponent(c tview.Primitive) {
+func (a *App) ShowBarComponent(c tview.Primitive) {
 	bc := a.Root.GetItem(1)
 	a.Root.RemoveItem(bc)
 	a.Root.AddItem(c, 1, 0, true)
