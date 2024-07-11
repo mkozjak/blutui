@@ -66,6 +66,10 @@ func (l *Library) DrawArtistPane() {
 }
 
 func (l *Library) SelectCpArtist() {
+	if l.cpArtistIdx < 0 {
+		return
+	}
+
 	l.artistPane.SetCurrentItem(l.cpArtistIdx)
 }
 
