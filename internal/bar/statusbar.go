@@ -30,7 +30,7 @@ type StatusBar struct {
 	// information like currently set volume level, player's current playback state,
 	// a currently playing song (if any) and a currently shown app page.
 	volume       *tview.Table
-	playerStatus *tview.TextView
+	playerStatus *tview.Table
 	nowPlaying   *tview.TextView
 	currentPage  *tview.TextView
 }
@@ -56,8 +56,8 @@ func (sb *StatusBar) createContainer() *tview.Grid {
 		SetCell(0, 0, tview.NewTableCell("").SetTextColor(tcell.ColorDefault)).
 		SetCell(0, 1, tview.NewTableCell("").SetTextColor(tcell.ColorDefault))
 
-	sb.playerStatus = tview.NewTextView()
-	sb.playerStatus.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
+	sb.playerStatus = tview.NewTable().
+		SetFixed(1, 1).SetSelectable(false, false)
 
 	sb.nowPlaying = tview.NewTextView()
 	sb.nowPlaying.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
@@ -71,7 +71,7 @@ func (sb *StatusBar) createContainer() *tview.Grid {
 		AddItem(sb.playerStatus, 0, 2, 1, 1, 1, 20, false).
 		AddItem(sb.nowPlaying, 0, 3, 1, 1, 1, 50, false).
 		AddItem(sb.currentPage, 0, 4, 1, 1, 1, 10, false).
-		SetColumns(3, 8, 20, 0, 10)
+		SetColumns(3, 8, 30, 0, 10)
 
 	sb.container.SetBackgroundColor(tcell.ColorDefault).SetBorder(false).SetBorderPadding(0, 0, 1, 1)
 
@@ -163,7 +163,22 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 
 		sb.volume.SetCell(0, 0, tview.NewTableCell("vol:").SetTextColor(tcell.ColorDefault))
 		sb.volume.SetCell(0, 1, tview.NewTableCell(strconv.Itoa(s.Volume)).SetTextColor(tcell.ColorDefault))
-		sb.playerStatus.SetText(s.State + repeat + format).SetTextAlign(tview.AlignLeft)
+
+		// Index 0 (state) is always fixed. 1 (repeat) and 2 (format) are added or removed dynamically.
+		sb.playerStatus.SetCell(0, 0, tview.NewTableCell(s.State).SetTextColor(tcell.ColorDefault))
+
+		if s.Repeat != 2 {
+			sb.playerStatus.SetCell(0, 1, tview.NewTableCell(repeat).SetTextColor(tcell.ColorDefault))
+		} else {
+			sb.playerStatus.RemoveColumn(1)
+		}
+		if format != "" {
+			sb.playerStatus.SetCell(0, sb.playerStatus.GetColumnCount(), tview.NewTableCell(format).
+				SetTextColor(tcell.ColorDefault))
+		} else {
+			sb.playerStatus.RemoveColumn(sb.playerStatus.GetColumnCount() + 1)
+		}
+
 		sb.nowPlaying.SetText(cpTitle).SetTextAlign(tview.AlignCenter)
 		sb.currentPage.SetText(currPage).SetTextAlign(tview.AlignRight)
 
