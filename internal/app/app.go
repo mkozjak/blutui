@@ -5,8 +5,11 @@ import (
 	"github.com/mkozjak/tview"
 )
 
+// FocusStopper represents an object that can both focus and stop.
 type FocusStopper interface {
+	// Focuser represents the ability to focus on a specific target.
 	Focuser
+	// Stopper represents the ability to stop a running process.
 	Stopper
 }
 
