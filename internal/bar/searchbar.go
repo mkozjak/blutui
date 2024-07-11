@@ -15,8 +15,8 @@ import (
 type SearchBar struct {
 	// The following fields hold interfaces that are used for communicating with
 	// [Bar] and library instances.
-	switcher  switcher
-	library   library.Command
+	switcher switcher
+	library  library.ArtistFilter
 
 	// A tview-specific widget that provides query input to the user in order
 	// to initiate an artist fuzzy search feature.
@@ -26,7 +26,7 @@ type SearchBar struct {
 // newSearchBar returns a new [SearchBar] given its dependencies switcher and library instances
 // SearchBar is then used for the creation of a container, tview.InputField, that is
 // directly used by the app to focus the search input field.
-func newSearchBar(s switcher, l library.Command) *SearchBar {
+func newSearchBar(s switcher, l library.ArtistFilter) *SearchBar {
 	return &SearchBar{switcher: s, library: l}
 }
 

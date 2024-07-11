@@ -59,7 +59,7 @@ type Controller interface {
 type Player struct {
 	API               string
 	Updates           chan<- Status
-	spinner           spinner.Command
+	spinner           spinner.StartStopper
 	status            Status
 	volumeHoldCount   int
 	volumeHoldBlocker bool
@@ -67,7 +67,7 @@ type Player struct {
 	volumeHoldMutex   sync.Mutex
 }
 
-func New(api string, sp spinner.Command, s chan<- Status) *Player {
+func New(api string, sp spinner.StartStopper, s chan<- Status) *Player {
 	return &Player{
 		API:     api,
 		Updates: s,

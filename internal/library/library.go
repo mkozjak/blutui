@@ -71,14 +71,22 @@ type artist struct {
 }
 
 type Command interface {
-	Artists() []string
 	FetchData(cached bool, doneCh chan<- FetchDone)
 	UpdateData()
-	FilterArtistPane(f []string)
-	MarkCpArtist(name string)
-	MarkCpTrack(track, artist, album string)
 	IsFiltered() bool
 	SelectCpArtist()
+	ArtistFilter
+	CPMarkSetter
+}
+
+type ArtistFilter interface {
+	Artists() []string
+	FilterArtistPane(f []string)
+}
+
+type CPMarkSetter interface {
+	MarkCpArtist(name string)
+	MarkCpTrack(track, artist, album string)
 	SetCpAlbumName(name string)
 	SetCpTrackName(name string)
 }
@@ -89,9 +97,9 @@ type FetchDone struct {
 
 type Library struct {
 	container *tview.Flex
-	app       app.Command
+	app       app.Focuser
 	player    player.Controller
-	spinner   spinner.Command
+	spinner   spinner.StartStopper
 	API       string
 
 	// TODO: should move these into a separate ap struct?
@@ -106,7 +114,7 @@ type Library struct {
 	CpTrackName         string
 }
 
-func New(api string, a app.Command, p player.Controller, sp spinner.Command) *Library {
+func New(api string, a app.Focuser, p player.Controller, sp spinner.StartStopper) *Library {
 	return &Library{
 		app:                a,
 		player:             p,

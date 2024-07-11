@@ -5,18 +5,34 @@ import (
 	"github.com/mkozjak/tview"
 )
 
-type Command interface {
-	Draw() *tview.Application
-	CurrentPage() string
+// FocusStopper represents an object that can both focus and stop.
+type FocusStopper interface {
+	// Focuser represents the ability to focus on a specific target.
+	Focuser
+	// Stopper represents the ability to stop a running process.
+	Stopper
+}
+
+type Focuser interface {
 	PrevFocused() tview.Primitive
 	SetFocus(p tview.Primitive) *tview.Application
 	SetPrevFocused(p string)
+}
+
+type StatusbarShower interface {
 	ShowBarComponent(p tview.Primitive)
-	Stop()
+}
+
+type PageViewer interface {
+	CurrentPage() string
 }
 
 type Drawer interface {
 	Draw() *tview.Application
+}
+
+type Stopper interface {
+	Stop()
 }
 
 type App struct {

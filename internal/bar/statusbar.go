@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/mkozjak/blutui/internal/app"
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/blutui/spinner"
@@ -23,9 +22,9 @@ type StatusBar struct {
 
 	// The following fields hold interfaces that are used for communicating with
 	// app, library and spinner instances.
-	app     app.Command
-	library library.Command
-	spinner spinner.Command
+	app     appManager
+	library library.CPMarkSetter
+	spinner spinner.Container
 
 	// The following fields are tview-specific widgets responsible for holding player
 	// information like currently set volume level, player's current playback state,
@@ -40,7 +39,7 @@ type StatusBar struct {
 // spinner instances.
 // StatusBar is then used for the creation of its child containers for volume,
 // player status, currently played song and currently shown app page.
-func newStatusBar(a app.Command, l library.Command, sp spinner.Command) *StatusBar {
+func newStatusBar(a appManager, l library.CPMarkSetter, sp spinner.Container) *StatusBar {
 	return &StatusBar{
 		app:     a,
 		library: l,
@@ -67,7 +66,7 @@ func (sb *StatusBar) createContainer() *tview.Grid {
 	sb.currentPage.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
 
 	sb.container = tview.NewGrid().
-		AddItem(sb.spinner.GetContainer(), 0, 0, 1, 1, 1, 1, false).
+		AddItem(sb.spinner.Container(), 0, 0, 1, 1, 1, 1, false).
 		AddItem(sb.volume, 0, 1, 1, 1, 1, 8, false).
 		AddItem(sb.playerStatus, 0, 2, 1, 1, 1, 20, false).
 		AddItem(sb.nowPlaying, 0, 3, 1, 1, 1, 50, false).
