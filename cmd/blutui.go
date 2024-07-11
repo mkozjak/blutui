@@ -73,22 +73,12 @@ func main() {
 	a.Pages.SetBackgroundColor(tcell.ColorDefault)
 
 	// Configure global keybindings
-	gk := keyboard.NewGlobalHandler(keyboard.GlobalDependencies{
-		App:     a,
-		Player:  a.Player,
-		Library: lib,
-		Pages:   a.Pages,
-		Bar:     b,
-	})
-
+	gk := keyboard.NewGlobalHandler(a, a.Player, lib, a.Pages, b)
 	a.Application.SetInputCapture(gk.Listen)
 
 	// Configure helpscreen keybindings
 	// Attach helpscreen to the app
-	hk := keyboard.NewHelpHandler(keyboard.HelpDependencies{
-		Pages: a.Pages,
-	})
-
+	hk := keyboard.NewHelpHandler(a.Pages)
 	h := internal.CreateHelpScreen(hk.Listen)
 	a.Pages.AddPage("help", h, false, false)
 
