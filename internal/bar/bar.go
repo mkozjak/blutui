@@ -14,14 +14,14 @@ type switcher interface {
 	Show(name string)
 }
 
-type IApp interface {
+type appManager interface {
 	app.Focuser
 	app.StatusbarShower
 	app.PageViewer
 	app.Drawer
 }
 
-type ILibrary interface {
+type libManager interface {
 	library.ArtistFilter
 	library.CPMarkSetter
 }
@@ -32,8 +32,8 @@ type Bar struct {
 	// app, library and spinner instances. App is used for focusing-specific tasks,
 	// library for music data manipulation by search and status bar components and
 	// spinner in order to start or stop the loading indicator.
-	app     IApp
-	library ILibrary
+	app     appManager
+	library libManager
 	spinner spinner.Container
 
 	// tview-specific widgets that represent types compatible with flex widget or
@@ -52,7 +52,7 @@ type Bar struct {
 // Returned Bar is suitable to be used for getting tview.Primitive that can be sent to
 // tview's components for drawing to the screen. It is also used for switching between
 // [StatusBar] and [SearchBar].
-func New(a IApp, l ILibrary, sp spinner.Container, ch <-chan player.Status) *Bar {
+func New(a appManager, l libManager, sp spinner.Container, ch <-chan player.Status) *Bar {
 	bar := &Bar{
 		app:     a,
 		library: l,

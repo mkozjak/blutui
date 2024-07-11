@@ -22,7 +22,7 @@ type StatusBar struct {
 
 	// The following fields hold interfaces that are used for communicating with
 	// app, library and spinner instances.
-	app     IApp
+	app     appManager
 	library library.CPMarkSetter
 	spinner spinner.Container
 
@@ -39,7 +39,7 @@ type StatusBar struct {
 // spinner instances.
 // StatusBar is then used for the creation of its child containers for volume,
 // player status, currently played song and currently shown app page.
-func newStatusBar(a IApp, l library.CPMarkSetter, sp spinner.Container) *StatusBar {
+func newStatusBar(a appManager, l library.CPMarkSetter, sp spinner.Container) *StatusBar {
 	return &StatusBar{
 		app:     a,
 		library: l,
