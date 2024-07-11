@@ -71,14 +71,22 @@ type artist struct {
 }
 
 type Command interface {
-	Artists() []string
 	FetchData(cached bool, doneCh chan<- FetchDone)
 	UpdateData()
-	FilterArtistPane(f []string)
-	MarkCpArtist(name string)
-	MarkCpTrack(track, artist, album string)
 	IsFiltered() bool
 	SelectCpArtist()
+	ArtistFilter
+	CPMarkSetter
+}
+
+type ArtistFilter interface {
+	Artists() []string
+	FilterArtistPane(f []string)
+}
+
+type CPMarkSetter interface {
+	MarkCpArtist(name string)
+	MarkCpTrack(track, artist, album string)
 	SetCpAlbumName(name string)
 	SetCpTrackName(name string)
 }
