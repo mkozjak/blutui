@@ -5,9 +5,7 @@ import (
 	"github.com/mkozjak/tview"
 )
 
-type Command interface {
-	Drawer
-	PageViewer
+type FocusStopper interface {
 	Focuser
 	Stopper
 }
