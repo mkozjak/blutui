@@ -1,6 +1,7 @@
 package tview
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -99,6 +100,7 @@ type InputField struct {
 		main       tcell.Style
 		selected   tcell.Style
 		background tcell.Color
+		useTags    bool
 	}
 
 	// An optional function which is called when the user selects an
@@ -135,12 +137,18 @@ func NewInputField() *InputField {
 		if i.changed != nil {
 			i.changed(i.textArea.GetText())
 		}
+	}).SetFocusFunc(func() {
+		// Forward focus event to the input field.
+		if i.Box.focus != nil {
+			i.Box.focus()
+		}
 	})
 	i.textArea.textStyle = tcell.StyleDefault.Background(Styles.ContrastBackgroundColor).Foreground(Styles.PrimaryTextColor)
 	i.textArea.placeholderStyle = tcell.StyleDefault.Background(Styles.ContrastBackgroundColor).Foreground(Styles.ContrastSecondaryTextColor)
 	i.autocompleteStyles.main = tcell.StyleDefault.Background(Styles.MoreContrastBackgroundColor).Foreground(Styles.PrimitiveBackgroundColor)
 	i.autocompleteStyles.selected = tcell.StyleDefault.Background(Styles.PrimaryTextColor).Foreground(Styles.PrimitiveBackgroundColor)
 	i.autocompleteStyles.background = Styles.MoreContrastBackgroundColor
+	i.autocompleteStyles.useTags = true
 	return i
 }
 
@@ -251,6 +259,13 @@ func (i *InputField) SetAutocompleteStyles(background tcell.Color, main, selecte
 	return i
 }
 
+// SetAutocompleteUseTags sets whether or not the autocomplete entries may
+// contain style tags affecting their appearance. The default is true.
+func (i *InputField) SetAutocompleteUseTags(useTags bool) *InputField {
+	i.autocompleteStyles.useTags = useTags
+	return i
+}
+
 // SetFormAttributes sets attributes shared by all form items.
 func (i *InputField) SetFormAttributes(labelWidth int, labelColor, bgColor, fieldTextColor, fieldBgColor tcell.Color) FormItem {
 	i.textArea.SetFormAttributes(labelWidth, labelColor, bgColor, fieldTextColor, fieldBgColor)
@@ -358,13 +373,14 @@ func (i *InputField) Autocomplete() *InputField {
 		i.autocompleteList.ShowSecondaryText(false).
 			SetMainTextStyle(i.autocompleteStyles.main).
 			SetSelectedStyle(i.autocompleteStyles.selected).
+			SetUseStyleTags(i.autocompleteStyles.useTags, i.autocompleteStyles.useTags).
 			SetHighlightFullLine(true).
 			SetBackgroundColor(i.autocompleteStyles.background)
 	}
 
 	// Fill it with the entries.
 	currentEntry := -1
-	suffixLength := 9999 // I'm just waiting for the day somebody opens an issue with this number being too small.
+	suffixLength := math.MaxInt
 	i.autocompleteList.Clear()
 	for index, entry := range entries {
 		i.autocompleteList.AddItem(entry, "", 0, nil)
@@ -477,7 +493,7 @@ func (i *InputField) Draw(screen tcell.Screen) {
 	// Draw autocomplete list.
 	i.autocompleteListMutex.Lock()
 	defer i.autocompleteListMutex.Unlock()
-	if i.autocompleteList != nil {
+	if i.autocompleteList != nil && i.HasFocus() {
 		// How much space do we need?
 		lheight := i.autocompleteList.GetItemCount()
 		lwidth := 0

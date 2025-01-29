@@ -207,10 +207,9 @@ func (d *DropDown) SetPrefixTextColor(color tcell.Color) *DropDown {
 // as well as selected items). Style attributes are currently ignored but may be
 // used in the future.
 func (d *DropDown) SetListStyles(unselected, selected tcell.Style) *DropDown {
-	fg, bg, _ := unselected.Decompose()
-	d.list.SetMainTextColor(fg).SetBackgroundColor(bg)
-	fg, bg, _ = selected.Decompose()
-	d.list.SetSelectedTextColor(fg).SetSelectedBackgroundColor(bg)
+	d.list.SetMainTextStyle(unselected).SetSelectedStyle(selected)
+	_, bg, _ := unselected.Decompose()
+	d.list.SetBackgroundColor(bg)
 	return d
 }
 
@@ -381,9 +380,6 @@ func (d *DropDown) Draw(screen tcell.Screen) {
 		fieldWidth = rightLimit - x
 	}
 	fieldStyle := tcell.StyleDefault.Background(d.fieldBackgroundColor)
-	if d.HasFocus() && !d.open {
-		fieldStyle = fieldStyle.Background(d.fieldTextColor)
-	}
 	if d.disabled {
 		fieldStyle = fieldStyle.Background(d.backgroundColor)
 	}
@@ -409,9 +405,6 @@ func (d *DropDown) Draw(screen tcell.Screen) {
 			text = d.currentOptionPrefix + d.options[d.currentOption].Text + d.currentOptionSuffix
 		}
 		// Just show the current selection.
-		if d.HasFocus() && !d.open && !d.disabled {
-			color = d.fieldBackgroundColor
-		}
 		Print(screen, text, x, y, fieldWidth, AlignLeft, color)
 	}
 
