@@ -217,7 +217,7 @@ func JWSimilarity(s1, s2 string) float64 {
 		return 0
 	}
 
-	// Now alculate Jaro-Winkler similarity
+	// Now calculate Jaro-Winkler similarity
 	var l float64 = 0
 	var p float64 = 0.1
 
