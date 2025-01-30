@@ -39,6 +39,7 @@ type App struct {
 	Application *tview.Application
 	Root        *tview.Flex
 	Library     *tview.Flex
+	Tidal       *tview.Flex
 	Pages       *tview.Pages
 	StatusBar   *tview.Table
 	HelpScreen  *tview.Modal

@@ -16,6 +16,9 @@ import (
 	"github.com/mkozjak/tview"
 )
 
+var localRootEndpoint string = "/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic"
+var tidalRootEndpoint string = "/Browse?key=%2FAlbums%3Fservice%3DTidal%26amp%3BbrowseIsFavouritesContext%3D1%26amp%3Bcategory%3DFAVOURITES"
+
 // Used for parsing data from /Browse
 type browse struct {
 	Items []item `xml:"item"`
@@ -92,7 +95,8 @@ type CPMarkSetter interface {
 }
 
 type FetchDone struct {
-	Error error
+	Service string
+	Error   error
 }
 
 type Library struct {
@@ -101,6 +105,7 @@ type Library struct {
 	player    player.Controller
 	spinner   spinner.StartStopper
 	API       string
+	service   string
 
 	// TODO: should move these into a separate ap struct?
 	artistPane          *tview.List
@@ -114,12 +119,13 @@ type Library struct {
 	CpTrackName         string
 }
 
-func New(api string, a app.Focuser, p player.Controller, sp spinner.StartStopper) *Library {
+func New(api, service string, a app.Focuser, p player.Controller, sp spinner.StartStopper) *Library {
 	return &Library{
 		app:                a,
 		player:             p,
 		spinner:            sp,
 		API:                api,
+		service:            service,
 		albumArtists:       map[string]artist{},
 		cpArtistIdx:        -1,
 		artistPaneFiltered: false,
@@ -156,140 +162,150 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		return
 	}
 
-	body, err := cache.FetchAndCache(l.API+"/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic", c, cached)
-	if err != nil {
-		internal.Log("Error fetching/caching data:", err)
-		doneCh <- FetchDone{Error: err}
-		return
-	}
+	var albums browse
 
-	var sections browse
-	err = xml.Unmarshal(body, &sections)
-	if err != nil {
-		internal.Log("Error parsing the sections XML:", err)
-		doneCh <- FetchDone{Error: err}
-		return
-	}
-
-	l.albumArtists = make(map[string]artist)
-
-	// parse album sections (alphabetical order) from xml
-	for _, item := range sections.Items {
-		body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(item.BrowseKey), c, cached)
+	fetchAlbums := func(url string) {
+		body, err := cache.FetchAndCache(url, c, cached)
 		if err != nil {
 			internal.Log("Error fetching album sections:", err)
 			doneCh <- FetchDone{Error: err}
 			return
 		}
 
-		var albums browse
 		err = xml.Unmarshal(body, &albums)
 		if err != nil {
 			internal.Log("Error parsing the albums XML:", err)
 			doneCh <- FetchDone{Error: err}
 			return
 		}
+	}
 
-		// iterate albums and fill l.albumArtists
-		for _, al := range albums.Items {
-			var duration int
+	l.albumArtists = make(map[string]artist)
 
-			// fetch album tracks
-			body, err = cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(al.BrowseKey), c, cached)
-			if err != nil {
-				internal.Log("Error fetching album tracks:", err)
-				doneCh <- FetchDone{Error: err}
-				return
-			}
+	if l.service == "local" {
+		body, err := cache.FetchAndCache(l.API+localRootEndpoint, c, cached)
+		if err != nil {
+			internal.Log("Error fetching/caching data:", err)
+			doneCh <- FetchDone{Error: err}
+			return
+		}
 
-			var tracks browse
-			err = xml.Unmarshal(body, &tracks)
-			if err != nil {
-				internal.Log("Error parsing the album tracks XML:", err)
-				doneCh <- FetchDone{Error: err}
-				return
-			}
+		var sections browse
+		err = xml.Unmarshal(body, &sections)
+		if err != nil {
+			internal.Log("Error parsing the sections XML:", err)
+			doneCh <- FetchDone{Error: err}
+			return
+		}
 
-			var albumTracks []track
-			for _, tr := range tracks.Items {
-				track := track{
-					name:        tr.Text,
-					playUrl:     tr.PlayURL,
-					autoplayUrl: tr.AutoplayURL,
-					duration: func() int {
-						l, err := strconv.Atoi(tr.Duration)
-						if err != nil {
-							return 0
-						}
+		// parse album sections (alphabetical order) from xml
+		for _, item := range sections.Items {
+			fetchAlbums(l.API + "/Browse?key=" + url.QueryEscape(item.BrowseKey))
+		}
+	} else if l.service == "tidal" {
+		fetchAlbums(l.API + tidalRootEndpoint)
+	}
 
-						return l
-					}(),
-				}
+	// iterate albums and fill l.albumArtists
+	for _, al := range albums.Items {
+		var duration int
 
-				albumTracks = append(albumTracks, track)
-				duration += track.duration
-			}
+		// fetch album tracks
+		body, err := cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(al.BrowseKey), c, cached)
+		if err != nil {
+			internal.Log("Error fetching album tracks:", err)
+			doneCh <- FetchDone{Error: err}
+			return
+		}
 
-			arName := internal.Caser(al.Text2)
+		var tracks browse
 
-			// fetch album date from /Songs
-			body, err = cache.FetchAndCache(
-				strings.ReplaceAll(l.API+"/Songs?service=LocalMusic&album="+al.Text+"&artist="+al.Text2, " ", "+"),
-				c, cached)
-			if err != nil {
-				internal.Log("Error fetching album date:", err)
-				doneCh <- FetchDone{Error: err}
-				return
-			}
+		err = xml.Unmarshal(body, &tracks)
+		if err != nil {
+			internal.Log("Error parsing the album tracks XML:", err)
+			doneCh <- FetchDone{Error: err}
+			return
+		}
 
-			var s songs
-			var year int
-			err = xml.Unmarshal(body, &s)
-			if err != nil {
-				internal.Log("Error parsing the album songs XML:", err)
-				doneCh <- FetchDone{Error: err}
-				return
-			}
-
-			if len(s.Album) > 0 && len(s.Album[0].Song) > 0 {
-				d := s.Album[0].Song[0].Date
-				if d != "" && d != "0" {
-					year, err = internal.ExtractAlbumYear(d)
+		var albumTracks []track
+		for _, tr := range tracks.Items {
+			track := track{
+				name:        tr.Text,
+				playUrl:     tr.PlayURL,
+				autoplayUrl: tr.AutoplayURL,
+				duration: func() int {
+					l, err := strconv.Atoi(tr.Duration)
 					if err != nil {
-						internal.Log("Error extracting album's year:", err)
+						return 0
 					}
-				} else {
-					year, err = internal.HackAlbumYear(tracks.Items[0].ContextMenuKey)
-					if err != nil {
-						internal.Log("Error hacking album's year:", err)
-					}
-				}
+
+					return l
+				}(),
 			}
 
-			ar, ok := l.albumArtists[arName]
+			albumTracks = append(albumTracks, track)
+			duration += track.duration
+		}
 
-			if ok {
-				ar.albums = append(ar.albums, album{
+		arName := internal.Caser(al.Text2)
+
+		// fetch album date from /Songs
+		body, err = cache.FetchAndCache(
+			strings.ReplaceAll(l.API+"/Songs?service=LocalMusic&album="+al.Text+"&artist="+al.Text2, " ", "+"),
+			c, cached)
+		if err != nil {
+			internal.Log("Error fetching album date:", err)
+			doneCh <- FetchDone{Error: err}
+			return
+		}
+
+		var s songs
+		var year int
+		err = xml.Unmarshal(body, &s)
+		if err != nil {
+			internal.Log("Error parsing the album songs XML:", err)
+			doneCh <- FetchDone{Error: err}
+			return
+		}
+
+		if len(s.Album) > 0 && len(s.Album[0].Song) > 0 {
+			d := s.Album[0].Song[0].Date
+			if d != "" && d != "0" {
+				year, err = internal.ExtractAlbumYear(d)
+				if err != nil {
+					internal.Log("Error extracting album's year:", err)
+				}
+			} else {
+				year, err = internal.HackAlbumYear(tracks.Items[0].ContextMenuKey)
+				if err != nil {
+					internal.Log("Error hacking album's year:", err)
+				}
+			}
+		}
+
+		ar, ok := l.albumArtists[arName]
+
+		if ok {
+			ar.albums = append(ar.albums, album{
+				name:        al.Text,
+				tracks:      albumTracks,
+				year:        year,
+				playUrl:     al.PlayURL,
+				autoplayUrl: al.AutoplayURL,
+				duration:    duration,
+			})
+
+			l.albumArtists[arName] = ar
+		} else {
+			l.albumArtists[arName] = artist{
+				albums: []album{{
 					name:        al.Text,
 					tracks:      albumTracks,
 					year:        year,
 					playUrl:     al.PlayURL,
 					autoplayUrl: al.AutoplayURL,
 					duration:    duration,
-				})
-
-				l.albumArtists[arName] = ar
-			} else {
-				l.albumArtists[arName] = artist{
-					albums: []album{{
-						name:        al.Text,
-						tracks:      albumTracks,
-						year:        year,
-						playUrl:     al.PlayURL,
-						autoplayUrl: al.AutoplayURL,
-						duration:    duration,
-					}},
-				}
+				}},
 			}
 		}
 	}

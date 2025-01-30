@@ -36,30 +36,55 @@ func main() {
 	p := player.New("http://bluesound.local:11000", sp, pUpd)
 	a.Player = p
 
-	// Create Library Page
-	fc := make(chan library.FetchDone)
-	lib := library.New("http://bluesound.local:11000", a, p, sp)
+	// Create Local Library Page
+	lfc := make(chan library.FetchDone)
+	lib := library.New("http://bluesound.local:11000", "local", a, p, sp)
 	libc := lib.CreateContainer()
 
 	// Start initial fetching of data
-	go lib.FetchData(true, fc)
+	go lib.FetchData(true, lfc)
 
 	go func() {
 		for {
-			msg := <-fc
+			msg := <-lfc
 			if msg.Error != nil {
 				// TODO: should probably use os.Exit(1) here
-				panic("failed fetching initial data: " + msg.Error.Error())
+				panic("failed fetching initial local data: " + msg.Error.Error())
 			}
 
 			// Draw initial album list for the first artist in the list
 			lib.DrawArtistPane()
 			lib.DrawInitAlbums()
+			a.Draw()
+
 			return
 		}
 	}()
 
 	a.Library = libc
+
+	// Create Tidal Page
+	tfc := make(chan library.FetchDone)
+	tidal := library.New("http://bluesound.local:11000", "tidal", a, p, sp)
+	a.Tidal = tidal.CreateContainer()
+
+	go tidal.FetchData(true, tfc)
+
+	go func() {
+		for {
+			msg := <-tfc
+			if msg.Error != nil {
+				// TODO: should probably use os.Exit(1) here
+				panic("failed fetching initial tidal data: " + msg.Error.Error())
+			}
+
+			// Draw initial album list for the first artist in the list
+			tidal.DrawArtistPane()
+			tidal.DrawInitAlbums()
+
+			return
+		}
+	}()
 
 	// Create a bottom Bar container along with its components
 	b := bar.New(a, lib, sp, pUpd)
@@ -68,7 +93,8 @@ func main() {
 	go p.PollStatus()
 
 	a.Pages = tview.NewPages().
-		AddAndSwitchToPage("library", a.Library, true)
+		AddAndSwitchToPage("local", a.Library, true).
+		AddPage("tidal", a.Tidal, true, false)
 
 	a.Pages.SetBackgroundColor(tcell.ColorDefault)
 

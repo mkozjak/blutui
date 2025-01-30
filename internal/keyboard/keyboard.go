@@ -13,6 +13,7 @@ type pagesManager interface {
 	GetFrontPage() (string, tview.Primitive)
 	ShowPage(name string) *tview.Pages
 	HidePage(name string) *tview.Pages
+	SwitchToPage(name string) *tview.Pages
 }
 
 type GlobalHandler struct {
@@ -44,6 +45,20 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 	}
 
 	switch event.Rune() {
+	case '1':
+		p, _ := h.pages.GetFrontPage()
+		if p != "local" {
+			h.pages.SwitchToPage("local")
+		}
+
+		return nil
+	case '2':
+		p, _ := h.pages.GetFrontPage()
+		if p != "tidal" {
+			h.pages.SwitchToPage("tidal")
+		}
+
+		return nil
 	case 'p':
 		go h.player.Playpause()
 	case 's':
