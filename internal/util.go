@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -17,21 +18,31 @@ import (
 	"golang.org/x/text/language"
 )
 
-func Log(data ...interface{}) error {
-	file, err := os.Create("/tmp/debug.log")
+var (
+	mu     sync.Mutex
+	logger *os.File
+)
+
+func init() {
+	var err error
+	logger, err = os.OpenFile("/tmp/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	defer file.Close()
+}
+
+func Log(data ...interface{}) error {
+	mu.Lock()
+	defer mu.Unlock()
 
 	for _, datum := range data {
-		_, err = file.WriteString(fmt.Sprintf("%v ", datum))
+		_, err := fmt.Fprintf(logger, "%v ", datum)
 		if err != nil {
 			return err
 		}
 	}
-
-	return nil
+	_, err := fmt.Fprintln(logger) // Add newline
+	return err
 }
 
 func FormatDuration(d int) string {
