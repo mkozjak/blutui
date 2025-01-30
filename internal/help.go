@@ -10,6 +10,8 @@ import (
 func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview.Modal {
 	var text string
 	keybindings := map[string]string{
+		"show local library":                  "1",
+		"show tidal library":                  "2",
 		"start playback":                      "↵",
 		"play selected song only":             "x",
 		"play/pause":                          "p",
@@ -32,7 +34,7 @@ func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview
 	}
 
 	order := []string{
-		"start playback", "play selected song only", "play/pause", "stop",
+		"show local library", "show tidal library", "start playback", "play selected song only", "play/pause", "stop",
 		"next song", "previous song", "volume up", "volume down", "toggle mute", "toggle repeat mode (none, all, one)",
 		"page down", "page up", "half page down", "half page up", "jump to currently playing artist",
 		"search artists", "update library", "show this screen", "quit app",
