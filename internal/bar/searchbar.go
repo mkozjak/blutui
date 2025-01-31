@@ -15,8 +15,9 @@ import (
 type SearchBar struct {
 	// The following fields hold interfaces that are used for communicating with
 	// [Bar] and library instances.
+	app      appManager
 	switcher switcher
-	library  library.ArtistFilter
+	libs     map[string]library.ArtistFilter
 
 	// A tview-specific widget that provides query input to the user in order
 	// to initiate an artist fuzzy search feature.
@@ -26,8 +27,8 @@ type SearchBar struct {
 // newSearchBar returns a new [SearchBar] given its dependencies switcher and library instances
 // SearchBar is then used for the creation of a container, tview.InputField, that is
 // directly used by the app to focus the search input field.
-func newSearchBar(s switcher, l library.ArtistFilter) *SearchBar {
-	return &SearchBar{switcher: s, library: l}
+func newSearchBar(a appManager, s switcher, l map[string]library.ArtistFilter) *SearchBar {
+	return &SearchBar{app: a, switcher: s, libs: l}
 }
 
 // createContainer creates a [SearchBar] container returning a pointer to
@@ -69,7 +70,7 @@ func (s *SearchBar) createContainer() *tview.InputField {
 func (s *SearchBar) done(key tcell.Key) {
 	switch key {
 	case tcell.KeyEnter:
-		a := s.library.Artists()
+		a := s.libs[s.app.CurrentPage()].Artists()
 		query := s.container.GetText()
 		var m []string
 
@@ -91,7 +92,7 @@ func (s *SearchBar) done(key tcell.Key) {
 		}
 
 		if len(m) > 0 {
-			s.library.FilterArtistPane(m)
+			s.libs[s.app.CurrentPage()].FilterArtistPane(m)
 		}
 
 		s.container.SetText("")

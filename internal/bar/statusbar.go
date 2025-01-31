@@ -23,7 +23,7 @@ type StatusBar struct {
 	// The following fields hold interfaces that are used for communicating with
 	// app, library and spinner instances.
 	app     appManager
-	library library.CPMarkSetter
+	libs    map[string]library.CPMarkSetter
 	spinner spinner.Container
 
 	// The following fields are tview-specific widgets responsible for holding player
@@ -39,10 +39,10 @@ type StatusBar struct {
 // spinner instances.
 // StatusBar is then used for the creation of its child containers for volume,
 // player status, currently played song and currently shown app page.
-func newStatusBar(a appManager, l library.CPMarkSetter, sp spinner.Container) *StatusBar {
+func newStatusBar(a appManager, l map[string]library.CPMarkSetter, sp spinner.Container) *StatusBar {
 	return &StatusBar{
 		app:     a,
-		library: l,
+		libs:    l,
 		spinner: sp,
 	}
 }
@@ -88,6 +88,7 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 		var cpTitle string
 		var cpFormat string
 		var cpQuality string
+		currPage := sb.app.CurrentPage()
 
 		switch s.State {
 		case "play":
@@ -96,19 +97,10 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 			cpFormat = s.Format
 			cpQuality = s.Quality
 
-			// TODO: should probably be done elsewhere
-			if sb.app.CurrentPage() == "library" {
-				if s.Service == "LocalMusic" {
-					sb.library.MarkCpArtist(s.Artist)
-					sb.library.MarkCpTrack(s.Track, s.Artist, s.Album)
-					sb.library.SetCpTrackName(s.Track)
-					sb.library.SetCpAlbumName(s.Album)
-				} else {
-					sb.library.MarkCpArtist("")
-					sb.library.MarkCpTrack("", "", "")
-					sb.library.SetCpTrackName("")
-				}
-			}
+			sb.libs[currPage].MarkCpArtist(s.Artist)
+			sb.libs[currPage].MarkCpTrack(s.Track, s.Artist, s.Album)
+			sb.libs[currPage].SetCpTrackName(s.Track)
+			sb.libs[currPage].SetCpAlbumName(s.Album)
 		case "stream":
 			s.State = "streaming"
 			cpTitle = s.Title2
@@ -119,8 +111,8 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 			cpTitle = ""
 			cpFormat = ""
 			cpQuality = ""
-			sb.library.MarkCpArtist("")
-			sb.library.SetCpTrackName("")
+			sb.libs[currPage].MarkCpArtist("")
+			sb.libs[currPage].SetCpTrackName("")
 		case "pause":
 			s.State = "paused"
 
@@ -145,7 +137,6 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 			cpQuality = ""
 		}
 
-		currPage := sb.app.CurrentPage()
 		format := ""
 		if cpQuality != "" || cpFormat != "" {
 			format = cpQuality + " " + cpFormat

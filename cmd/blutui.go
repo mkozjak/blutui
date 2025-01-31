@@ -87,7 +87,7 @@ func main() {
 	}()
 
 	// Create a bottom Bar container along with its components
-	b := bar.New(a, lib, sp, pUpd)
+	b := bar.New(a, map[string]bar.LibManager{"local": lib, "tidal": tidal}, sp, pUpd)
 
 	// Start listening for Player updates
 	go p.PollStatus()

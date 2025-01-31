@@ -21,7 +21,7 @@ type appManager interface {
 	app.Drawer
 }
 
-type libManager interface {
+type LibManager interface {
 	library.ArtistFilter
 	library.CPMarkSetter
 }
@@ -29,11 +29,11 @@ type libManager interface {
 // A Bar represents a bottom bar that holds containers such as [SearchBar] or [StatusBar].
 type Bar struct {
 	// The following fields hold interfaces that are used for communicating with
-	// app, library and spinner instances. App is used for focusing-specific tasks,
-	// library for music data manipulation by search and status bar components and
+	// app, libraries and spinner instances. App is used for focusing-specific tasks,
+	// libraries for music data manipulation by search and status bar components and
 	// spinner in order to start or stop the loading indicator.
 	app     appManager
-	library libManager
+	libs    map[string]LibManager
 	spinner spinner.Container
 
 	// tview-specific widgets that represent types compatible with flex widget or
@@ -46,24 +46,34 @@ type Bar struct {
 	currCont string
 }
 
-// New returns a new [Bar] given its dependencies app, library and spinner instances
+// New returns a new [Bar] given its dependencies app, libraries and spinner instances
 // and a read-only channel that delivers player's updates like play, stream, stop etc.
 //
 // Returned Bar is suitable to be used for getting tview.Primitive that can be sent to
 // tview's components for drawing to the screen. It is also used for switching between
 // [StatusBar] and [SearchBar].
-func New(a appManager, l libManager, sp spinner.Container, ch <-chan player.Status) *Bar {
+func New(a appManager, l map[string]LibManager, sp spinner.Container, ch <-chan player.Status) *Bar {
 	bar := &Bar{
 		app:     a,
-		library: l,
+		libs:    l,
 		spinner: sp,
 	}
 
-	stb := newStatusBar(a, l, sp)
+	CPMarkSetters := make(map[string]library.CPMarkSetter)
+	for k, v := range l {
+		CPMarkSetters[k] = v
+	}
+
+	stb := newStatusBar(a, CPMarkSetters, sp)
 	stbc := stb.createContainer()
 	go stb.listen(ch)
 
-	srb := newSearchBar(bar, l)
+	artistFilters := make(map[string]library.ArtistFilter)
+	for k, v := range l {
+		artistFilters[k] = v
+	}
+
+	srb := newSearchBar(a, bar, artistFilters)
 	srbc := srb.createContainer()
 
 	bar.status = stbc
