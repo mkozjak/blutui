@@ -63,6 +63,10 @@ func (sb *StatusBar) createContainer() *tview.Grid {
 	sb.nowPlaying.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
 
 	sb.currentPage = tview.NewTextView()
+	sb.currentPage.SetChangedFunc(func() {
+		sb.app.Draw()
+	})
+
 	sb.currentPage.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
 
 	sb.container = tview.NewGrid().
@@ -156,14 +160,23 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 		sb.volume.SetCell(0, 1, tview.NewTableCell(strconv.Itoa(s.Volume)).SetTextColor(tcell.ColorDefault))
 		sb.playerStatus.SetText(s.State + repeat + format).SetTextAlign(tview.AlignLeft)
 		sb.nowPlaying.SetText(cpTitle).SetTextAlign(tview.AlignCenter)
-		sb.currentPage.SetText(currPage).SetTextAlign(tview.AlignRight)
+		sb.currentPage.SetText(currPage).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorBlack).
+			SetBackgroundColor(tcell.ColorCornflowerBlue)
+
+		if currPage == "local" {
+			sb.currentPage.SetTextColor(tcell.ColorWhite).
+				SetBackgroundColor(tcell.ColorCornflowerBlue)
+		} else if currPage == "tidal" {
+			sb.currentPage.SetTextColor(tcell.ColorWhite).
+				SetBackgroundColor(tcell.ColorGrey)
+		}
 
 		sb.app.Draw()
 	}
 }
 
-// setCurrentPage updates the label showing currently open application page
+// SetCurrentPage updates the label showing currently open application page
 // such as Library or Help screen given its input page name.
-func (sb *StatusBar) setCurrentPage(name string) {
+func (sb *StatusBar) SetCurrentPage(name string) {
 	sb.currentPage.SetText(name)
 }

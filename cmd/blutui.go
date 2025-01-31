@@ -61,12 +61,10 @@ func main() {
 		}
 	}()
 
-	a.Library = libc
-
 	// Create Tidal Page
 	tfc := make(chan library.FetchDone)
 	tidal := library.New("http://bluesound.local:11000", "tidal", a, p, sp)
-	a.Tidal = tidal.CreateContainer()
+	tidalc := tidal.CreateContainer()
 
 	go tidal.FetchData(true, tfc)
 
@@ -86,6 +84,11 @@ func main() {
 		}
 	}()
 
+	a.Libs = map[string]*tview.Flex{
+		"local": libc,
+		"tidal": tidalc,
+	}
+
 	// Create a bottom Bar container along with its components
 	b := bar.New(a, map[string]bar.LibManager{"local": lib, "tidal": tidal}, sp, pUpd)
 
@@ -93,10 +96,15 @@ func main() {
 	go p.PollStatus()
 
 	a.Pages = tview.NewPages().
-		AddAndSwitchToPage("local", a.Library, true).
-		AddPage("tidal", a.Tidal, true, false)
+		AddAndSwitchToPage("local", libc, true).
+		AddPage("tidal", tidalc, true, false)
 
 	a.Pages.SetBackgroundColor(tcell.ColorDefault)
+
+	a.Pages.SetChangedFunc(func() {
+		n, _ := a.Pages.GetFrontPage()
+		b.SetPageOnStatus(n)
+	})
 
 	// Configure global keybindings
 	gk := keyboard.NewGlobalHandler(a, a.Player, lib, a.Pages, b)
@@ -109,7 +117,7 @@ func main() {
 	a.Pages.AddPage("help", h, false, false)
 
 	// Draw root app window
-	// Root consists of pages (library, etc.) and the status/bottom bar
+	// Root consists of pages (local and tidal lib, etc.) and the status/bottom bar
 	a.Root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(a.Pages, 0, 1, true).
 		AddItem(b.StatusContainer(), 1, 0, false)

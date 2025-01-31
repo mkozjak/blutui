@@ -61,7 +61,7 @@ func (s *SearchBar) createContainer() *tview.InputField {
 // whitespace (" "). These tokens, along with the query, are then each sent as
 // input to [internal.JWSimilarity], that is the Jaro-Winkler Distance metric implementation.
 // A result that has a better JW score is then chosen for that artist.
-// A method then calls [library.FilterArtistPane] that redraws Artist Pane with
+// A method then calls [library.FilterArtistPane], which redraws Artist Pane with
 // search results, or matched artists.
 // In case when Escape is pressed, this method just resets the Search Bar input and
 // shows the Status Bar component.

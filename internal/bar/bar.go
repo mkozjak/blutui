@@ -1,6 +1,7 @@
 package bar
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal/app"
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
@@ -36,10 +37,11 @@ type Bar struct {
 	libs    map[string]LibManager
 	spinner spinner.Container
 
+	status *StatusBar
 	// tview-specific widgets that represent types compatible with flex widget or
 	// app focusing methods that are used to draw these widgets to the screen.
-	status *tview.Grid
-	search *tview.InputField
+	statusc *tview.Grid
+	searchc *tview.InputField
 
 	// Currently shown container, such as "status" or "search".
 	// Exposed via [CurrentContainer].
@@ -76,8 +78,9 @@ func New(a appManager, l map[string]LibManager, sp spinner.Container, ch <-chan 
 	srb := newSearchBar(a, bar, artistFilters)
 	srbc := srb.createContainer()
 
-	bar.status = stbc
-	bar.search = srbc
+	bar.status = stb
+	bar.statusc = stbc
+	bar.searchc = srbc
 	bar.currCont = "status"
 
 	return bar
@@ -91,13 +94,13 @@ func (b *Bar) CurrentContainer() string {
 // StatusContainer returns tview.Primitive for the Status Bar.
 // It is a pointer to the tview Grid component that implements tview.Primitive.
 func (b *Bar) StatusContainer() tview.Primitive {
-	return b.status
+	return b.statusc
 }
 
 // SearchContainer returns tview.Primitive for the Search Bar.
 // It is a pointer to the tview InputField component that implements tview.Primitive.
 func (b *Bar) SearchContainer() tview.Primitive {
-	return b.search
+	return b.searchc
 }
 
 // Show switches to a Bar component given its name as the input. It handles keyboard
@@ -105,13 +108,25 @@ func (b *Bar) SearchContainer() tview.Primitive {
 func (b *Bar) Show(name string) {
 	switch name {
 	case "search":
-		b.app.ShowBarComponent(b.search)
+		b.app.ShowBarComponent(b.searchc)
 		b.currCont = "search"
 	case "status":
-		b.app.ShowBarComponent(b.status)
+		b.app.ShowBarComponent(b.statusc)
 		p := b.app.PrevFocused()
 		b.app.SetPrevFocused("search")
 		b.currCont = "status"
 		b.app.SetFocus(p)
+	}
+}
+
+func (b *Bar) SetPageOnStatus(name string) {
+	b.status.currentPage.SetText(name)
+
+	if name == "local" {
+		b.status.currentPage.SetTextColor(tcell.ColorWhite).
+			SetBackgroundColor(tcell.ColorCornflowerBlue)
+	} else if name == "tidal" {
+		b.status.currentPage.SetTextColor(tcell.ColorWhite).
+			SetBackgroundColor(tcell.ColorGrey)
 	}
 }
