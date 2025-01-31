@@ -38,8 +38,7 @@ type Stopper interface {
 type App struct {
 	Application *tview.Application
 	Root        *tview.Flex
-	Library     *tview.Flex
-	Tidal       *tview.Flex
+	Libs        map[string]*tview.Flex
 	Pages       *tview.Pages
 	StatusBar   *tview.Table
 	HelpScreen  *tview.Modal
@@ -71,7 +70,7 @@ func (a *App) PrevFocused() tview.Primitive {
 	case "artistpane":
 		fallthrough
 	case "albumpane":
-		return a.Library.GetItem(0)
+		return a.Libs[a.CurrentPage()].GetItem(0)
 	}
 
 	return nil

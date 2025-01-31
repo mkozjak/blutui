@@ -27,7 +27,7 @@ func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview
 		"half page down":                      "ctrl+d",
 		"half page up":                        "ctrl+u",
 		"jump to currently playing artist":    "o",
-		"search artists":                      "/",
+		"search artists":                      "f",
 		"update library":                      "u",
 		"show this screen":                    "h",
 		"quit app":                            "q",

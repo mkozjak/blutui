@@ -87,7 +87,7 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 			h.pages.ShowPage("help")
 			return nil
 		}
-	case '/':
+	case 'f':
 		p, _ := h.pages.GetFrontPage()
 		if p == "help" || h.library.IsFiltered() {
 			return event
