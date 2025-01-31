@@ -59,6 +59,13 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 		}
 
 		return nil
+	case '3':
+		p, _ := h.pages.GetFrontPage()
+		if p != "tidal-search" {
+			h.pages.SwitchToPage("tidal-search")
+		}
+
+		return nil
 	case 'p':
 		go h.player.Playpause()
 	case 's':

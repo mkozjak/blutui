@@ -84,20 +84,26 @@ func main() {
 		}
 	}()
 
+	// Create Tidal Search Page
+	tidalsearch := library.New("http://bluesound.local:11000", "tidal-search", a, p, sp)
+	tidalsearchc := tidalsearch.CreateContainer()
+
 	a.Libs = map[string]*tview.Flex{
-		"local": libc,
-		"tidal": tidalc,
+		"local":        libc,
+		"tidal":        tidalc,
+		"tidal-search": tidalsearchc,
 	}
 
 	// Create a bottom Bar container along with its components
-	b := bar.New(a, map[string]bar.LibManager{"local": lib, "tidal": tidal}, sp, pUpd)
+	b := bar.New(a, map[string]bar.LibManager{"local": lib, "tidal": tidal, "tidal-search": tidalsearch}, sp, pUpd)
 
 	// Start listening for Player updates
 	go p.PollStatus()
 
 	a.Pages = tview.NewPages().
 		AddAndSwitchToPage("local", libc, true).
-		AddPage("tidal", tidalc, true, false)
+		AddPage("tidal", tidalc, true, false).
+		AddPage("tidal-search", tidalsearchc, true, false)
 
 	a.Pages.SetBackgroundColor(tcell.ColorDefault)
 
