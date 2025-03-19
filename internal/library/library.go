@@ -165,23 +165,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 
 	var albums browse
 
-	fetchLocalAlbums := func(url string) {
-		body, err := cache.FetchAndCache(url, c, cached)
-		if err != nil {
-			internal.Log("Error fetching album sections:", err)
-			doneCh <- FetchDone{Error: err}
-			return
-		}
-
-		err = xml.Unmarshal(body, &albums)
-		if err != nil {
-			internal.Log("Error parsing the albums XML:", err)
-			doneCh <- FetchDone{Error: err}
-			return
-		}
-	}
-
-	fetchTidalAlbums := func(url string) string {
+	fetchAlbums := func(url string) string {
 		body, err := cache.FetchAndCache(url, c, cached)
 		if err != nil {
 			internal.Log("Error fetching album sections:", err)
@@ -219,13 +203,13 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 
 		// parse album sections (alphabetical order) from xml
 		for _, item := range sections.Items {
-			fetchLocalAlbums(l.API + "/Browse?key=" + url.QueryEscape(item.BrowseKey))
+			fetchAlbums(l.API + "/Browse?key=" + url.QueryEscape(item.BrowseKey))
 		}
 	} else if l.service == "tidal" {
-		next := fetchTidalAlbums(l.API + tidalRootEndpoint)
+		next := fetchAlbums(l.API + tidalRootEndpoint)
 
 		if next != "" {
-			fetchTidalAlbums(l.API + "/Browse?key=" + url.QueryEscape(next))
+			fetchAlbums(l.API + "/Browse?key=" + url.QueryEscape(next))
 		}
 	}
 
