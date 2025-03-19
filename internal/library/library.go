@@ -21,7 +21,8 @@ var tidalRootEndpoint string = "/Browse?key=%2FAlbums%3Fservice%3DTidal%26amp%3B
 
 // Used for parsing data from /Browse
 type browse struct {
-	Items []item `xml:"item"`
+	NextKey string `xml:"nextKey,attr"`
+	Items   []item `xml:"item"`
 }
 
 type volume struct {
@@ -164,7 +165,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 
 	var albums browse
 
-	fetchAlbums := func(url string) {
+	fetchLocalAlbums := func(url string) {
 		body, err := cache.FetchAndCache(url, c, cached)
 		if err != nil {
 			internal.Log("Error fetching album sections:", err)
@@ -178,6 +179,24 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 			doneCh <- FetchDone{Error: err}
 			return
 		}
+	}
+
+	fetchTidalAlbums := func(url string) string {
+		body, err := cache.FetchAndCache(url, c, cached)
+		if err != nil {
+			internal.Log("Error fetching album sections:", err)
+			doneCh <- FetchDone{Error: err}
+			return ""
+		}
+
+		err = xml.Unmarshal(body, &albums)
+		if err != nil {
+			internal.Log("Error parsing the albums XML:", err)
+			doneCh <- FetchDone{Error: err}
+			return ""
+		}
+
+		return albums.NextKey
 	}
 
 	l.albumArtists = make(map[string]artist)
@@ -200,10 +219,14 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 
 		// parse album sections (alphabetical order) from xml
 		for _, item := range sections.Items {
-			fetchAlbums(l.API + "/Browse?key=" + url.QueryEscape(item.BrowseKey))
+			fetchLocalAlbums(l.API + "/Browse?key=" + url.QueryEscape(item.BrowseKey))
 		}
 	} else if l.service == "tidal" {
-		fetchAlbums(l.API + tidalRootEndpoint)
+		next := fetchTidalAlbums(l.API + tidalRootEndpoint)
+
+		if next != "" {
+			fetchTidalAlbums(l.API + "/Browse?key=" + url.QueryEscape(next))
+		}
 	}
 
 	// iterate albums and fill l.albumArtists

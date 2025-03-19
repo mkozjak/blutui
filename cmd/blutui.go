@@ -110,6 +110,10 @@ func main() {
 	a.Pages.SetChangedFunc(func() {
 		n, _ := a.Pages.GetFrontPage()
 		b.SetPageOnStatus(n)
+
+		if n == "tidal-search" {
+			a.Pages.ShowPage("ts-modal")
+		}
 	})
 
 	// Configure global keybindings
@@ -121,6 +125,17 @@ func main() {
 	hk := keyboard.NewHelpHandler(a.Pages)
 	h := internal.CreateHelpScreen(hk.Listen)
 	a.Pages.AddPage("help", h, false, false)
+
+	// Configure Tidal-Search modal keybindings
+	// Attach that modal to the app
+	mik := keyboard.NewTidalSearchHandler(a.Pages)
+	mi := internal.CreateModalInput(mik.Listen)
+
+	mi.SetCancelFunc(func() {
+		a.Pages.HidePage("ts-modal")
+	})
+
+	a.Pages.AddPage("ts-modal", mi, false, false)
 
 	// Draw root app window
 	// Root consists of pages (local and tidal lib, etc.) and the status/bottom bar

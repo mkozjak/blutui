@@ -114,6 +114,10 @@ type HelpHandler struct {
 	pages pagesManager
 }
 
+type TidalSearchHandler struct {
+	pages pagesManager
+}
+
 func NewHelpHandler(pg pagesManager) *HelpHandler {
 	return &HelpHandler{
 		pages: pg,
@@ -134,6 +138,22 @@ func (k *HelpHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 			k.pages.HidePage("help")
 			return nil
 		}
+	}
+
+	return event
+}
+
+func NewTidalSearchHandler(pg pagesManager) *TidalSearchHandler {
+	return &TidalSearchHandler{
+		pages: pg,
+	}
+}
+
+func (ts *TidalSearchHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Key() {
+	case tcell.KeyEscape:
+		ts.pages.HidePage("ts-modal")
+		// return nil
 	}
 
 	return event
