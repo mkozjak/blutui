@@ -52,8 +52,11 @@ func newStatusBar(a appManager, l map[string]library.CPMarkSetter, sp spinner.Co
 // the status bar on [Bar] to show important player status messages.
 func (sb *StatusBar) createContainer() *tview.Grid {
 	sb.volume = tview.NewTable().
-		SetFixed(1, 2).SetSelectable(false, false).
-		SetCell(0, 0, tview.NewTableCell("").SetTextColor(tcell.ColorDefault)).
+		SetFixed(1, 2).SetSelectable(false, false)
+
+	sb.volume.Box.SetBackgroundColor(tcell.ColorDefault)
+
+	sb.volume.SetCell(0, 0, tview.NewTableCell("").SetTextColor(tcell.ColorDefault)).
 		SetCell(0, 1, tview.NewTableCell("").SetTextColor(tcell.ColorDefault))
 
 	sb.playerStatus = tview.NewTextView()
