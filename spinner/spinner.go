@@ -80,6 +80,7 @@ func New(d func() *tview.Application) *Spinner {
 }
 
 func (s *Spinner) Container() tview.Primitive {
+	s.Box.SetBackgroundColor(tcell.ColorDefault)
 	return s
 }
 
