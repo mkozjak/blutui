@@ -80,9 +80,6 @@ func (p *Player) State() string {
 }
 
 func (p *Player) Play(url string) {
-	// TODO: before triggering playback, do a fake playback if amp is in standby
-	// if service, serviceName not defined, state is stop
-	// or if sleep is undefined and state is stopped
 	go p.spinner.Start()
 
 	// If player is not playing, it might be asleep so try waking it up before starting playback
