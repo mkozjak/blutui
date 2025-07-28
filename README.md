@@ -1,4 +1,3 @@
-blutui/README.md
 # Blutui
 
 **Blutui** is a terminal user interface (TUI) application for controlling Bluesound devices and browsing music libraries (Local and Tidal) from your terminal. It provides a fast, keyboard-driven interface for playback control, browsing artists and albums, and managing your listening experience—all without leaving your shell.
