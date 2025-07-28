@@ -176,16 +176,13 @@ func (l *Library) MarkCpTrack(track, artist, album string) {
 
 	for _, al := range l.currentArtistAlbums {
 		alName := internal.CleanAlbumName(al.GetTitle())
-		if alName != album {
-			continue
-		}
 
 		for i := 1; i < al.GetRowCount(); i++ {
 			c := al.GetCell(i, 0)
 			origTrack := c.Text
 
-			// Unmark track if not played currently
-			if internal.CleanTrackName(origTrack) != track {
+			// Unmark track if not played currently or not from current album
+			if internal.CleanTrackName(origTrack) != track || alName != album {
 				al.SetCell(i, 0, c.SetText(strings.TrimPrefix(origTrack, "[yellow]")))
 				continue
 			}
