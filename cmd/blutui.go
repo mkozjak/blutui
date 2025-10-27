@@ -70,7 +70,7 @@ func main() {
 	tidal := library.New(bsUrl, "tidal", a, p, sp)
 	tidalc := tidal.CreateContainer()
 
-	go tidal.FetchData(true, tfc)
+	// go tidal.FetchData(true, tfc)
 
 	go func() {
 		for {
