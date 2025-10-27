@@ -60,8 +60,6 @@ func main() {
 			lib.DrawArtistPane()
 			lib.DrawInitAlbums()
 			a.Draw()
-
-			return
 		}
 	}()
 
@@ -83,8 +81,6 @@ func main() {
 			// Draw initial album list for the first artist in the list
 			tidal.DrawArtistPane()
 			tidal.DrawInitAlbums()
-
-			return
 		}
 	}()
 

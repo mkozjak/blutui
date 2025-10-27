@@ -353,7 +353,6 @@ func (l *Library) UpdateData() {
 		// Refresh artist pane
 		l.DrawArtistPane()
 		l.app.SetFocus(l.artistPane)
-		return
 	}
 }
 
