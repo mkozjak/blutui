@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"time"
 
