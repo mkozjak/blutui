@@ -176,7 +176,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 
 		err = xml.Unmarshal(body, &albums)
 		if err != nil {
-			internal.Log("Error parsing the albums XML:", err)
+			internal.Log("Error parsing the albums XML:", err, url)
 			doneCh <- FetchDone{Error: err}
 			return
 		}
@@ -195,7 +195,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		var sections browse
 		err = xml.Unmarshal(body, &sections)
 		if err != nil {
-			internal.Log("Error parsing the sections XML:", err)
+			internal.Log("Error parsing the sections XML:", err, string(body))
 			doneCh <- FetchDone{Error: err}
 			return
 		}
@@ -224,7 +224,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 
 		err = xml.Unmarshal(body, &tracks)
 		if err != nil {
-			internal.Log("Error parsing the album tracks XML:", err)
+			internal.Log("Error parsing the album tracks XML:", err, "body:", string(body))
 			doneCh <- FetchDone{Error: err}
 			return
 		}
