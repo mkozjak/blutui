@@ -265,7 +265,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		var year int
 		err = xml.Unmarshal(body, &s)
 		if err != nil {
-			internal.Log("Error parsing the album songs XML:", err)
+			internal.Log("Error parsing the album songs XML:", err, "body:", string(body))
 			doneCh <- FetchDone{Error: err}
 			return
 		}
