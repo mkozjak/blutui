@@ -16,7 +16,7 @@ import (
 	"github.com/mkozjak/tview"
 )
 
-var localRootEndpoint string = "/Browse?key=LocalMusic%3AbySection%2F%252FAlbums%253Fservice%253DLocalMusic"
+var localRootEndpoint string = "/Browse?key=LocalMusic%3AbySection%3AAlbum%2F%252Flibrary%252Fv1%252FAlbums%253Fservice%3DLocalMusic"
 var tidalRootEndpoint string = "/Browse?key=%2FAlbums%3Fservice%3DTidal%26amp%3BbrowseIsFavouritesContext%3D1%26amp%3Bcategory%3DFAVOURITES"
 
 // Used for parsing data from /Browse
@@ -39,6 +39,8 @@ type item struct {
 	AutoplayURL    string `xml:"autoplayURL,attr"`
 	ContextMenuKey string `xml:"contextMenuKey,attr"`
 	Duration       string `xml:"duration,attr"`
+	Image          string `xml:"image,attr"`
+	Tracks         string `xml:"tracks,attr"`
 }
 
 // Used for parsing data from /Songs
