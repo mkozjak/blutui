@@ -3,6 +3,7 @@ package cache
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/http/httputil"
@@ -80,7 +81,7 @@ func FetchAndCache(url string, cache *Cache, cached bool) ([]byte, error) {
 		}
 		defer resp.Body.Close()
 
-		body, err = httputil.DumpResponse(resp, true)
+		body, err = io.ReadAll(resp.Body)
 		if err != nil {
 			internal.Log("Error reading response body:", err)
 			return nil, err
