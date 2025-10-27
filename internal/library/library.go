@@ -252,9 +252,10 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		arName := internal.Caser(al.Text2)
 
 		// fetch album date from /Songs
-		body, err = cache.FetchAndCache(
-			strings.ReplaceAll(l.API+"/Songs?service=LocalMusic&album="+al.Text+"&artist="+al.Text2, " ", "+"),
-			c, cached)
+		alEsc := url.QueryEscape(al.Text)
+		arEsc := url.QueryEscape(al.Text2)
+
+		body, err = cache.FetchAndCache(l.API+"/Songs?service=LocalMusic&album="+alEsc+"&artist="+arEsc, c, cached)
 		if err != nil {
 			internal.Log("Error fetching album date:", err)
 			doneCh <- FetchDone{Error: err}
