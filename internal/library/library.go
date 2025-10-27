@@ -45,11 +45,10 @@ type item struct {
 
 // Used for parsing data from /Songs
 type songs struct {
-	Album []struct {
-		Song []struct {
-			Date string `xml:"date"`
-		} `xml:"song"`
-	} `xml:"album"`
+	Song []struct {
+		Date string `xml:"date"`
+		Fn   string `xml:"fn"`
+	} `xml:"song"`
 }
 
 type track struct {
@@ -264,6 +263,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 
 		var s songs
 		var year int
+
 		err = xml.Unmarshal(body, &s)
 		if err != nil {
 			internal.Log("Error parsing the album songs XML:", err, "body:", string(body))
@@ -271,15 +271,16 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 			return
 		}
 
-		if len(s.Album) > 0 && len(s.Album[0].Song) > 0 {
-			d := s.Album[0].Song[0].Date
+		if len(s.Song) > 0 {
+			d := s.Song[0].Date
+
 			if d != "" && d != "0" {
 				year, err = internal.ExtractAlbumYear(d)
 				if err != nil {
 					internal.Log("Error extracting album's year:", err)
 				}
 			} else {
-				year, err = internal.HackAlbumYear(tracks.Items[0].ContextMenuKey)
+				year, err = internal.HackAlbumYear(s.Song[0].Fn)
 				if err != nil {
 					internal.Log("Error hacking album's year:", err)
 				}
