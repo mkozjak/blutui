@@ -114,7 +114,7 @@ func HackAlbumYear(key string) (int, error) {
 		r, _ := regexp.Compile(`\[(\d{4})\]|\((\d{4})\)`)
 		matches := r.FindStringSubmatch(v[0])
 
-		if matches != nil && len(matches) > 1 {
+		if len(matches) > 1 {
 			y, err := strconv.Atoi(matches[1])
 			if err != nil {
 				return 0, err
@@ -134,6 +134,18 @@ func HackAlbumYear(key string) (int, error) {
 // opening square bracket. This will result in "Chilombo [clean[]".
 func EscapeStyleTag(s string) string {
 	return strings.Replace(s, "]", "[]", 1)
+}
+
+// ExtractYearFromPath extracts a 4-digit year from a file path, e.g. [2002] or (2002)
+func ExtractYearFromPath(path string) (int, error) {
+	r := regexp.MustCompile(`\[(\d{4})\]|\((\d{4})\)`)
+	matches := r.FindStringSubmatch(path)
+
+	if len(matches) > 1 {
+		return strconv.Atoi(matches[1])
+	}
+
+	return 0, errors.New("year could not be found")
 }
 
 // CleanAlbumName removes all tview style tags and album year annotations

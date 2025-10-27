@@ -282,7 +282,10 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 			} else {
 				year, err = internal.HackAlbumYear(s.Song[0].Fn)
 				if err != nil {
-					internal.Log("Error hacking album's year:", err)
+					year, err = internal.ExtractYearFromPath(s.Song[0].Fn)
+					if err != nil {
+						internal.Log("Error extracting album's year from path:", err)
+					}
 				}
 			}
 		}
