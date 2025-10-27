@@ -43,7 +43,7 @@ Run the application from your terminal:
 ./bin/blutui
 ```
 
-By default, Blutui will attempt to connect to your Bluesound device at `http://bluesound.local:11000`. You may need to adjust your device's hostname or network settings if this does not work.
+By default, Blutui will attempt to connect to your Bluesound device at `http://bluesound.lan:11000`. You may need to adjust your device's hostname or network settings if this does not work.
 
 ### Flags
 

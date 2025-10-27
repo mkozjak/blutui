@@ -16,6 +16,10 @@ import (
 )
 
 var appVersion string
+var proto string = "http"
+var host string = "bluesound.lan"
+var port string = "11000"
+var bsUrl string = fmt.Sprintf("%s://%s:%s", proto, host, port)
 
 func main() {
 	// Define the version flag
@@ -33,12 +37,12 @@ func main() {
 
 	// Create Player and start http long-polling Bluesound for updates
 	pUpd := make(chan player.Status)
-	p := player.New("http://bluesound.local:11000", sp, pUpd)
+	p := player.New(bsUrl, sp, pUpd)
 	a.Player = p
 
 	// Create Local Library Page
 	lfc := make(chan library.FetchDone)
-	lib := library.New("http://bluesound.local:11000", "local", a, p, sp)
+	lib := library.New(bsUrl, "local", a, p, sp)
 	libc := lib.CreateContainer()
 
 	// Start initial fetching of data
@@ -63,7 +67,7 @@ func main() {
 
 	// Create Tidal Page
 	tfc := make(chan library.FetchDone)
-	tidal := library.New("http://bluesound.local:11000", "tidal", a, p, sp)
+	tidal := library.New(bsUrl, "tidal", a, p, sp)
 	tidalc := tidal.CreateContainer()
 
 	go tidal.FetchData(true, tfc)
