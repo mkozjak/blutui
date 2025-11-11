@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
+	"os"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal"
@@ -30,6 +33,15 @@ func main() {
 		fmt.Println(appVersion)
 		return
 	}
+
+	// Check TCP connection to host:port before drawing UI
+	address := net.JoinHostPort(host, port)
+	conn, err := net.DialTimeout("tcp", address, 2*time.Second)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error connecting to %s: %v\n", address, err)
+		os.Exit(1)
+	}
+	conn.Close()
 
 	// Create main app
 	a := app.New()
