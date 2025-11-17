@@ -16,6 +16,7 @@ import (
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"golang.org/x/text/unicode/norm"
 )
 
 var (
@@ -166,6 +167,22 @@ func CleanTrackName(n string) string {
 	return re.ReplaceAllString(n, "")
 }
 
+// RemoveAccents strips accent marks from a Unicode string.
+func RemoveAccents(s string) string {
+	t := norm.NFD.String(s)
+	var b strings.Builder
+
+	for _, r := range t {
+		if unicode.Is(unicode.Mn, r) {
+			continue
+		}
+
+		b.WriteRune(r)
+	}
+
+	return b.String()
+}
+
 // JWSimilarity is the implementation of Jaro-Winkler similarity metric
 // It returns 1 if there's a 100% match and 0% if there's no matching characters.
 func JWSimilarity(s1, s2 string) float64 {
@@ -175,6 +192,9 @@ func JWSimilarity(s1, s2 string) float64 {
 
 	s1 = strings.ToLower(s1)
 	s2 = strings.ToLower(s2)
+
+	s1 = RemoveAccents(s1)
+	s2 = RemoveAccents(s2)
 
 	// input strings are exactly the same
 	if s1 == s2 {
