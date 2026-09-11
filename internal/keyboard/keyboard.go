@@ -81,13 +81,13 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 		go h.player.ToggleRepeatMode()
 	case 'u':
 		go h.library.UpdateData()
-	case 'h':
+	case '?':
 		p, _ := h.pages.GetFrontPage()
 		if p != "help" {
 			h.pages.ShowPage("help")
 			return nil
 		}
-	case 'f':
+	case '/':
 		p, _ := h.pages.GetFrontPage()
 		if p == "help" || h.library.IsFiltered() {
 			return event
@@ -121,7 +121,7 @@ func (k *HelpHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 	}
 
 	switch event.Rune() {
-	case 'h':
+	case '?':
 		p, _ := k.pages.GetFrontPage()
 		if p == "help" {
 			k.pages.HidePage("help")

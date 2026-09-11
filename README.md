@@ -72,12 +72,12 @@ By default, Blutui will attempt to connect to your Bluesound device at `http://b
 | `Ctrl+d`            | Half page down                              |
 | `Ctrl+u`            | Half page up                                |
 | `o`                 | Jump to currently playing artist            |
-| `f`                 | Search artists                              |
+| `/`                 | Search artists                              |
 | `u`                 | Update library                              |
-| `h`                 | Show help screen                            |
+| `?`                 | Show help screen                            |
 | `q`                 | Quit app                                    |
 
-Press `h` at any time to view the help screen with all keybindings.
+Press `?` at any time to view the help screen with all keybindings.
 
 ---
 

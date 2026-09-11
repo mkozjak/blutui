@@ -20,7 +20,7 @@ import (
 
 var appVersion string
 var proto string = "http"
-var host string = "bluesound.lan"
+var host string = "bluesound.home.arpa"
 var port string = "11000"
 var bsUrl string = fmt.Sprintf("%s://%s:%s", proto, host, port)
 
