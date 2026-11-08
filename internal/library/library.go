@@ -329,7 +329,9 @@ func (l *Library) fetchData(fetch func(string) ([]byte, error)) error {
 				if err != nil {
 					internal.Log("Error extracting album's year:", err)
 				}
-			} else {
+			}
+
+			if year == 0 {
 				year, err = internal.HackAlbumYear(s.Song[0].Fn)
 				if err != nil {
 					year, err = internal.ExtractYearFromPath(s.Song[0].Fn)

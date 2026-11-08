@@ -57,6 +57,42 @@ func receiveFetch(t *testing.T, ch <-chan FetchDone) FetchDone {
 	}
 }
 
+func TestFetchDataAlbumYearFallback(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		date string
+		want int
+	}{
+		{name: "invalid date", date: "1", want: 1969},
+		{name: "missing date", want: 1969},
+		{name: "zero date", date: "0", want: 1969},
+		{name: "valid date takes precedence", date: "1970", want: 1970},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			responses := libraryResponses("So Excited")
+			responses["/Songs?service=LocalMusic&album=Album&artist=Artist"] = fmt.Sprintf(
+				`<songs><song><date>%s</date><fn>/var/mnt/TITAN-music/B.B. King/[1969] Completely Well/B.B. King_Completely Well_01_So Excited.flac</fn></song></songs>`, tc.date)
+			l := New("", "local", testApp{tview.NewApplication()}, nil, testSpinner{})
+			err := l.fetchData(func(endpoint string) ([]byte, error) {
+				body, ok := responses[endpoint]
+
+				if !ok {
+					return nil, fmt.Errorf("unexpected endpoint: %s", endpoint)
+				}
+
+				return []byte(body), nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if got := l.albumArtists["Artist"].albums[0].year; got != tc.want {
+				t.Fatalf("album year = %d, want %d", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestFetchDataCacheRefresh(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
