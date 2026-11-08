@@ -26,6 +26,8 @@ func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview
 		"page up":                             "ctrl+b",
 		"half page down":                      "ctrl+d",
 		"half page up":                        "ctrl+u",
+		"focus artist pane":                   "h",
+		"focus album pane":                    "l",
 		"jump to currently playing artist":    "o",
 		"search artists":                      "/",
 		"update library":                      "u",
@@ -36,7 +38,8 @@ func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview
 	order := []string{
 		"show local library", "show tidal library", "start playback", "play selected song only", "play/pause", "stop",
 		"next song", "previous song", "volume up", "volume down", "toggle mute", "toggle repeat mode (none, all, one)",
-		"page down", "page up", "half page down", "half page up", "jump to currently playing artist",
+		"page down", "page up", "half page down", "half page up", "focus artist pane", "focus album pane",
+		"jump to currently playing artist",
 		"search artists", "update library", "show this screen", "quit app",
 	}
 
