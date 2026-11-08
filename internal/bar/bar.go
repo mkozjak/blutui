@@ -20,6 +20,7 @@ type appManager interface {
 	app.StatusbarShower
 	app.PageViewer
 	app.Drawer
+	QueueUpdateDraw(func())
 }
 
 type LibManager interface {

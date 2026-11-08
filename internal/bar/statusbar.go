@@ -2,6 +2,7 @@ package bar
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal/library"
@@ -33,6 +34,7 @@ type StatusBar struct {
 	playerStatus *tview.TextView
 	nowPlaying   *tview.TextView
 	currentPage  *tview.TextView
+	lastStatus   player.Status
 }
 
 // newStatusBar returns a new [StatusBar] given its dependencies app, library and
@@ -62,13 +64,10 @@ func (sb *StatusBar) createContainer() *tview.Grid {
 	sb.playerStatus = tview.NewTextView()
 	sb.playerStatus.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
 
-	sb.nowPlaying = tview.NewTextView()
+	sb.nowPlaying = tview.NewTextView().SetWrap(false)
 	sb.nowPlaying.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
 
 	sb.currentPage = tview.NewTextView()
-	sb.currentPage.SetChangedFunc(func() {
-		sb.app.Draw()
-	})
 
 	sb.currentPage.SetTextColor(tcell.ColorDefault).SetBackgroundColor(tcell.ColorDefault)
 
@@ -76,7 +75,7 @@ func (sb *StatusBar) createContainer() *tview.Grid {
 		AddItem(sb.spinner.Container(), 0, 0, 1, 1, 1, 1, false).
 		AddItem(sb.volume, 0, 1, 1, 1, 1, 8, false).
 		AddItem(sb.playerStatus, 0, 2, 1, 1, 1, 20, false).
-		AddItem(sb.nowPlaying, 0, 3, 1, 1, 1, 50, false).
+		AddItem(sb.nowPlaying, 0, 3, 1, 1, 0, 0, false).
 		AddItem(sb.currentPage, 0, 4, 1, 1, 1, 10, false).
 		SetColumns(3, 8, 20, 0, 10)
 
@@ -92,89 +91,90 @@ func (sb *StatusBar) createContainer() *tview.Grid {
 // management errors.
 func (sb *StatusBar) listen(ch <-chan player.Status) {
 	for s := range ch {
-		var cpTitle string
-		var cpFormat string
-		var cpQuality string
-		currPage := sb.app.CurrentPage()
+		sb.app.QueueUpdateDraw(func() { sb.update(s) })
+	}
+}
+
+func (sb *StatusBar) update(s player.Status) {
+	if s.State == "ctrlerr" {
+		state := s.State
+		s = sb.lastStatus
+		s.State = state
+	} else {
+		sb.lastStatus = s
+	}
+
+	var cpTitle string
+	var cpFormat string
+	var cpQuality string
+	currPage := sb.app.CurrentPage()
+
+	switch s.State {
+	case "play", "stream", "pause":
+		cpTitle = nowPlayingTitle(s)
+		cpFormat = s.Format
+		cpQuality = s.Quality
+
+		if lib := sb.libs[currPage]; lib != nil {
+			lib.MarkCpArtist(s.Artist)
+			lib.MarkCpTrack(s.Track, s.Artist, s.Album)
+			lib.SetCpTrackName(s.Track)
+			lib.SetCpAlbumName(s.Album)
+		}
 
 		switch s.State {
 		case "play":
 			s.State = "playing"
-			cpTitle = s.Artist + " - " + s.Track
-			cpFormat = s.Format
-			cpQuality = s.Quality
-
-			sb.libs[currPage].MarkCpArtist(s.Artist)
-			sb.libs[currPage].MarkCpTrack(s.Track, s.Artist, s.Album)
-			sb.libs[currPage].SetCpTrackName(s.Track)
-			sb.libs[currPage].SetCpAlbumName(s.Album)
 		case "stream":
 			s.State = "streaming"
-			cpTitle = s.Title2
-			cpFormat = s.Format
-			cpQuality = s.Quality
-		case "stop":
-			s.State = "stopped"
-			cpTitle = ""
-			cpFormat = ""
-			cpQuality = ""
-			sb.libs[currPage].MarkCpArtist("")
-			sb.libs[currPage].SetCpTrackName("")
 		case "pause":
 			s.State = "paused"
-
-			if s.Artist == "" && s.Track == "" {
-				// streaming, set title to Title3 from /Status
-				cpTitle = s.Title3
-			} else {
-				cpTitle = s.Artist + " - " + s.Track
-			}
-
-			cpFormat = s.Format
-			cpQuality = s.Quality
-		case "neterr":
-			s.State = "network error"
-			cpTitle = ""
-			cpFormat = ""
-			cpQuality = ""
-		case "ctrlerr":
-			s.State = "player control error"
-			cpTitle = ""
-			cpFormat = ""
-			cpQuality = ""
 		}
+	case "stop":
+		s.State = "stopped"
 
-		format := ""
-		if cpQuality != "" || cpFormat != "" {
-			format = cpQuality + " " + cpFormat
+		if lib := sb.libs[currPage]; lib != nil {
+			lib.MarkCpArtist("")
+			lib.SetCpTrackName("")
+			lib.SetCpAlbumName("")
 		}
+	case "neterr":
+		s.State = "network error"
+	case "ctrlerr":
+		s.State = "player control error"
+		cpTitle = nowPlayingTitle(s)
+		cpFormat = s.Format
+		cpQuality = s.Quality
+	}
 
-		var repeat string
-		switch s.Repeat {
-		case 0:
-			repeat = " ♯ "
-		case 1:
-			repeat = " ∞ "
-		default:
-			repeat = " "
-		}
+	format := ""
+	if cpQuality != "" || cpFormat != "" {
+		format = cpQuality + " " + cpFormat
+	}
 
-		sb.volume.SetCell(0, 0, tview.NewTableCell("vol:").SetTextColor(tcell.ColorDefault))
-		sb.volume.SetCell(0, 1, tview.NewTableCell(strconv.Itoa(s.Volume)).SetTextColor(tcell.ColorDefault))
-		sb.playerStatus.SetText(s.State + repeat + format).SetTextAlign(tview.AlignLeft)
-		sb.nowPlaying.SetText(cpTitle).SetTextAlign(tview.AlignCenter)
-		sb.currentPage.SetText(currPage).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorBlack).
+	var repeat string
+	switch s.Repeat {
+	case 0:
+		repeat = " ♯ "
+	case 1:
+		repeat = " ∞ "
+	default:
+		repeat = " "
+	}
+
+	sb.volume.SetCell(0, 0, tview.NewTableCell("vol:").SetTextColor(tcell.ColorDefault))
+	sb.volume.SetCell(0, 1, tview.NewTableCell(strconv.Itoa(s.Volume)).SetTextColor(tcell.ColorDefault))
+	sb.playerStatus.SetText(s.State + repeat + format).SetTextAlign(tview.AlignLeft)
+	sb.nowPlaying.SetText(cpTitle).SetTextAlign(tview.AlignLeft)
+	sb.currentPage.SetText(currPage).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorBlack).
+		SetBackgroundColor(tcell.ColorCornflowerBlue)
+
+	if currPage == "local" {
+		sb.currentPage.SetTextColor(tcell.ColorWhite).
 			SetBackgroundColor(tcell.ColorCornflowerBlue)
-
-		if currPage == "local" {
-			sb.currentPage.SetTextColor(tcell.ColorWhite).
-				SetBackgroundColor(tcell.ColorCornflowerBlue)
-		} else if currPage == "tidal" {
-			sb.currentPage.SetTextColor(tcell.ColorWhite).
-				SetBackgroundColor(tcell.ColorGrey)
-		}
-
-		sb.app.Draw()
+	} else if currPage == "tidal" {
+		sb.currentPage.SetTextColor(tcell.ColorWhite).
+			SetBackgroundColor(tcell.ColorGrey)
 	}
 }
 
@@ -182,4 +182,24 @@ func (sb *StatusBar) listen(ch <-chan player.Status) {
 // such as Library or Help screen given its input page name.
 func (sb *StatusBar) SetCurrentPage(name string) {
 	sb.currentPage.SetText(name)
+}
+
+func nowPlayingTitle(s player.Status) string {
+	artist, track := strings.TrimSpace(s.Artist), strings.TrimSpace(s.Track)
+
+	if artist != "" && track != "" {
+		return artist + " - " + track
+	}
+
+	if track != "" {
+		return track
+	}
+
+	for _, title := range []string{s.Title2, s.Title3, artist} {
+		if title = strings.TrimSpace(title); title != "" {
+			return title
+		}
+	}
+
+	return ""
 }

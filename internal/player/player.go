@@ -1,6 +1,7 @@
 package player
 
 import (
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -10,7 +11,6 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/mkozjak/blutui/internal"
@@ -61,6 +61,7 @@ type Player struct {
 	Updates           chan<- Status
 	spinner           spinner.StartStopper
 	status            Status
+	statusMu          sync.RWMutex
 	volumeHoldCount   int
 	volumeHoldBlocker bool
 	volumeHoldTicker  *time.Ticker
@@ -76,6 +77,9 @@ func New(api string, sp spinner.StartStopper, s chan<- Status) *Player {
 }
 
 func (p *Player) State() string {
+	p.statusMu.RLock()
+	defer p.statusMu.RUnlock()
+
 	return p.status.State
 }
 
@@ -328,42 +332,102 @@ func (p *Player) currentVolume() (int, bool, error) {
 }
 
 func (p *Player) PollStatus() {
+	p.pollStatus(context.Background())
+}
+
+func (p *Player) pollStatus(ctx context.Context) {
+	client := &http.Client{Timeout: 70 * time.Second}
 	etag := ""
 
-	for {
-		resp, err := http.Get(p.API + "/Status?timeout=60" + etag)
-		if err != nil {
-			uerr := url.Error{Err: err}
-			var derr *net.DNSError
-
-			if errors.As(err, &derr) || errors.Is(err, syscall.ECONNREFUSED) {
-				s := Status{State: "neterr"}
-
-				p.status = s
-				p.Updates <- s
-				continue
-			}
-
-			if uerr.Timeout() {
-				continue
-			}
+	for ctx.Err() == nil {
+		s, err := p.fetchStatus(ctx, client, etag)
+		if ctx.Err() != nil {
+			return
 		}
-		defer resp.Body.Close()
 
-		body, err := io.ReadAll(resp.Body)
 		if err != nil {
+			var timeout net.Error
+
+			if !errors.As(err, &timeout) || !timeout.Timeout() {
+				internal.Log("Error fetching player status:", err)
+				p.statusMu.Lock()
+				p.status.State = "neterr"
+				p.statusMu.Unlock()
+
+				select {
+				case p.Updates <- Status{State: "neterr"}:
+				case <-ctx.Done():
+					return
+				}
+
+				etag = ""
+			}
+
+			timer := time.NewTimer(time.Second)
+
+			select {
+			case <-timer.C:
+			case <-ctx.Done():
+				timer.Stop()
+				return
+			}
+
 			continue
 		}
 
-		var s Status
-		err = xml.Unmarshal(body, &s)
-		if err != nil {
+		if s == nil {
 			continue
 		}
 
-		p.status = s
-		p.Updates <- s
-		etag = "&etag=" + s.ETag
-		time.Sleep(5 * time.Second)
+		p.statusMu.Lock()
+		p.status = *s
+		p.statusMu.Unlock()
+
+		select {
+		case p.Updates <- *s:
+		case <-ctx.Done():
+			return
+		}
+
+		etag = s.ETag
 	}
+}
+
+func (p *Player) fetchStatus(ctx context.Context, client *http.Client, etag string) (*Status, error) {
+	query := url.Values{"timeout": {"60"}}
+
+	if etag != "" {
+		query.Set("etag", etag)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, p.API+"/Status?"+query.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotModified {
+		return nil, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetching player status: %s", resp.Status)
+	}
+
+	var s Status
+
+	if err := xml.NewDecoder(resp.Body).Decode(&s); err != nil {
+		return nil, err
+	}
+
+	if s.State == "" {
+		return nil, errors.New("player status has no playback state")
+	}
+
+	return &s, nil
 }
