@@ -61,17 +61,8 @@ func main() {
 	go lib.FetchData(true, lfc)
 
 	go func() {
-		for {
-			msg := <-lfc
-			if msg.Error != nil {
-				// TODO: should probably use os.Exit(1) here
-				panic("failed fetching initial local data: " + msg.Error.Error())
-			}
-
-			// Draw initial album list for the first artist in the list
-			lib.DrawArtistPane()
-			lib.DrawInitAlbums()
-			a.Draw()
+		for msg := range lfc {
+			a.QueueUpdateDraw(func() { lib.ApplyData(msg) })
 		}
 	}()
 
@@ -83,16 +74,8 @@ func main() {
 	// go tidal.FetchData(true, tfc)
 
 	go func() {
-		for {
-			msg := <-tfc
-			if msg.Error != nil {
-				// TODO: should probably use os.Exit(1) here
-				panic("failed fetching initial tidal data: " + msg.Error.Error())
-			}
-
-			// Draw initial album list for the first artist in the list
-			tidal.DrawArtistPane()
-			tidal.DrawInitAlbums()
+		for msg := range tfc {
+			a.QueueUpdateDraw(func() { tidal.ApplyData(msg) })
 		}
 	}()
 

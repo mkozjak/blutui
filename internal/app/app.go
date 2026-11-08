@@ -93,3 +93,7 @@ func (a *App) ShowBarComponent(c tview.Primitive) {
 func (a *App) Stop() {
 	a.Application.Stop()
 }
+
+func (a *App) QueueUpdateDraw(update func()) {
+	a.Application.QueueUpdateDraw(update)
+}

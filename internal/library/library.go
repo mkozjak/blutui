@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/mkozjak/blutui/cache"
 	internal "github.com/mkozjak/blutui/internal"
@@ -96,13 +98,21 @@ type CPMarkSetter interface {
 }
 
 type FetchDone struct {
-	Service string
-	Error   error
+	Service      string
+	Error        error
+	albumArtists map[string]artist
+	artists      []string
+}
+
+type libraryApp interface {
+	app.Focuser
+	QueueUpdateDraw(func())
 }
 
 type Library struct {
+	fetchMu   sync.Mutex
 	container *tview.Flex
-	app       app.Focuser
+	app       libraryApp
 	player    player.Controller
 	spinner   spinner.StartStopper
 	API       string
@@ -120,7 +130,7 @@ type Library struct {
 	CpTrackName         string
 }
 
-func New(api, service string, a app.Focuser, p player.Controller, sp spinner.StartStopper) *Library {
+func New(api, service string, a libraryApp, p player.Controller, sp spinner.StartStopper) *Library {
 	return &Library{
 		app:                a,
 		player:             p,
@@ -154,57 +164,101 @@ func (l *Library) CreateContainer() *tview.Flex {
 }
 
 func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
+	defer close(doneCh)
+	l.fetchMu.Lock()
+	defer l.fetchMu.Unlock()
+
 	go l.spinner.Start()
+	defer l.spinner.Stop()
 
 	c, err := cache.LoadCache()
 	if err != nil {
 		internal.Log("Error loading local cache:", err)
-		doneCh <- FetchDone{Error: err}
+		doneCh <- FetchDone{Service: l.service, Error: err}
 		return
 	}
 
+	load := func(fetch func(string) ([]byte, error)) FetchDone {
+		snapshot := &Library{API: l.API, service: l.service}
+		err := snapshot.fetchData(fetch)
+		return FetchDone{
+			Service: l.service, Error: err,
+			albumArtists: snapshot.albumArtists, artists: snapshot.artists,
+		}
+	}
+
+	if cached {
+		stale := false
+		result := load(func(url string) ([]byte, error) {
+			item, found := c.Data[url]
+
+			if !found {
+				return nil, errors.New("response missing from cache")
+			}
+
+			stale = stale || !item.Expiration.After(time.Now())
+			return item.Response, nil
+		})
+
+		if result.Error == nil {
+			doneCh <- result
+
+			if !stale {
+				return
+			}
+		}
+	}
+
+	doneCh <- load(func(url string) ([]byte, error) {
+		return cache.FetchAndCache(url, c, cached)
+	})
+}
+
+func (l *Library) fetchData(fetch func(string) ([]byte, error)) error {
 	var albums browse
 
-	fetchAlbums := func(url string) {
-		body, err := cache.FetchAndCache(url, c, cached)
+	fetchAlbums := func(url string) error {
+		body, err := fetch(url)
 		if err != nil {
 			internal.Log("Error fetching album sections:", err)
-			doneCh <- FetchDone{Error: err}
-			return
+			return err
 		}
 
 		err = xml.Unmarshal(body, &albums)
 		if err != nil {
 			internal.Log("Error parsing the albums XML:", err, url)
-			doneCh <- FetchDone{Error: err}
-			return
+			return err
 		}
+
+		return nil
 	}
 
 	l.albumArtists = make(map[string]artist)
 
 	if l.service == "local" {
-		body, err := cache.FetchAndCache(l.API+localRootEndpoint, c, cached)
+		body, err := fetch(l.API + localRootEndpoint)
 		if err != nil {
 			internal.Log("Error fetching/caching data:", err)
-			doneCh <- FetchDone{Error: err}
-			return
+			return err
 		}
 
 		var sections browse
 		err = xml.Unmarshal(body, &sections)
 		if err != nil {
 			internal.Log("Error parsing the sections XML:", err, string(body))
-			doneCh <- FetchDone{Error: err}
-			return
+			return err
 		}
 
 		// parse album sections (alphabetical order) from xml
 		for _, item := range sections.Items {
-			fetchAlbums(l.API + "/Browse?key=" + url.QueryEscape(item.BrowseKey))
+			if err := fetchAlbums(l.API + "/Browse?key=" + url.QueryEscape(item.BrowseKey)); err != nil {
+				return err
+			}
 		}
 	} else if l.service == "tidal" {
-		fetchAlbums(l.API + tidalRootEndpoint)
+		if err := fetchAlbums(l.API + tidalRootEndpoint); err != nil {
+			return err
+		}
 	}
 
 	// iterate albums and fill l.albumArtists
@@ -212,11 +266,10 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		var duration int
 
 		// fetch album tracks
-		body, err := cache.FetchAndCache(l.API+"/Browse?key="+url.QueryEscape(al.BrowseKey), c, cached)
+		body, err := fetch(l.API + "/Browse?key=" + url.QueryEscape(al.BrowseKey))
 		if err != nil {
 			internal.Log("Error fetching album tracks:", err)
-			doneCh <- FetchDone{Error: err}
-			return
+			return err
 		}
 
 		var tracks browse
@@ -224,8 +277,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		err = xml.Unmarshal(body, &tracks)
 		if err != nil {
 			internal.Log("Error parsing the album tracks XML:", err, "body:", string(body))
-			doneCh <- FetchDone{Error: err}
-			return
+			return err
 		}
 
 		var albumTracks []track
@@ -254,11 +306,10 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		alEsc := url.QueryEscape(al.Text)
 		arEsc := url.QueryEscape(al.Text2)
 
-		body, err = cache.FetchAndCache(l.API+"/Songs?service=LocalMusic&album="+alEsc+"&artist="+arEsc, c, cached)
+		body, err = fetch(l.API + "/Songs?service=LocalMusic&album=" + alEsc + "&artist=" + arEsc)
 		if err != nil {
 			internal.Log("Error fetching album date:", err)
-			doneCh <- FetchDone{Error: err}
-			return
+			return err
 		}
 
 		var s songs
@@ -267,8 +318,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		err = xml.Unmarshal(body, &s)
 		if err != nil {
 			internal.Log("Error parsing the album songs XML:", err, "body:", string(body))
-			doneCh <- FetchDone{Error: err}
-			return
+			return err
 		}
 
 		if len(s.Song) > 0 {
@@ -331,8 +381,7 @@ func (l *Library) FetchData(cached bool, doneCh chan<- FetchDone) {
 		l.albumArtists[artistName] = ar
 	}
 
-	l.spinner.Stop()
-	doneCh <- FetchDone{Error: nil}
+	return nil
 }
 
 func (l *Library) IsFiltered() bool {
@@ -343,16 +392,55 @@ func (l *Library) UpdateData() {
 	ch := make(chan FetchDone)
 	go l.FetchData(false, ch)
 
-	for {
-		msg := <-ch
-		if msg.Error != nil {
-			// TODO: show error on bar
-			panic("failed fetching initial data: " + msg.Error.Error())
-		}
+	for msg := range ch {
+		l.app.QueueUpdateDraw(func() { l.ApplyData(msg) })
+	}
+}
 
-		// Refresh artist pane
-		l.DrawArtistPane()
-		l.app.SetFocus(l.artistPane)
+func (l *Library) ApplyData(msg FetchDone) {
+	if msg.Error != nil {
+		internal.Log("Error refreshing library:", msg.Error)
+		return
+	}
+
+	selected, playing := "", ""
+
+	if l.artistPane.GetItemCount() > 0 {
+		selected, _ = l.artistPane.GetItemText(l.artistPane.GetCurrentItem())
+		selected = strings.TrimPrefix(selected, "[yellow]")
+	}
+
+	if l.cpArtistIdx >= 0 && l.cpArtistIdx < l.artistPane.GetItemCount() {
+		playing, _ = l.artistPane.GetItemText(l.cpArtistIdx)
+		playing = strings.TrimPrefix(playing, "[yellow]")
+	}
+
+	albumFocused := l.albumPane.HasFocus()
+	l.albumArtists, l.artists = msg.albumArtists, msg.artists
+	l.cpArtistIdx = -1
+	l.artistPaneFiltered = false
+	l.albumPane.Clear()
+	l.currentArtistAlbums = nil
+	l.DrawArtistPane()
+
+	if len(l.artists) > 0 {
+		idx := l.artistPane.FindItems(selected, "", false, true)
+
+		if len(idx) > 0 {
+			l.artistPane.SetCurrentItem(idx[0])
+		} else {
+			l.artistPane.SetCurrentItem(0)
+		}
+	}
+
+	l.MarkCpArtist(playing)
+
+	if albumFocused {
+		if len(l.currentArtistAlbums) > 0 {
+			l.app.SetFocus(l.currentArtistAlbums[0])
+		} else {
+			l.app.SetFocus(l.artistPane)
+		}
 	}
 }
 

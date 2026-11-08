@@ -2,11 +2,11 @@ package cache
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
-	"io/fs"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/mkozjak/blutui/internal"
@@ -14,6 +14,7 @@ import (
 
 type Cache struct {
 	Data map[string]CacheItem
+	path string
 }
 
 type CacheItem struct {
@@ -22,9 +23,17 @@ type CacheItem struct {
 }
 
 func LoadCache() (*Cache, error) {
-	cache := &Cache{Data: make(map[string]CacheItem)}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
 
-	file, err := os.Open("/Users/mkozjak/.config/blutui/cache")
+	cache := &Cache{
+		Data: make(map[string]CacheItem),
+		path: filepath.Join(home, ".config", "blutui", "cache"),
+	}
+
+	file, err := os.Open(cache.path)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -38,22 +47,24 @@ func LoadCache() (*Cache, error) {
 	err = decoder.Decode(cache)
 	if err != nil {
 		internal.Log("Error decoding cache file:", err)
+		cache.Data = make(map[string]CacheItem)
+	}
+
+	if cache.Data == nil {
+		cache.Data = make(map[string]CacheItem)
 	}
 
 	return cache, nil
 }
 
 func saveCache(cache *Cache) error {
-	file, err := os.OpenFile("/Users/mkozjak/.config/blutui/cache", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	if err := os.MkdirAll(filepath.Dir(cache.path), 0755); err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(cache.path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			file, err = os.Create("/Users/mkozjak/.config/blutui/cache")
-			if err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
+		return err
 	}
 	defer file.Close()
 
@@ -63,7 +74,7 @@ func saveCache(cache *Cache) error {
 		internal.Log("Error encoding cache to file:", err)
 	}
 
-	return nil
+	return err
 }
 
 func FetchAndCache(url string, cache *Cache, cached bool) ([]byte, error) {
@@ -73,12 +84,17 @@ func FetchAndCache(url string, cache *Cache, cached bool) ([]byte, error) {
 		// Use cached response
 		body = item.Response
 	} else {
-		resp, err := http.Get(url)
+		client := &http.Client{Timeout: 30 * time.Second}
+		resp, err := client.Get(url)
 		if err != nil {
 			internal.Log("Error fetching album section list:", err)
 			return nil, err
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("fetching %s: %s", url, resp.Status)
+		}
 
 		body, err = io.ReadAll(resp.Body)
 		if err != nil {
@@ -93,7 +109,6 @@ func FetchAndCache(url string, cache *Cache, cached bool) ([]byte, error) {
 
 		if err = saveCache(cache); err != nil {
 			internal.Log("Error saving data to local cache:", err)
-			return nil, err
 		}
 	}
 

@@ -8,6 +8,10 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyTab:
 		if l.artistPane.HasFocus() {
+			if len(l.currentArtistAlbums) == 0 {
+				return nil
+			}
+
 			// Set first artist's album as selectable and make it focused
 			l.currentArtistAlbums[0].SetSelectable(true, false)
 			l.app.SetFocus(l.currentArtistAlbums[0])
