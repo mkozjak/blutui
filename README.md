@@ -7,13 +7,13 @@
 ## Features
 
 - **Bluesound Integration:** Control playback, volume, mute, repeat modes, and more on Bluesound devices via HTTP API.
-- **Amplifier Wake-Up:** After an extended idle period, wakes the amplifier while you browse so the beginning of your first song is less likely to be cut off.
 - **Music Library Browsing:** Browse and search your local and Tidal music libraries, view artists, albums, and tracks.
 - **Fast TUI:** Built with [tcell](https://github.com/gdamore/tcell) and [tview](https://github.com/mkozjak/tview) for responsive, mouse-enabled terminal UI.
 - **Keyboard Shortcuts:** Efficient navigation and control with comprehensive keybindings.
 - **Status Bar:** Real-time player status and feedback.
 - **Help Screen:** In-app help for all keybindings.
 - **Caching:** Local caching for faster library browsing.
+- **Amplifier Wake-Up:** After an extended idle period, wakes the amplifier while you browse so the beginning of your first song is less likely to be cut off.
 
 ---
 
