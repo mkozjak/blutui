@@ -166,28 +166,25 @@ func (l *Library) DrawInitAlbums() {
 }
 
 func (l *Library) MarkCpTrack(track, artist, album string) {
-	if l.cpArtistIdx < 0 {
+	if l.artistPane.GetItemCount() == 0 {
 		return
 	}
 
-	if l.artists[l.cpArtistIdx] != artist {
-		return
-	}
+	shownArtist, _ := l.artistPane.GetItemText(l.artistPane.GetCurrentItem())
+	shownArtist = strings.TrimPrefix(shownArtist, "[yellow]")
 
 	for _, al := range l.currentArtistAlbums {
 		alName := internal.CleanAlbumName(al.GetTitle())
 
-		for i := 1; i < al.GetRowCount(); i++ {
+		for i := 0; i < al.GetRowCount(); i++ {
 			c := al.GetCell(i, 0)
-			origTrack := c.Text
+			origTrack := strings.TrimPrefix(c.Text, "[yellow]")
 
-			// Unmark track if not played currently or not from current album
-			if internal.CleanTrackName(origTrack) != track || alName != album {
-				al.SetCell(i, 0, c.SetText(strings.TrimPrefix(origTrack, "[yellow]")))
-				continue
+			if track != "" && shownArtist == artist && alName == album && internal.CleanTrackName(origTrack) == track {
+				c.SetText("[yellow]" + origTrack)
+			} else {
+				c.SetText(origTrack)
 			}
-
-			al.SetCell(i, 0, c.SetText("[yellow]"+origTrack))
 		}
 	}
 }

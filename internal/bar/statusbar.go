@@ -135,6 +135,7 @@ func (sb *StatusBar) update(s player.Status) {
 
 		if lib := sb.libs[currPage]; lib != nil {
 			lib.MarkCpArtist("")
+			lib.MarkCpTrack("", "", "")
 			lib.SetCpTrackName("")
 			lib.SetCpAlbumName("")
 		}
