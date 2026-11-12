@@ -51,6 +51,8 @@ func main() {
 	pUpd := make(chan player.Status)
 	p := player.New(bsUrl, sp, pUpd)
 	a.Player = p
+	p.EnableActivityTracking()
+	go p.WakeOnStartup()
 
 	// Create Local Library Page
 	lfc := make(chan library.FetchDone)

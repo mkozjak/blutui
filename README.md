@@ -7,6 +7,7 @@
 ## Features
 
 - **Bluesound Integration:** Control playback, volume, mute, repeat modes, and more on Bluesound devices via HTTP API.
+- **Amplifier Wake-Up:** After an extended idle period, wakes the amplifier while you browse so the beginning of your first song is less likely to be cut off.
 - **Music Library Browsing:** Browse and search your local and Tidal music libraries, view artists, albums, and tracks.
 - **Fast TUI:** Built with [tcell](https://github.com/gdamore/tcell) and [tview](https://github.com/mkozjak/tview) for responsive, mouse-enabled terminal UI.
 - **Keyboard Shortcuts:** Efficient navigation and control with comprehensive keybindings.
@@ -44,6 +45,8 @@ Run the application from your terminal:
 ```
 
 By default, Blutui will attempt to connect to your Bluesound device at `http://bluesound.lan:11000`. You may need to adjust your device's hostname or network settings if this does not work.
+
+On startup, if playback is paused or stopped and the player was last observed active more than 15 minutes ago, Blutui briefly starts and stops playback to wake the amplifier. It also wakes the amplifier if no activity history is available. It temporarily mutes an unmuted player and restores its original mute state afterward. This changes the active source; existing playback is left alone when the player reports that it is playing. Blutui stores its observations locally, so it cannot track playback while it is closed.
 
 ### Flags
 

@@ -62,6 +62,7 @@ type Player struct {
 	spinner           spinner.StartStopper
 	status            Status
 	statusMu          sync.RWMutex
+	activity          *activityTracker
 	volumeHoldCount   int
 	volumeHoldBlocker bool
 	volumeHoldTicker  *time.Ticker
@@ -377,6 +378,9 @@ func (p *Player) pollStatus(ctx context.Context) {
 
 		if s == nil {
 			continue
+		}
+		if p.activity != nil {
+			p.activity.observe(s.State, time.Now())
 		}
 
 		p.statusMu.Lock()
