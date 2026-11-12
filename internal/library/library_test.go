@@ -274,3 +274,30 @@ func TestApplyDataSelectionAndEmptyLibrary(t *testing.T) {
 	l.app.SetFocus(l.artistPane)
 	l.KeyboardHandler(tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone))
 }
+
+func TestSelectCurrentlyPlayingArtistDuringStartup(t *testing.T) {
+	data := FetchDone{artists: []string{"A", "B"}, albumArtists: map[string]artist{"A": {}, "B": {}}}
+
+	for _, statusFirst := range []bool{true, false} {
+		l := New("", "local", testApp{tview.NewApplication()}, nil, testSpinner{})
+		l.CreateContainer()
+		l.SelectCpArtist()
+
+		if statusFirst {
+			l.MarkCpArtist("B")
+			l.ApplyData(data)
+		} else {
+			l.ApplyData(data)
+			l.MarkCpArtist("B")
+		}
+
+		if got := l.artistPane.GetCurrentItem(); got != 1 {
+			t.Fatalf("statusFirst=%v: selected index %d, want 1", statusFirst, got)
+		}
+
+		l.MarkCpArtist("Missing")
+		if l.cpArtistIdx != -1 {
+			t.Fatal("missing artist retained the previous artist index")
+		}
+	}
+}

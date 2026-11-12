@@ -67,21 +67,27 @@ func (l *Library) DrawArtistPane() {
 
 func (l *Library) SelectCpArtist() {
 	if l.cpArtistIdx < 0 {
+		l.cpArtistPending = true
 		return
 	}
 
+	l.cpArtistPending = false
 	l.artistPane.SetCurrentItem(l.cpArtistIdx)
 }
 
 func (l *Library) MarkCpArtist(name string) {
+	l.cpArtistName = name
+
 	// clear previously highlighted items
 	if l.cpArtistIdx >= 0 {
 		n, _ := l.artistPane.GetItemText(l.cpArtistIdx)
 		l.artistPane.SetItemText(l.cpArtistIdx, strings.TrimPrefix(n, "[yellow]"), "")
 	}
 
+	l.cpArtistIdx = -1
+
 	if name == "" {
-		l.cpArtistIdx = -1
+		l.cpArtistPending = false
 		return
 	}
 
@@ -95,4 +101,8 @@ func (l *Library) MarkCpArtist(name string) {
 	n, _ := l.artistPane.GetItemText(idx[0])
 	l.artistPane.SetItemText(idx[0], "[yellow]"+n, "")
 	l.cpArtistIdx = idx[0]
+
+	if l.cpArtistPending {
+		l.SelectCpArtist()
+	}
 }

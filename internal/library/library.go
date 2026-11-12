@@ -126,6 +126,8 @@ type Library struct {
 	artists             []string
 	currentArtistAlbums []*tview.Table
 	cpArtistIdx         int
+	cpArtistName        string
+	cpArtistPending     bool
 	CpAlbumName         string
 	CpTrackName         string
 }
@@ -405,16 +407,11 @@ func (l *Library) ApplyData(msg FetchDone) {
 		return
 	}
 
-	selected, playing := "", ""
+	selected := ""
 
 	if l.artistPane.GetItemCount() > 0 {
 		selected, _ = l.artistPane.GetItemText(l.artistPane.GetCurrentItem())
 		selected = strings.TrimPrefix(selected, "[yellow]")
-	}
-
-	if l.cpArtistIdx >= 0 && l.cpArtistIdx < l.artistPane.GetItemCount() {
-		playing, _ = l.artistPane.GetItemText(l.cpArtistIdx)
-		playing = strings.TrimPrefix(playing, "[yellow]")
 	}
 
 	albumFocused := l.albumPane.HasFocus()
@@ -435,7 +432,9 @@ func (l *Library) ApplyData(msg FetchDone) {
 		}
 	}
 
-	l.MarkCpArtist(playing)
+	if l.cpArtistName != "" {
+		l.MarkCpArtist(l.cpArtistName)
+	}
 
 	if albumFocused {
 		if len(l.currentArtistAlbums) > 0 {

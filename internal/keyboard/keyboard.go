@@ -74,9 +74,7 @@ func (h *GlobalHandler) Listen(event *tcell.EventKey) *tcell.EventKey {
 	case 'm':
 		go h.player.ToggleMute()
 	case 'o':
-		if h.player.State() == "play" {
-			h.library.SelectCpArtist()
-		}
+		h.library.SelectCpArtist()
 	case 'r':
 		go h.player.ToggleRepeatMode()
 	case 'u':
