@@ -301,3 +301,36 @@ func TestSelectCurrentlyPlayingArtistDuringStartup(t *testing.T) {
 		}
 	}
 }
+
+func TestMarkCurrentlyPlayingTrack(t *testing.T) {
+	l := New("", "local", testApp{tview.NewApplication()}, nil, testSpinner{})
+	l.CreateContainer()
+	l.ApplyData(FetchDone{
+		artists: []string{"Artist", "Other"},
+		albumArtists: map[string]artist{
+			"Artist": {albums: []album{{name: "Album", year: 2020, tracks: []track{{name: "1. First"}, {name: "2. Second"}}}}},
+			"Other":  {},
+		},
+	})
+	l.MarkCpArtist("Artist")
+
+	for _, tc := range []struct {
+		track  string
+		artist string
+		first  string
+		second string
+	}{
+		{"First", "Artist", "[yellow]1. First", "2. Second"},
+		{"First", "Artist", "[yellow]1. First", "2. Second"},
+		{"Second", "Artist", "1. First", "[yellow]2. Second"},
+		{"First", "Other", "1. First", "2. Second"},
+		{"", "", "1. First", "2. Second"},
+	} {
+		l.MarkCpTrack(tc.track, tc.artist, "Album")
+		table := l.currentArtistAlbums[0]
+
+		if first, second := table.GetCell(0, 0).Text, table.GetCell(1, 0).Text; first != tc.first || second != tc.second {
+			t.Errorf("track %q by %q: got %q, %q; want %q, %q", tc.track, tc.artist, first, second, tc.first, tc.second)
+		}
+	}
+}
