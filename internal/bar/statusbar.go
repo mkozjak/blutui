@@ -116,10 +116,10 @@ func (sb *StatusBar) update(s player.Status) {
 		cpQuality = s.Quality
 
 		if lib := sb.libs[currPage]; lib != nil {
-			lib.MarkCpArtist(s.Artist)
-			lib.MarkCpTrack(s.Track, s.Artist, s.Album)
 			lib.SetCpTrackName(s.Track)
 			lib.SetCpAlbumName(s.Album)
+			lib.MarkCpArtist(s.Artist)
+			lib.MarkCpTrack(s.Track, s.Artist, s.Album)
 		}
 
 		switch s.State {

@@ -66,13 +66,40 @@ func (l *Library) DrawArtistPane() {
 }
 
 func (l *Library) SelectCpArtist() {
-	if l.cpArtistIdx < 0 {
+	index := -1
+
+	for i := 0; i < l.artistPane.GetItemCount(); i++ {
+		name, _ := l.artistPane.GetItemText(i)
+
+		if l.cpArtistName != "" && strings.TrimPrefix(name, "[yellow]") == l.cpArtistName {
+			index = i
+			break
+		}
+	}
+
+	if index < 0 {
 		l.cpArtistPending = true
 		return
 	}
 
 	l.cpArtistPending = false
-	l.artistPane.SetCurrentItem(l.cpArtistIdx)
+	l.artistPane.SetCurrentItem(index)
+
+	for _, table := range l.currentArtistAlbums {
+		if internal.CleanAlbumName(table.GetTitle()) != l.CpAlbumName {
+			continue
+		}
+
+		for row := 0; row < table.GetRowCount(); row++ {
+			name := strings.TrimPrefix(table.GetCell(row, 0).Text, "[yellow]")
+
+			if l.CpTrackName != "" && internal.CleanTrackName(name) == l.CpTrackName {
+				table.Select(row, 0)
+				l.app.SetFocus(table)
+				return
+			}
+		}
+	}
 }
 
 func (l *Library) MarkCpArtist(name string) {

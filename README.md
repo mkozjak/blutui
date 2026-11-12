@@ -73,7 +73,7 @@ By default, Blutui will attempt to connect to your Bluesound device at `http://b
 | `Ctrl+u`            | Half page up                                |
 | `h`                 | Focus artist pane                           |
 | `l`                 | Focus album pane                            |
-| `o`                 | Jump to currently playing artist            |
+| `o`                 | Jump to currently playing track            |
 | `/`                 | Search artists                              |
 | `u`                 | Update library                              |
 | `?`                 | Show help screen                            |

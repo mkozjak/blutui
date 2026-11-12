@@ -166,3 +166,38 @@ func TestPaneFocusKeys(t *testing.T) {
 		t.Fatal("l moved focus for an artist without albums")
 	}
 }
+
+func TestJumpToCurrentlyPlayingTrack(t *testing.T) {
+	for _, startInAlbum := range []bool{false, true} {
+		t.Run(map[bool]string{false: "artist pane", true: "album pane"}[startInAlbum], func(t *testing.T) {
+			l := New("", "local", testApp{tview.NewApplication()}, nil, testSpinner{})
+			l.CreateContainer()
+			l.ApplyData(FetchDone{artists: []string{"A", "B"}, albumArtists: map[string]artist{
+				"A": {albums: []album{{name: "Other", tracks: []track{{name: "Other"}}}}},
+				"B": {albums: []album{
+					{name: "First", year: 2020, tracks: []track{{name: "1. Track"}}},
+					{name: "Second", year: 2021, tracks: []track{{name: "1. Track"}, {name: "2. Playing"}}},
+				}},
+			}})
+			l.SetCpTrackName("Playing")
+			l.SetCpAlbumName("Second")
+			l.MarkCpArtist("B")
+
+			if startInAlbum {
+				l.app.SetFocus(l.currentArtistAlbums[0])
+			} else {
+				l.app.SetFocus(l.artistPane)
+			}
+
+			l.SelectCpArtist()
+
+			if l.artistPane.GetCurrentItem() != 1 || !l.currentArtistAlbums[1].HasFocus() {
+				t.Fatal("did not focus the playing artist and album")
+			}
+
+			if row, _ := l.currentArtistAlbums[1].GetSelection(); row != 1 {
+				t.Fatalf("selected track row = %d, want 1", row)
+			}
+		})
+	}
+}
