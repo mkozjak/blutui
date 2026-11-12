@@ -15,7 +15,7 @@ import (
 	"github.com/mkozjak/blutui/internal/app"
 	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/blutui/spinner"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 var localRootEndpoint string = "/Browse?key=LocalMusic%3AbySection%3AAlbum%2F%252Flibrary%252Fv1%252FAlbums%253Fservice%3DLocalMusic"

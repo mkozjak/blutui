@@ -2,7 +2,7 @@ package internal
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 // This is a library help screen
@@ -55,8 +55,7 @@ func CreateHelpScreen(listen func(event *tcell.EventKey) *tcell.EventKey) *tview
 		SetBorder(true).
 		SetTitle("[::b]Keybindings").
 		SetBorderColor(tcell.ColorCornflowerBlue).
-		SetBackgroundColor(tcell.ColorDefault).
-		SetCustomBorders(CustomBorders)
+		SetBackgroundColor(tcell.ColorDefault)
 
 	return c
 }

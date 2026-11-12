@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 type StartStopper interface {

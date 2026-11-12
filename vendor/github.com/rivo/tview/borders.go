@@ -43,19 +43,3 @@ var Borders = struct {
 	BottomLeftFocus:  BoxDrawingsDoubleUpAndRight,
 	BottomRightFocus: BoxDrawingsDoubleUpAndLeft,
 }
-
-type BoxBorders struct {
-	Horizontal  rune
-	Vertical    rune
-	TopLeft     rune
-	TopRight    rune
-	BottomLeft  rune
-	BottomRight rune
-
-	HorizontalFocus  rune
-	VerticalFocus    rune
-	TopLeftFocus     rune
-	TopRightFocus    rune
-	BottomLeftFocus  rune
-	BottomRightFocus rune
-}

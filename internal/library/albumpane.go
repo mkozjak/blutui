@@ -6,7 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	internal "github.com/mkozjak/blutui/internal"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 // right pane - albums
@@ -18,8 +18,7 @@ func (l *Library) createAlbumContainer() *tview.Grid {
 		SetBorder(true).
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
-		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(internal.CustomBorders)
+		SetTitleAlign(tview.AlignLeft)
 
 	return p
 }
@@ -37,7 +36,6 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(internal.NoBorders).
 		SetFocusFunc(func() {
 			// Set this current table as selectable so its selected rows get highlighted
 			c.SetSelectable(true, false)
@@ -52,6 +50,24 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 
 	// Create a custom list line for album length etc.
 	c.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		if width >= 2 && height >= 2 {
+			style := tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue).Background(tcell.ColorDefault)
+			for col := x; col < x+width; col++ {
+				screen.SetContent(col, y, ' ', nil, style)
+				screen.SetContent(col, y+height-1, ' ', nil, style)
+			}
+			for row := y + 1; row < y+height-1; row++ {
+				screen.SetContent(x, row, ' ', nil, style)
+				screen.SetContent(x+width-1, row, ' ', nil, style)
+			}
+			if width >= 4 {
+				printed, _ := tview.Print(screen, c.GetTitle(), x+1, y, width-2, tview.AlignLeft, tview.Styles.TitleColor)
+				if len(c.GetTitle())-printed > 0 && printed > 0 {
+					tview.Print(screen, string(tview.SemigraphicsHorizontalEllipsis), x+width-2, y, 1, tview.AlignLeft, tview.Styles.TitleColor)
+				}
+			}
+		}
+
 		centerY := y + height/c.GetRowCount()/2
 
 		for cx := x + len(c.GetTitle()) - 3; cx < x+width-len(durms)-2; cx++ {

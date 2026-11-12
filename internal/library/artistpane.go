@@ -6,7 +6,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	internal "github.com/mkozjak/blutui/internal"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 // left pane - artists
@@ -27,7 +27,6 @@ func (l *Library) createArtistContainer() *tview.List {
 		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
 		SetTitleAlign(tview.AlignLeft).
-		SetCustomBorders(internal.CustomBorders).
 		// set artists list keymap
 		SetInputCapture(l.artistPaneKeyboardHandler).
 		SetFocusFunc(func() {

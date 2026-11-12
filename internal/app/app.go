@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/mkozjak/blutui/internal/player"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 // FocusStopper represents an object that can both focus and stop.

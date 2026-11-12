@@ -33,9 +33,6 @@ type Box struct {
 	// two in width and height.
 	border bool
 
-	// Custom set of runes for printing borders
-	customBorders *BoxBorders
-
 	// The border style.
 	borderStyle tcell.Style
 
@@ -308,14 +305,6 @@ func (b *Box) SetBorderStyle(style tcell.Style) *Box {
 	return b
 }
 
-// SetCustomBorder allows to override the runes
-// that are used to print the border.
-// Pass nil to fallback to the default borders
-func (b *Box) SetCustomBorders(borders *BoxBorders) *Box {
-	b.customBorders = borders
-	return b
-}
-
 // SetBorderColor sets the box's border color.
 func (b *Box) SetBorderColor(color tcell.Color) *Box {
 	b.borderStyle = b.borderStyle.Foreground(color)
@@ -325,7 +314,7 @@ func (b *Box) SetBorderColor(color tcell.Color) *Box {
 // SetBorderAttributes sets the border's style attributes. You can combine
 // different attributes using bitmask operations:
 //
-//	box.SetBorderAttributes(tcell.AttrUnderline | tcell.AttrBold)
+//	box.SetBorderAttributes(tcell.AttrItalic | tcell.AttrBold)
 func (b *Box) SetBorderAttributes(attr tcell.AttrMask) *Box {
 	b.borderStyle = b.borderStyle.Attributes(attr)
 	return b
@@ -403,37 +392,19 @@ func (b *Box) DrawForSubclass(screen tcell.Screen, p Primitive) {
 	if b.border && b.width >= 2 && b.height >= 2 {
 		var vertical, horizontal, topLeft, topRight, bottomLeft, bottomRight rune
 		if p.HasFocus() {
-			if b.customBorders != nil {
-				horizontal = b.customBorders.HorizontalFocus
-				vertical = b.customBorders.VerticalFocus
-				topLeft = b.customBorders.TopLeftFocus
-				topRight = b.customBorders.TopRightFocus
-				bottomLeft = b.customBorders.BottomLeftFocus
-				bottomRight = b.customBorders.BottomRightFocus
-			} else {
-				horizontal = Borders.HorizontalFocus
-				vertical = Borders.VerticalFocus
-				topLeft = Borders.TopLeftFocus
-				topRight = Borders.TopRightFocus
-				bottomLeft = Borders.BottomLeftFocus
-				bottomRight = Borders.BottomRightFocus
-			}
+			horizontal = Borders.HorizontalFocus
+			vertical = Borders.VerticalFocus
+			topLeft = Borders.TopLeftFocus
+			topRight = Borders.TopRightFocus
+			bottomLeft = Borders.BottomLeftFocus
+			bottomRight = Borders.BottomRightFocus
 		} else {
-			if b.customBorders != nil {
-				horizontal = b.customBorders.Horizontal
-				vertical = b.customBorders.Vertical
-				topLeft = b.customBorders.TopLeft
-				topRight = b.customBorders.TopRight
-				bottomLeft = b.customBorders.BottomLeft
-				bottomRight = b.customBorders.BottomRight
-			} else {
-				horizontal = Borders.Horizontal
-				vertical = Borders.Vertical
-				topLeft = Borders.TopLeft
-				topRight = Borders.TopRight
-				bottomLeft = Borders.BottomLeft
-				bottomRight = Borders.BottomRight
-			}
+			horizontal = Borders.Horizontal
+			vertical = Borders.Vertical
+			topLeft = Borders.TopLeft
+			topRight = Borders.TopRight
+			bottomLeft = Borders.BottomLeft
+			bottomRight = Borders.BottomRight
 		}
 		for x := b.x + 1; x < b.x+b.width-1; x++ {
 			screen.SetContent(x, b.y, horizontal, nil, b.borderStyle)

@@ -15,7 +15,7 @@ import (
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/blutui/spinner"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 var appVersion string
@@ -25,6 +25,13 @@ var port string = "11000"
 var bsUrl string = fmt.Sprintf("%s://%s:%s", proto, host, port)
 
 func main() {
+	tview.Borders.HorizontalFocus = tview.Borders.Horizontal
+	tview.Borders.VerticalFocus = tview.Borders.Vertical
+	tview.Borders.TopLeftFocus = tview.Borders.TopLeft
+	tview.Borders.TopRightFocus = tview.Borders.TopRight
+	tview.Borders.BottomLeftFocus = tview.Borders.BottomLeft
+	tview.Borders.BottomRightFocus = tview.Borders.BottomRight
+
 	// Define the version flag
 	versionFlag := flag.Bool("version", false, "Display app version")
 	flag.Parse()

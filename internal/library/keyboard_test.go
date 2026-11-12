@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 func TestAlbumPageNavigation(t *testing.T) {

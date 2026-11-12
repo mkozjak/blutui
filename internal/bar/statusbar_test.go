@@ -5,7 +5,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal/player"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 type statusApp struct {

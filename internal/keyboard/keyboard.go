@@ -6,7 +6,7 @@ import (
 	"github.com/mkozjak/blutui/internal/bar"
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 type pagesManager interface {

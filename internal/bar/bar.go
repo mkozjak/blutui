@@ -6,7 +6,7 @@ import (
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/blutui/spinner"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 // switcher is the interface that is implemented by [Bar] that enables

@@ -16,7 +16,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/cache"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 type testSpinner struct{}

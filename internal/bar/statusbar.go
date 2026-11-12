@@ -8,7 +8,7 @@ import (
 	"github.com/mkozjak/blutui/internal/library"
 	"github.com/mkozjak/blutui/internal/player"
 	"github.com/mkozjak/blutui/spinner"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 // A StatusBar is a [Bar] component that provides important player information

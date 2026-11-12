@@ -7,7 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/mkozjak/blutui/internal"
 	"github.com/mkozjak/blutui/internal/library"
-	"github.com/mkozjak/tview"
+	"github.com/rivo/tview"
 )
 
 // A SearchBar is a [Bar] component that provides fuzzy search capability for artists.
