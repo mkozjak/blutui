@@ -1,6 +1,8 @@
 .DEFAULT_GOAL := build
 BINARY_NAME=blutui
 
+.PHONY: build run install clean test
+
 build:
 	go build \
 		-ldflags "-X main.appVersion=$$(git rev-parse --short HEAD)" \
@@ -8,6 +10,9 @@ build:
 
 run: build
 	/tmp/${BINARY_NAME}
+
+test:
+	go test ./...
 
 install: build
 	cp /tmp/${BINARY_NAME} $$GOPATH/bin/blutui

@@ -90,7 +90,7 @@ Contributions are welcome! Please open issues or submit pull requests on [GitHub
 ### Development
 
 - Code is organized in `internal/` modules for app logic, player, library, keyboard, and UI components.
-- Use `make` to build and test.
+- Use `make` to build and `make test` to run tests.
 - Please follow idiomatic Go practices and document your code.
 
 ---
