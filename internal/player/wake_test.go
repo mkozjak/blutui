@@ -48,7 +48,7 @@ func TestWakeOnStartup(t *testing.T) {
 			}))
 			defer s.Close()
 			p := New(s.URL, nil, nil)
-			p.activity = &activityTracker{path: filepath.Join(t.TempDir(), "activity"), record: activityRecord{State: tc.initial, LastActive: time.Now().Add(-16 * time.Minute)}}
+			p.activity = &activityTracker{path: filepath.Join(t.TempDir(), "activity"), initialLastActive: time.Now().Add(-16 * time.Minute), record: activityRecord{State: tc.initial, LastActive: time.Now().Add(-16 * time.Minute)}}
 			if err := p.wakeOnStartup(s.Client(), 0); err != nil {
 				t.Fatal(err)
 			}
@@ -97,7 +97,7 @@ func TestWakeIdleThresholdAndMute(t *testing.T) {
 			}))
 			defer s.Close()
 			p := New(s.URL, nil, nil)
-			p.activity = &activityTracker{path: filepath.Join(t.TempDir(), "activity"), record: activityRecord{State: "stop", LastActive: tc.last}, initialUnknown: tc.last.IsZero()}
+			p.activity = &activityTracker{path: filepath.Join(t.TempDir(), "activity"), record: activityRecord{State: "stop", LastActive: tc.last}, initialLastActive: tc.last}
 			if err := p.wakeOnStartup(s.Client(), 0); err != nil {
 				t.Fatal(err)
 			}

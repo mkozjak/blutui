@@ -18,10 +18,10 @@ type activityRecord struct {
 }
 
 type activityTracker struct {
-	mu             sync.Mutex
-	path           string
-	record         activityRecord
-	initialUnknown bool
+	mu                sync.Mutex
+	path              string
+	record            activityRecord
+	initialLastActive time.Time
 }
 
 // EnableActivityTracking stores observations separately for each player.
@@ -42,7 +42,7 @@ func (p *Player) EnableActivityTracking() {
 	} else if !os.IsNotExist(err) {
 		internal.Log("Error reading player activity:", err)
 	}
-	t.initialUnknown = t.record.LastActive.IsZero()
+	t.initialLastActive = t.record.LastActive
 	p.activity = t
 }
 
@@ -68,10 +68,8 @@ func (t *activityTracker) observe(state string, now time.Time) {
 	}
 }
 
-func (t *activityTracker) idleLongEnough(now time.Time) bool {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	return !t.record.LastActive.IsZero() && now.Sub(t.record.LastActive) > 15*time.Minute
+func (t *activityTracker) shouldWakeOnStartup(now time.Time) bool {
+	return t.initialLastActive.IsZero() || now.Sub(t.initialLastActive) > 15*time.Minute
 }
 
 // save is called with the tracker locked.

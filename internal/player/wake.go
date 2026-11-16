@@ -35,8 +35,7 @@ func (p *Player) wakeOnStartup(client *http.Client, delay time.Duration) (result
 	if p.activity == nil {
 		return nil
 	}
-	p.activity.observe(status.State, time.Now())
-	if !p.activity.initialUnknown && !p.activity.idleLongEnough(time.Now()) {
+	if !p.activity.shouldWakeOnStartup(time.Now()) {
 		return nil
 	}
 	if status.Mute != "0" && status.Mute != "1" {

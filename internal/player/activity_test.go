@@ -24,7 +24,25 @@ func TestActivityPersistsIdleTransition(t *testing.T) {
 	if record.State != "pause" || !record.LastActive.Equal(now.Add(time.Minute)) {
 		t.Fatalf("unexpected persisted activity: %+v", record)
 	}
-	if tracker.idleLongEnough(now.Add(15*time.Minute)) || !tracker.idleLongEnough(now.Add(17*time.Minute)) {
-		t.Fatal("idle threshold did not use the pause time")
+}
+
+func TestStartupWakeUsesLoadedHistory(t *testing.T) {
+	now := time.Now()
+	for _, tc := range []struct {
+		name string
+		last time.Time
+		want bool
+	}{
+		{"unknown", time.Time{}, true},
+		{"recent", now.Add(-14 * time.Minute), false},
+		{"old", now.Add(-16 * time.Minute), true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tracker := &activityTracker{path: filepath.Join(t.TempDir(), "activity"), initialLastActive: tc.last, record: activityRecord{LastActive: tc.last, State: "play"}}
+			tracker.observe("stop", now)
+			if got := tracker.shouldWakeOnStartup(now); got != tc.want {
+				t.Fatalf("shouldWakeOnStartup = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
