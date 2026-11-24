@@ -39,6 +39,7 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 		SetFocusFunc(func() {
 			// Set this current table as selectable so its selected rows get highlighted
 			c.SetSelectable(true, false)
+			l.lastFocusedAlbum = c
 		}).
 		SetBlurFunc(func() {
 			// Set this current table as not selectable so it loses the highlighting
@@ -177,8 +178,7 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 }
 
 func (l *Library) DrawInitAlbums() {
-	r := l.drawArtistAlbums(l.artists[0], l.albumPane)
-	l.albumPane.SetRows(r...)
+	l.drawArtistAlbums(l.artists[0])
 }
 
 func (l *Library) MarkCpTrack(track, artist, album string) {
@@ -205,30 +205,30 @@ func (l *Library) MarkCpTrack(track, artist, album string) {
 	}
 }
 
-func (l *Library) drawArtistAlbums(artist string, c *tview.Grid) []int {
-	alHeights := []int{}
+func (l *Library) drawArtistAlbums(artist string) {
+	l.albumPane.Clear()
 	l.currentArtistAlbums = nil
+	l.lastFocusedAlbum = nil
 
 	// remove style from the string
 	cArtist := strings.TrimPrefix(artist, "[yellow]")
+	row := 0
 
 	for i, album := range l.albumArtists[cArtist].albums {
 		albumTable := l.drawAlbum(cArtist, album)
-		alHeights = append(alHeights, len(album.tracks)+2)
+		height := len(album.tracks) + 2
 
 		// automatically focus the first track from the first album
 		// since grid is the parent, it will automatically lose focus
 		// and give it to the first album
-		if i == 0 {
-			c.AddItem(albumTable, i, 0, 1, 1, 0, 0, true)
-		} else {
-			c.AddItem(albumTable, i, 0, 1, 1, 0, 0, false)
-		}
+		l.albumPane.AddItem(albumTable, row, 0, height, 1, 0, 0, i == 0)
 
+		row += height
 		l.currentArtistAlbums = append(l.currentArtistAlbums, albumTable)
 	}
 
-	return alHeights
+	// Match each grid row to a terminal line so offsets can land inside albums.
+	l.albumPane.SetSize(row, 1, 1, 0).SetOffset(0, 0)
 }
 
 // selectedAlbumIdx returns an index of the currently focused album
@@ -248,7 +248,5 @@ func (l *Library) selectedAlbumIdx() int {
 
 // draw selected artist's right pane (album items) on artist scroll
 func (l *Library) scrollCb(index int, artist string, _ string, shortcut rune) {
-	l.albumPane.Clear()
-	alHeights := l.drawArtistAlbums(artist, l.albumPane)
-	l.albumPane.SetRows(alHeights...)
+	l.drawArtistAlbums(artist)
 }

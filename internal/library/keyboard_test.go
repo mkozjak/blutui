@@ -1,6 +1,7 @@
 package library
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
@@ -171,11 +172,11 @@ func TestJumpToCurrentlyPlayingTrack(t *testing.T) {
 	for _, startInAlbum := range []bool{false, true} {
 		t.Run(map[bool]string{false: "artist pane", true: "album pane"}[startInAlbum], func(t *testing.T) {
 			l := New("", "local", testApp{tview.NewApplication()}, nil, testSpinner{})
-			l.CreateContainer()
+			container := l.CreateContainer()
 			l.ApplyData(FetchDone{artists: []string{"A", "B"}, albumArtists: map[string]artist{
 				"A": {albums: []album{{name: "Other", tracks: []track{{name: "Other"}}}}},
 				"B": {albums: []album{
-					{name: "First", year: 2020, tracks: []track{{name: "1. Track"}}},
+					{name: "First", year: 2020, tracks: make([]track, 8)},
 					{name: "Second", year: 2021, tracks: []track{{name: "1. Track"}, {name: "2. Playing"}}},
 				}},
 			}})
@@ -189,7 +190,33 @@ func TestJumpToCurrentlyPlayingTrack(t *testing.T) {
 				l.app.SetFocus(l.artistPane)
 			}
 
+			screen := tcell.NewSimulationScreen("")
+			if err := screen.Init(); err != nil {
+				t.Fatal(err)
+			}
+			defer screen.Fini()
+
+			screen.SetSize(80, 10)
+			container.SetRect(0, 0, 80, 10)
+			container.Draw(screen)
+
+			albumText := func() string {
+				screen.Clear()
+				container.Draw(screen)
+				x, y, width, height := l.albumPane.GetInnerRect()
+				var view strings.Builder
+				for row := y; row < y+height; row++ {
+					for col := x; col < x+width; col++ {
+						ch, _, _, _ := screen.GetContent(col, row)
+						view.WriteRune(ch)
+					}
+					view.WriteByte('\n')
+				}
+				return view.String()
+			}
+
 			l.SelectCpArtist()
+			playingView := albumText()
 
 			if l.artistPane.GetCurrentItem() != 1 || !l.currentArtistAlbums[1].HasFocus() {
 				t.Fatal("did not focus the playing artist and album")
@@ -197,6 +224,31 @@ func TestJumpToCurrentlyPlayingTrack(t *testing.T) {
 
 			if row, _ := l.currentArtistAlbums[1].GetSelection(); row != 1 {
 				t.Fatalf("selected track row = %d, want 1", row)
+			}
+
+			if !strings.Contains(playingView, "2. Playing") {
+				t.Fatalf("playing track is outside the viewport:\n%s", playingView)
+			}
+
+			tab := tcell.NewEventKey(tcell.KeyTab, 0, tcell.ModNone)
+			l.KeyboardHandler(tab)
+
+			if !l.artistPane.HasFocus() {
+				t.Fatal("Tab did not focus the artist pane")
+			}
+
+			if got := albumText(); got != playingView {
+				t.Fatalf("Tab changed the track viewport:\n%s\nwant:\n%s", got, playingView)
+			}
+
+			l.KeyboardHandler(tab)
+
+			if !l.currentArtistAlbums[1].HasFocus() {
+				t.Fatal("Tab did not return focus to the playing album")
+			}
+
+			if got := albumText(); got != playingView {
+				t.Fatalf("returning focus changed the track viewport:\n%s\nwant:\n%s", got, playingView)
 			}
 		})
 	}

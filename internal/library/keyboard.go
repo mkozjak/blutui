@@ -12,12 +12,14 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 				return nil
 			}
 
-			// Set first artist's album as selectable and make it focused
-			l.currentArtistAlbums[0].SetSelectable(true, false)
-			l.app.SetFocus(l.currentArtistAlbums[0])
+			album := l.lastFocusedAlbum
+
+			if album == nil {
+				album = l.currentArtistAlbums[0]
+			}
+
+			l.app.SetFocus(album)
 		} else {
-			// Reset offset/scroll and throw focus to artist pane
-			l.albumPane.SetOffset(0, 0)
 			l.app.SetFocus(l.artistPane)
 		}
 
@@ -68,6 +70,7 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	case 'h':
 		if l.albumPane.HasFocus() {
 			l.albumPane.SetOffset(0, 0)
+			l.lastFocusedAlbum = nil
 			l.app.SetFocus(l.artistPane)
 		}
 

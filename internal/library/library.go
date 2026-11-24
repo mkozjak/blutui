@@ -125,6 +125,7 @@ type Library struct {
 	albumArtists        map[string]artist
 	artists             []string
 	currentArtistAlbums []*tview.Table
+	lastFocusedAlbum    *tview.Table
 	cpArtistIdx         int
 	cpArtistName        string
 	cpArtistPending     bool
@@ -420,6 +421,7 @@ func (l *Library) ApplyData(msg FetchDone) {
 	l.artistPaneFiltered = false
 	l.albumPane.Clear()
 	l.currentArtistAlbums = nil
+	l.lastFocusedAlbum = nil
 	l.DrawArtistPane()
 
 	if len(l.artists) > 0 {
