@@ -69,7 +69,7 @@ func (l *Library) KeyboardHandler(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Rune() {
 	case 'h':
 		if l.albumPane.HasFocus() {
-			l.albumPane.SetOffset(0, 0)
+			l.albumPane.rowOffset = 0
 			l.lastFocusedAlbum = nil
 			l.app.SetFocus(l.artistPane)
 		}

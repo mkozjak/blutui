@@ -1,12 +1,99 @@
 package library
 
 import (
+	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
+
+func TestAlbumBoundaryScrollsOnlyWhenNeeded(t *testing.T) {
+	l := New("", "local", testApp{tview.NewApplication()}, nil, testSpinner{})
+	container := l.CreateContainer()
+	albums := []album{{name: "First", tracks: make([]track, 8)}, {name: "Second", tracks: make([]track, 4)}}
+	for i := range albums {
+		for row := range albums[i].tracks {
+			albums[i].tracks[row].name = fmt.Sprintf("%c%d", 'A'+i, row+1)
+		}
+	}
+
+	l.ApplyData(FetchDone{artists: []string{"Artist"}, albumArtists: map[string]artist{"Artist": {albums: albums}}})
+	l.app.SetFocus(l.currentArtistAlbums[1])
+	screen := tcell.NewSimulationScreen("")
+
+	if err := screen.Init(); err != nil {
+		t.Fatal(err)
+	}
+	defer screen.Fini()
+
+	screen.SetSize(80, 10)
+	container.SetRect(0, 0, 80, 10)
+	visibleRows := func() []string {
+		screen.Clear()
+		container.Draw(screen)
+		x, y, _, height := l.albumPane.GetInnerRect()
+		rows := make([]string, height)
+		for i := range rows {
+			for col := x + 1; col < x+7; col++ {
+				ch, _, _, _ := screen.GetContent(col, y+i)
+				rows[i] += string(ch)
+			}
+			rows[i] = strings.TrimSpace(rows[i])
+		}
+
+		return rows
+	}
+	setFocus := func(p tview.Primitive) { l.app.SetFocus(p) }
+	press := func(key rune) {
+		container.InputHandler()(tcell.NewEventKey(tcell.KeyRune, key, tcell.ModNone), setFocus)
+	}
+
+	before := visibleRows()
+	press('k')
+
+	if after := visibleRows(); !slices.Equal(after, before) {
+		t.Fatalf("crossing to a visible track changed the viewport from %q to %q", before, after)
+	}
+
+	want := []string{"A4", "A5", "A6", "A7", "A8", "", "Second", "B1"}
+	if !slices.Equal(before, want) {
+		t.Fatalf("visible rows = %q, want %q", before, want)
+	}
+
+	x, y, _, _ := l.albumPane.GetInnerRect()
+	_, _, style, _ := screen.GetContent(x+1, y+4)
+	if _, background, _ := style.Decompose(); background != tcell.ColorCornflowerBlue {
+		t.Fatal("previous album's last track is missing the selection highlight")
+	}
+
+	for range 5 {
+		press('k')
+		container.Draw(screen)
+	}
+
+	want = []string{"A3", "A4", "A5", "A6", "A7", "A8", "", "Second"}
+	if got := visibleRows(); !slices.Equal(got, want) {
+		t.Fatalf("scrolling up one line shows %q, want %q", got, want)
+	}
+
+	mouse := container.MouseHandler()
+	mouse(tview.MouseScrollDown, tcell.NewEventMouse(x+1, y, tcell.WheelDown, tcell.ModNone), setFocus)
+	if got := visibleRows(); !slices.Equal(got, before) {
+		t.Fatalf("mouse scroll shows %q, want %q", got, before)
+	}
+
+	mouse(tview.MouseLeftDown, tcell.NewEventMouse(x+1, y, tcell.Button1, tcell.ModNone), setFocus)
+	if got := visibleRows(); !slices.Equal(got, before) {
+		t.Fatalf("clicking a visible track changed the viewport to %q", got)
+	}
+
+	if row, _ := l.currentArtistAlbums[0].GetSelection(); row != 3 {
+		t.Fatalf("clicked track row = %d, want 3", row)
+	}
+}
 
 func TestAlbumNavigation(t *testing.T) {
 	for _, tc := range []struct {
@@ -155,7 +242,7 @@ func TestPaneFocusKeys(t *testing.T) {
 		t.Fatal("l changed selection while already in the album pane")
 	}
 
-	l.albumPane.SetOffset(1, 0)
+	l.albumPane.rowOffset = 1
 	press('h')
 	press('h')
 
@@ -163,7 +250,7 @@ func TestPaneFocusKeys(t *testing.T) {
 		t.Fatal("h did not focus the artist pane")
 	}
 
-	if offset, _ := l.albumPane.GetOffset(); offset != 0 {
+	if l.albumPane.rowOffset != 0 {
 		t.Fatal("h did not reset the album scroll offset")
 	}
 

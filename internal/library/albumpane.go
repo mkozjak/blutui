@@ -9,10 +9,14 @@ import (
 	"github.com/rivo/tview"
 )
 
+type albumTable struct {
+	*tview.Table
+	clippedTop int
+}
+
 // right pane - albums
-func (l *Library) createAlbumContainer() *tview.Grid {
-	p := tview.NewGrid().
-		SetColumns(0)
+func (l *Library) createAlbumContainer() *albumViewport {
+	p := &albumViewport{Box: tview.NewBox(), library: l}
 
 	p.SetTitle(" [::b]Track ").
 		SetBorder(true).
@@ -23,23 +27,20 @@ func (l *Library) createAlbumContainer() *tview.Grid {
 	return p
 }
 
-func (l *Library) drawAlbum(artist string, album album) *tview.Table {
+func (l *Library) drawAlbum(artist string, album album) *albumTable {
 	durms := internal.FormatDuration(album.duration)
 
 	// Create a new album and set it as not selectable by default
 	// so that it's first track doesn't get highlighted.
-	c := tview.NewTable().
-		SetSelectable(false, false)
+	c := &albumTable{Table: tview.NewTable().SetSelectable(false, false)}
 
 	c.SetTitle(fmt.Sprintf("[::b]%s (%d)", internal.EscapeStyleTag(album.name), album.year)).
-		SetBorder(true).
-		SetBorderColor(tcell.ColorCornflowerBlue).
 		SetBackgroundColor(tcell.ColorDefault).
-		SetTitleAlign(tview.AlignLeft).
 		SetFocusFunc(func() {
 			// Set this current table as selectable so its selected rows get highlighted
 			c.SetSelectable(true, false)
 			l.lastFocusedAlbum = c
+			l.albumPane.manualScroll = false
 		}).
 		SetBlurFunc(func() {
 			// Set this current table as not selectable so it loses the highlighting
@@ -47,40 +48,24 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 			l.app.SetPrevFocused("albumpane")
 		})
 
+	c.SetSelectionChangedFunc(func(_, _ int) {
+		l.albumPane.manualScroll = false
+	})
 	c.SetCell(0, 0, tview.NewTableCell(album.name).SetTransparency(true))
 
 	// Create a custom list line for album length etc.
 	c.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		if width >= 2 && height >= 2 {
-			style := tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue).Background(tcell.ColorDefault)
-			for col := x; col < x+width; col++ {
-				screen.SetContent(col, y, ' ', nil, style)
-				screen.SetContent(col, y+height-1, ' ', nil, style)
-			}
-			for row := y + 1; row < y+height-1; row++ {
-				screen.SetContent(x, row, ' ', nil, style)
-				screen.SetContent(x+width-1, row, ' ', nil, style)
-			}
-			if width >= 4 {
-				printed, _ := tview.Print(screen, c.GetTitle(), x+1, y, width-2, tview.AlignLeft, tview.Styles.TitleColor)
-				if len(c.GetTitle())-printed > 0 && printed > 0 {
-					tview.Print(screen, string(tview.SemigraphicsHorizontalEllipsis), x+width-2, y, 1, tview.AlignLeft, tview.Styles.TitleColor)
-				}
-			}
+		width = max(0, width-2)
+		if c.clippedTop == 0 && height > 0 {
+			c.drawHeader(screen, x+1, y, width, durms)
+			y++
+			height--
 		}
 
-		centerY := y + height/c.GetRowCount()/2
-
-		for cx := x + len(c.GetTitle()) - 3; cx < x+width-len(durms)-2; cx++ {
-			screen.SetContent(cx, centerY, tview.BoxDrawingsLightHorizontal, nil,
-				tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue))
-		}
-
-		// Write album length along the horizontal line
-		tview.Print(screen, "[::b]"+durms, x+1, centerY, width-2, tview.AlignRight, tcell.ColorWhite)
-
+		trackOffset := max(0, c.clippedTop-1)
+		c.SetOffset(trackOffset, 0)
 		// Space for other content
-		return x + 1, centerY + 1, width - 2, height - (centerY + 1 - y)
+		return x + 1, y, width, min(height, c.GetRowCount()-trackOffset)
 	})
 
 	// Set album tracklist keymap
@@ -183,6 +168,27 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 	return c
 }
 
+func (c *albumTable) drawHeader(screen tcell.Screen, x, y, width int, duration string) {
+	titleWidth := width
+	if width > len(duration)+1 {
+		titleWidth -= len(duration) + 1
+		// Write album length along the horizontal line
+		tview.Print(screen, "[::b]"+duration, x, y, width, tview.AlignRight, tcell.ColorWhite)
+	}
+
+	title := c.GetTitle()
+	printed, cells := tview.Print(screen, title, x, y, titleWidth, tview.AlignLeft, tview.Styles.TitleColor)
+	if printed < len(title) && titleWidth > 0 {
+		tview.Print(screen, string(tview.SemigraphicsHorizontalEllipsis), x+titleWidth-1, y, 1, tview.AlignLeft, tview.Styles.TitleColor)
+		return
+	}
+
+	style := tcell.StyleDefault.Foreground(tcell.ColorCornflowerBlue)
+	for col := x + cells + 1; col < x+titleWidth; col++ {
+		screen.SetContent(col, y, tview.BoxDrawingsLightHorizontal, nil, style)
+	}
+}
+
 func (l *Library) DrawInitAlbums() {
 	l.drawArtistAlbums(l.artists[0])
 }
@@ -211,30 +217,22 @@ func (l *Library) MarkCpTrack(track, artist, album string) {
 	}
 }
 
-func (l *Library) drawArtistAlbums(artist string) {
-	l.albumPane.Clear()
+func (l *Library) clearAlbumPane() {
+	l.albumPane.rowOffset = 0
+	l.albumPane.manualScroll = false
 	l.currentArtistAlbums = nil
 	l.lastFocusedAlbum = nil
+}
+
+func (l *Library) drawArtistAlbums(artist string) {
+	l.clearAlbumPane()
 
 	// remove style from the string
 	cArtist := strings.TrimPrefix(artist, "[yellow]")
-	row := 0
 
-	for i, album := range l.albumArtists[cArtist].albums {
-		albumTable := l.drawAlbum(cArtist, album)
-		height := len(album.tracks) + 2
-
-		// automatically focus the first track from the first album
-		// since grid is the parent, it will automatically lose focus
-		// and give it to the first album
-		l.albumPane.AddItem(albumTable, row, 0, height, 1, 0, 0, i == 0)
-
-		row += height
-		l.currentArtistAlbums = append(l.currentArtistAlbums, albumTable)
+	for _, album := range l.albumArtists[cArtist].albums {
+		l.currentArtistAlbums = append(l.currentArtistAlbums, l.drawAlbum(cArtist, album))
 	}
-
-	// Match each grid row to a terminal line so offsets can land inside albums.
-	l.albumPane.SetSize(row, 1, 1, 0).SetOffset(0, 0)
 }
 
 // selectedAlbumIdx returns an index of the currently focused album

@@ -121,11 +121,11 @@ type Library struct {
 	// TODO: should move these into a separate ap struct?
 	artistPane          *tview.List
 	artistPaneFiltered  bool
-	albumPane           *tview.Grid
+	albumPane           *albumViewport
 	albumArtists        map[string]artist
 	artists             []string
-	currentArtistAlbums []*tview.Table
-	lastFocusedAlbum    *tview.Table
+	currentArtistAlbums []*albumTable
+	lastFocusedAlbum    *albumTable
 	cpArtistIdx         int
 	cpArtistName        string
 	cpArtistPending     bool
@@ -419,9 +419,7 @@ func (l *Library) ApplyData(msg FetchDone) {
 	l.albumArtists, l.artists = msg.albumArtists, msg.artists
 	l.cpArtistIdx = -1
 	l.artistPaneFiltered = false
-	l.albumPane.Clear()
-	l.currentArtistAlbums = nil
-	l.lastFocusedAlbum = nil
+	l.clearAlbumPane()
 	l.DrawArtistPane()
 
 	if len(l.artists) > 0 {
