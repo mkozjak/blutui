@@ -93,8 +93,11 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 			if currRow+1 == c.GetRowCount() {
 				albumIndex := l.selectedAlbumIdx()
 
-				if albumIndex+1 != len(l.albumArtists[artist].albums) {
-					l.app.SetFocus(l.currentArtistAlbums[albumIndex+1])
+				if albumIndex >= 0 && albumIndex+1 < len(l.currentArtistAlbums) {
+					next := l.currentArtistAlbums[albumIndex+1]
+					next.Select(0, 0)
+					l.app.SetFocus(next)
+					return nil
 				}
 			}
 
@@ -106,8 +109,11 @@ func (l *Library) drawAlbum(artist string, album album) *tview.Table {
 			if currRow == 0 {
 				albumIndex := l.selectedAlbumIdx()
 
-				if albumIndex != 0 {
-					l.app.SetFocus(l.currentArtistAlbums[albumIndex-1])
+				if albumIndex > 0 {
+					previous := l.currentArtistAlbums[albumIndex-1]
+					previous.Select(previous.GetRowCount()-1, 0)
+					l.app.SetFocus(previous)
+					return nil
 				}
 			}
 

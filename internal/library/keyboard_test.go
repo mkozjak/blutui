@@ -8,17 +8,23 @@ import (
 	"github.com/rivo/tview"
 )
 
-func TestAlbumPageNavigation(t *testing.T) {
+func TestAlbumNavigation(t *testing.T) {
 	for _, tc := range []struct {
-		name      string
-		key       tcell.Key
-		album     int
-		row       int
-		presses   int
-		height    int
-		wantAlbum int
-		wantRow   int
+		name          string
+		key           tcell.Key
+		char          rune
+		album         int
+		row           int
+		rememberedRow int
+		presses       int
+		height        int
+		wantAlbum     int
+		wantRow       int
 	}{
+		{name: "k from first track goes to previous album's last track", key: tcell.KeyRune, char: 'k', album: 2, presses: 1, wantAlbum: 1, wantRow: 1},
+		{name: "j from last track goes to next album's first track", key: tcell.KeyRune, char: 'j', album: 1, row: 1, rememberedRow: 4, presses: 1, wantAlbum: 2},
+		{name: "k stops at first track of first album", key: tcell.KeyRune, char: 'k', presses: 1},
+		{name: "j stops at last track of last album", key: tcell.KeyRune, char: 'j', album: 3, row: 2, presses: 1, wantAlbum: 3, wantRow: 2},
 		{name: "within album", key: tcell.KeyCtrlF, album: 2, row: 1, presses: 1, wantAlbum: 2, wantRow: 7},
 		{name: "forward across short albums", key: tcell.KeyCtrlF, row: 2, presses: 1, wantAlbum: 2, wantRow: 2},
 		{name: "backward across short albums", key: tcell.KeyCtrlB, album: 2, row: 1, presses: 1, wantRow: 1},
@@ -46,6 +52,7 @@ func TestAlbumPageNavigation(t *testing.T) {
 			}
 
 			l.ApplyData(FetchDone{artists: []string{"Artist"}, albumArtists: map[string]artist{"Artist": {albums: albums}}})
+			l.currentArtistAlbums[tc.wantAlbum].Select(tc.rememberedRow, 0)
 			l.currentArtistAlbums[tc.album].Select(tc.row, 0)
 			l.app.SetFocus(l.currentArtistAlbums[tc.album])
 
@@ -67,7 +74,7 @@ func TestAlbumPageNavigation(t *testing.T) {
 			container.Draw(screen)
 
 			for i := 0; i < tc.presses; i++ {
-				container.InputHandler()(tcell.NewEventKey(tc.key, 0, tcell.ModNone), func(p tview.Primitive) {
+				container.InputHandler()(tcell.NewEventKey(tc.key, tc.char, tcell.ModNone), func(p tview.Primitive) {
 					l.app.SetFocus(p)
 				})
 				container.Draw(screen)
