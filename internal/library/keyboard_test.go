@@ -93,6 +93,22 @@ func TestAlbumBoundaryScrollsOnlyWhenNeeded(t *testing.T) {
 	if row, _ := l.currentArtistAlbums[0].GetSelection(); row != 3 {
 		t.Fatalf("clicked track row = %d, want 3", row)
 	}
+
+	for range 3 {
+		press('k')
+		container.Draw(screen)
+	}
+
+	want = []string{"First", "A1", "A2", "A3", "A4", "A5", "A6", "A7"}
+	if got := visibleRows(); !slices.Equal(got, want) {
+		t.Fatalf("scrolling to the first track shows %q, want %q", got, want)
+	}
+
+	screen.SetSize(80, 3)
+	container.SetRect(0, 0, 80, 3)
+	if got := visibleRows(); !slices.Equal(got, []string{"A1"}) {
+		t.Fatalf("one-line viewport shows %q, want the selected track", got)
+	}
 }
 
 func TestAlbumNavigation(t *testing.T) {

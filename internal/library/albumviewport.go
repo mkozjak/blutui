@@ -21,8 +21,14 @@ func (p *albumViewport) Draw(screen tcell.Screen) {
 		if album.HasFocus() && !p.manualScroll && height > 0 {
 			row, _ := album.GetSelection()
 			selectedLine := totalRows + 1 + max(0, row)
-			// Move just enough to bring the selected line inside the viewport.
-			p.rowOffset = min(selectedLine, max(p.rowOffset, selectedLine-height+1))
+			maxOffset := selectedLine
+
+			if row <= 0 && height > 1 {
+				maxOffset = totalRows
+			}
+
+			// Move just enough to show the selection and the header above the first track.
+			p.rowOffset = min(maxOffset, max(p.rowOffset, selectedLine-height+1))
 		}
 
 		totalRows += album.GetRowCount() + 2
