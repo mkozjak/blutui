@@ -76,6 +76,8 @@ On startup, if playback is paused or stopped and the player was last observed ac
 | `Ctrl+u`            | Half page up                                |
 | `h`                 | Focus artist pane                           |
 | `l`                 | Focus album pane                            |
+| `[`                 | Jump to the previous album's first track    |
+| `]`                 | Jump to the next album's first track        |
 | `o`                 | Jump to currently playing track            |
 | `/`                 | Search artists                              |
 | `u`                 | Update library                              |

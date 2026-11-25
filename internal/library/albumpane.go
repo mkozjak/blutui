@@ -71,6 +71,26 @@ func (l *Library) drawAlbum(artist string, album album) *albumTable {
 	// Set album tracklist keymap
 	c.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
+		case '[', ']':
+			albumIndex := l.selectedAlbumIdx()
+			if albumIndex < 0 {
+				return nil
+			}
+
+			if event.Rune() == '[' {
+				albumIndex--
+			} else {
+				albumIndex++
+			}
+
+			if albumIndex >= 0 && albumIndex < len(l.currentArtistAlbums) {
+				album := l.currentArtistAlbums[albumIndex]
+				album.Select(0, 0)
+				l.app.SetFocus(album)
+			}
+
+			return nil
+
 		case 'j':
 			currRow, _ := c.GetSelection()
 
